@@ -14,6 +14,9 @@ brew install wget
 brew cask install iterm2
 brew cask install sshfs
 brew cask install google-chrome
+
+# To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
+brew install gpg
 #brew install chrome-cli
 #brew cask install google-drive
 #brew cask install transmit
