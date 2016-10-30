@@ -19,6 +19,7 @@ rm -r .vim
 ln -si "$working_dir/$folder/vim" .vim
 ln -si "$working_dir/$folder/vimrc" .vimrc
 ln -si "$working_dir/$folder/gitignore" .gitignore
+ln -si "$working_dir/$folder/isort.cfg" .isort.cfg
 git config --global core.excludesfile '~/.gitignore'
 
 # initialize Vim plugins

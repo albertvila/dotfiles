@@ -15,5 +15,6 @@ sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/u
 cd ~
 unlink .vim
 unlink .vimrc
-
+unlink .isort.cfg
+unlink .gitignore
 cd -

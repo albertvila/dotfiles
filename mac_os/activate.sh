@@ -15,6 +15,9 @@ brew cask install iterm2
 brew cask install sshfs
 brew cask install google-chrome
 
+# Needed by atom if we want to sort python imports
+pip install isort
+
 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
 brew install gpg
 #brew install chrome-cli
