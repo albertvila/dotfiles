@@ -20,11 +20,14 @@ pip install isort
 
 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
 brew install gpg
+
 #brew install chrome-cli
 #brew cask install google-drive
 #brew cask install transmit
 #brew cask install spectacle
-#brew cask install flycut
+
+# Clipboard manager for copy/paste (https://github.com/TermiT/Flycut)
+brew cask install flycut
 #brew cask install java
 #brew cask install paintbrush
 #brew cask install the-unarchiver
