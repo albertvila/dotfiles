@@ -1,6 +1,7 @@
 "=== Vundle
 " necessary for Vundle invokation / installation
 set nocompatible " be iMproved, required
+set backspace=2
 filetype off " required
 
 " set the runtime path to include Vundle and initialize
@@ -18,7 +19,7 @@ Plugin 'scrooloose/syntastic'
 Plugin 'bling/vim-airline'
 Plugin 'majutsushi/tagbar'
 Plugin 'flazz/vim-colorschemes'
-
+Plugin 'terryma/vim-multiple-cursors'
 " install UtilSnips plugin
 " Track the engine.
 Plugin 'SirVer/ultisnips'

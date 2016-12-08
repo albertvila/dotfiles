@@ -1,0 +1,26 @@
+# Install
+- Dash https://kapeli.com/dash
+- Atom
+  - sublime-style-column-selection
+  - atom-beatify
+  - dash
+  - file-icons
+  - git-plus
+  - highlight-selected
+  - linter
+  - linter-pep8
+  - minimap
+  - minimap-git-diff
+  - minimap-highlight-selected
+  - pretty-json
+  - project-manager
+  - todo-show
+  - tree-view-git-status
+  - linter-perl (disabled)
+- Firefox
+- Alfred
+- Feedly
+- IntelliJ
+- Spotify
+- VLC
+
