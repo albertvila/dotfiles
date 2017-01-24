@@ -19,10 +19,13 @@ Plugin 'scrooloose/syntastic'
 Plugin 'bling/vim-airline'
 Plugin 'majutsushi/tagbar'
 Plugin 'flazz/vim-colorschemes'
-Plugin 'terryma/vim-multiple-cursors'
+" NOT USED Plugin 'terryma/vim-multiple-cursors'
+
 " install UtilSnips plugin
 " Track the engine.
-Plugin 'SirVer/ultisnips'
+" Problem in cloud host because it needs vim >= 7.4 and we have 7.2 (use the
+" vim from the /apollo/env/envImprovements/bin/vim
+"Plugin 'SirVer/ultisnips'
 
 " Snippets are separated from the engine. Add this if you want them:
 Plugin 'honza/vim-snippets'
