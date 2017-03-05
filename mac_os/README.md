@@ -1,5 +1,4 @@
 # Install
-- Dash https://kapeli.com/dash
 - Atom
   - sublime-style-column-selection
   - atom-beatify
@@ -23,4 +22,3 @@
 - IntelliJ
 - Spotify
 - VLC
-

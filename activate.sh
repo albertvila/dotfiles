@@ -29,6 +29,15 @@ cd -
 
 cd ~
 echo "setting up personal .zshrc ..."
-ln -si "$working_dir/$folder/zshrc" .oh-my-zsh/custom/common.zsh
+ln -si "$working_dir/$folder/zshrc" .oh-my-zsh/custom/zshrc.zsh
 echo $'\360\237\215\251' " [DONE]"
+
+echo "setting up tmux ..."
+ln -si "$working_dir/$folder/tmux/tmux.conf" .tmux.conf
+ln -si "$working_dir/$folder/tmux/tmuxinator.zsh" .tmuxinator.zsh
+ln -si "$working_dir/$folder/tmux/titirrineta.yml" .tmuxinator/titirrineta.yml
+echo $'\360\237\215\251' " [DONE]"
+
 cd -
+echo "If you don't see the theme in zsh, update the profile in iterm2's configuration to use that shell command -> /bin/zsh --login"
+echo "Edit the ~/.zshrc file and change plugins=(git z h)"

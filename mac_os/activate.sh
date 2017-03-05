@@ -6,11 +6,10 @@ defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
 # install homebrew
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install coreutils
-#brew install pkg-config
 brew install vim
 brew install htop
 brew install wget
-#brew install pandoc
+
 brew cask install iterm2
 brew cask install sshfs
 brew cask install google-chrome
@@ -20,6 +19,13 @@ pip install isort
 
 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
 brew install gpg
+
+brew install tmux
+# https://github.com/tmuxinator/tmuxinator
+gem install tmuxinator
+
+#brew install pkg-config
+#brew install pandoc
 
 #brew install chrome-cli
 #brew cask install google-drive
