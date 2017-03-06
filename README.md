@@ -4,7 +4,7 @@ This is a collection of dotfiles and scripts I use for customizing OS X/Linux to
 
 The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles of the same name as the dotfile symlinks being created in your home directory.
 
-I also prefer `zsh` as my shell of choice. As such, the setup script will also clone the `oh-my-zsh` repository from my GitHub. It then checks to see if `zsh` is installed. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
+I also prefer `zsh` as my shell of choice. As such, the setup script will install `oh-my-zsh` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
 So, to recap, the install script will:
 
@@ -77,3 +77,30 @@ Tmuxinator
 ## Future ToDo
 
 - Check [Prezto](http://jr0cket.co.uk/2013/09/hey-prezto-zsh-for-command-line-heaven.html)
+
+
+# MacOS Install
+
+- Atom
+  - sublime-style-column-selection
+  - atom-beatify
+  - file-icons
+  - git-plus
+  - highlight-selected
+  - linter
+  - linter-pep8
+  - minimap
+  - minimap-git-diff
+  - minimap-highlight-selected
+  - pretty-json
+  - project-manager
+  - todo-show
+  - tree-view-git-status
+  - linter-perl (disabled)
+
+- Firefox
+- Alfred
+- Feedly
+- IntelliJ
+- Spotify
+- VLC
