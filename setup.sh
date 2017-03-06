@@ -56,8 +56,11 @@ print_result() {
   && exit
 }
 
+# donut \xf0\x9f\x8d\xa9
+# penguin \xf0\x9f\x90\xa7\x31
+# apple \xf0\x9f\x8d\x8f
 print_done() {
-  icon=$'\360\237\215\251'
+  icon=$'\xf0\x9f\x8d\xa9'
   printf "$icon  done\n"
 }
 
@@ -263,7 +266,7 @@ install_zsh
 ###############################################################################
 
 # Install Zsh settings
-ln -fs $DOTFILES_DIR/zsh/themes/albert.zsh-theme $HOME/.oh-my-zsh/themes
+ln -fs $DOTFILES_DIR/zsh/themes/agnoster-albert.zsh-theme $HOME/.oh-my-zsh/themes
 ln -fs $DOTFILES_DIR/zsh/custom/zshrc $HOME/.oh-my-zsh/custom/zshrc.zsh
 
 ###############################################################################
