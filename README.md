@@ -77,7 +77,9 @@ Tmuxinator
 ## Future ToDo
 
 - Check [Prezto](http://jr0cket.co.uk/2013/09/hey-prezto-zsh-for-command-line-heaven.html)
-
+- Create a ~/.dotfiles every time and use it to check if the script is run for the first time
+    - If so, execute osx defaults, add theme to iterm, ...
+- Create a --force flag to run previous checks even if the ~/.dotfiles file exist
 
 # MacOS Install
 
