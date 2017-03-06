@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# It symlinks all the dotfiles (and .atom/) to ~/, also some binaries to ~/bin
+# It symlinks all the dotfiles to ~/, also some binaries to ~/bin
 # This is safe to run multiple times and will prompt you about anything unclear
 # A backup is kept under ~/.dotfiles_old
 
@@ -33,17 +33,14 @@ execute() {
 }
 
 print_error() {
-  # Print output in red
   printf "\e[0;31m  [✖] $1 $2\e[0m\n"
 }
 
 print_question() {
-  # Print output in yellow
   printf "\e[0;33m  [?] $1\e[0m"
 }
 
 print_success() {
-  # Print output in green
   printf "\e[0;32m  [✔] $1\e[0m\n"
 }
 
@@ -56,11 +53,8 @@ print_result() {
   && exit
 }
 
-# donut \xf0\x9f\x8d\xa9
-# penguin \xf0\x9f\x90\xa7\x31
-# apple \xf0\x9f\x8d\x8f
 print_done() {
-  icon=$'\xf0\x9f\x8d\xa9'
+  icon=$'\xf0\x9f\x8d\xa9' # donut
   printf "$icon  done\n"
 }
 
@@ -196,30 +190,7 @@ echo "Creating $DOTFILES_BACKUP_DIR for backup of any existing dotfiles in ~..."
 mkdir -p $DOTFILES_BACKUP_DIR
 print_done
 
-# Atom editor settings
-#echo "Copying Atom settings.."
-#mv -f ~/.atom ~/dotfiles_old/
-#ln -s $HOME/dotfiles/atom ~/.atom
-#print_done
-
 declare -a FILES_TO_SYMLINK=(
-  #'shell/shell_aliases'
-  #'shell/shell_config'
-  #'shell/shell_exports'
-  #'shell/shell_functions'
-  #'shell/bash_profile'
-  #'shell/bash_prompt'
-  #'shell/bashrc'
-  #'shell/zshrc'
-  #'shell/ackrc'
-  #'shell/curlrc'
-  #'shell/gemrc'
-  #'shell/inputrc'
-  #'shell/screenrc'
-
-  #'git/gitattributes'
-  #'git/gitconfig'
-  #'git/gitignore'
   'vim'
   'vim/vimrc'
   'git/gitignore'
@@ -233,33 +204,18 @@ declare -a BINARIES=(
   'batcharge.py'
 )
 
-# FILES_TO_SYMLINK="$FILES_TO_SYMLINK .vim bin" # add in vim and the binaries
-
 move_existing_dotfiles
 
 # Package managers & packages
 
-# . "$DOTFILES_DIR/install/brew.sh"
-# . "$DOTFILES_DIR/install/npm.sh"
-
 os=$(get_os)
-#if [ $os == "osx" ]; then
-#  . "$DOTFILES_DIR/install/brew_osx.sh"
-#fi
+if [ $os == "osx" ]; then
+  . "$DOTFILES_DIR/install/osx/brew.sh"
+  . "$DOTFILES_DIR/install/osx/atom.sh"
+fi
 
 install_dotfiles
 install_zsh
-
-###############################################################################
-# Atom                                                                        #
-###############################################################################
-
-# Copy over Atom configs
-##cp -r atom/packages.list $HOME/.atom
-
-# Install community packages
-##apm list --installed --bare - get a list of installed packages
-##apm install --packages-file $HOME/.atom/packages.list
 
 ###############################################################################
 # Zsh                                                                         #
@@ -292,17 +248,10 @@ os=$(get_os)
 if [ $os == "osx" ]; then
   # show full pathes in Finder
   defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
-
-  # Only use UTF-8 in Terminal.app
-  #defaults write com.apple.terminal StringEncodings -array 4
-
-  # Don’t display the annoying prompt when quitting iTerm
-  #defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 fi
 
 # Install the Solarized Dark theme for iTerm
 #open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
-
 
 # Reload zsh settings
 #source ~/.zshrc

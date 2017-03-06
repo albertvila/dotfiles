@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+echo "Checking brew cask/brew/pip packages ..."
 
 # install homebrew
 which -s brew
@@ -21,7 +22,7 @@ brew_cask_apps=(
 
 for pkg in ${brew_cask_apps[@]}; do
   if brew cask list -1 | grep -q "^${pkg}"; then
-    echo "[brew cask] Package '$pkg' is already installed"
+    print_success "[brew cask] Package '$pkg' is already installed"
   else
     echo "[brew cask] Package '$pkg' is not installed"
     brew cask install "$pkg"
@@ -40,7 +41,7 @@ brew_apps=(
 
 for pkg in ${brew_apps[@]}; do
   if brew list -1 | grep -q "^${pkg}\$"; then
-    echo "[brew] Package '$pkg' is already installed"
+    print_success "[brew] Package '$pkg' is already installed"
   else
     echo "[brew] Package '$pkg' is not installed"
     brew install "$pkg"
@@ -55,7 +56,7 @@ pip_apps=(
 
 for pkg in ${pip_apps[@]}; do
   if pip list --format=legacy | grep "^${pkg}"; then
-    echo "[pip] Package '$pkg' is already installed"
+    print_success "[pip] Package '$pkg' is already installed"
   else
     echo "[pip] Package '$pkg' is not installed"
     pip install "$pkg"
@@ -69,13 +70,14 @@ gem_apps=(
 
 for pkg in ${gem_apps[@]}; do
   if gem list | grep "^${pkg}"; then
-    echo "[gem] Package '$pkg' is already installed"
+    print_success "[gem] Package '$pkg' is already installed"
   else
     echo "[gem] Package '$pkg' is not installed"
     gem install "$pkg"
   fi
 done
 
+print_done
 #brew install pkg-config
 #brew install pandoc
 #brew install chrome-cli
