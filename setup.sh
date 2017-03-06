@@ -288,14 +288,21 @@ ln -fs "$DOTFILES_DIR/tmux/titirrineta.yml" $HOME/.tmuxinator/titirrineta.yml
 # initialize Vim plugins
 vim +PluginInstall +qall
 
-# Only use UTF-8 in Terminal.app
-#defaults write com.apple.terminal StringEncodings -array 4
+os=$(get_os)
+if [ $os == "osx" ]; then
+  # show full pathes in Finder
+  defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
+
+  # Only use UTF-8 in Terminal.app
+  #defaults write com.apple.terminal StringEncodings -array 4
+
+  # Don’t display the annoying prompt when quitting iTerm
+  #defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+fi
 
 # Install the Solarized Dark theme for iTerm
 #open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
 
-# Don’t display the annoying prompt when quitting iTerm
-#defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
 # Reload zsh settings
 #source ~/.zshrc
