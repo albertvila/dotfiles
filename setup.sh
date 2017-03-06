@@ -207,7 +207,6 @@ declare -a BINARIES=(
 move_existing_dotfiles
 
 # Package managers & packages
-
 os=$(get_os)
 if [ $os == "osx" ]; then
   . "$DOTFILES_DIR/install/osx/brew.sh"
@@ -248,10 +247,15 @@ os=$(get_os)
 if [ $os == "osx" ]; then
   # show full pathes in Finder
   defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
-fi
 
-# Install the Solarized Dark theme for iTerm
-#open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
+  # Disable and kill Dashboard
+  # Can be reverted with:
+  # defaults write com.apple.dashboard mcx-disabled -boolean NO; killall Doc
+  #defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock
+
+  # Install the Solarized Dark theme for iTerm
+  #open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
+fi
 
 # Reload zsh settings
 #source ~/.zshrc

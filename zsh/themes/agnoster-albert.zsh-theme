@@ -99,9 +99,9 @@ prompt_git() {
 
     if [[ -e "${repo_path}/BISECT_LOG" ]]; then
       mode=" <B>"
-    elif [[ -e "${repo_path}/MERGE_HEAD" ]]; then
+      elif [[ -e "${repo_path}/MERGE_HEAD" ]]; then
       mode=" >M<"
-    elif [[ -e "${repo_path}/rebase" || -e "${repo_path}/rebase-apply" || -e "${repo_path}/rebase-merge" || -e "${repo_path}/../.dotest" ]]; then
+      elif [[ -e "${repo_path}/rebase" || -e "${repo_path}/rebase-apply" || -e "${repo_path}/rebase-merge" || -e "${repo_path}/../.dotest" ]]; then
       mode=" >R>"
     fi
 
@@ -121,25 +121,25 @@ prompt_git() {
 }
 
 prompt_bzr() {
-    (( $+commands[bzr] )) || return
-    if (bzr status >/dev/null 2>&1); then
-        status_mod=`bzr status | head -n1 | grep "modified" | wc -m`
-        status_all=`bzr status | head -n1 | wc -m`
-        revision=`bzr log | head -n2 | tail -n1 | sed 's/^revno: //'`
-        if [[ $status_mod -gt 0 ]] ; then
-            prompt_segment yellow black
-            echo -n "bzr@"$revision "✚ "
-        else
-            if [[ $status_all -gt 0 ]] ; then
-                prompt_segment yellow black
-                echo -n "bzr@"$revision
+  (( $+commands[bzr] )) || return
+  if (bzr status >/dev/null 2>&1); then
+    status_mod=`bzr status | head -n1 | grep "modified" | wc -m`
+    status_all=`bzr status | head -n1 | wc -m`
+    revision=`bzr log | head -n2 | tail -n1 | sed 's/^revno: //'`
+    if [[ $status_mod -gt 0 ]] ; then
+      prompt_segment yellow black
+      echo -n "bzr@"$revision "✚ "
+    else
+      if [[ $status_all -gt 0 ]] ; then
+        prompt_segment yellow black
+        echo -n "bzr@"$revision
 
-            else
-                prompt_segment green black
-                echo -n "bzr@"$revision
-            fi
-        fi
+      else
+        prompt_segment green black
+        echo -n "bzr@"$revision
+      fi
     fi
+  fi
 }
 
 prompt_hg() {
@@ -151,7 +151,7 @@ prompt_hg() {
         # if files are not added
         prompt_segment red white
         st='±'
-      elif [[ -n $(hg prompt "{status|modified}") ]]; then
+        elif [[ -n $(hg prompt "{status|modified}") ]]; then
         # if any modification
         prompt_segment yellow black
         st='±'
@@ -167,7 +167,7 @@ prompt_hg() {
       if `hg st | grep -q "^\?"`; then
         prompt_segment red black
         st='±'
-      elif `hg st | grep -q "^[MA]"`; then
+        elif `hg st | grep -q "^[MA]"`; then
         prompt_segment yellow black
         st='±'
       else
@@ -193,11 +193,30 @@ prompt_status() {
   [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
 
   [[ -n "$symbols" ]] && prompt_segment black default "$symbols"
-  #prompt_segment black default "\xf0\x9f\x8d\x8f"
 }
 
 function battery_charge {
-  echo `~/bin/batcharge.py`
+  # Only on a OSx laptop
+  if `uname -s | grep -q "Darwin"`; then
+    if `sysctl -n hw.model | grep -q "Book"`; then
+      echo `~/bin/batcharge.py`
+    fi
+    return
+  fi
+
+  # For other linux laptops / to be tested
+  return
+
+  local pwr_supply_dir
+  readonly pwr_supply_dir="/sys/class/power_supply"
+
+  # sanity:
+  [[ -d "$pwr_supply_dir" ]] || { echo -e "[$pwr_supply_dir] is not a valid dir! abort."; return 2; }
+
+  find "$pwr_supply_dir" -mindepth 1 -maxdepth 1 -name 'BAT*' -print -quit | grep -q .
+  if [ $? ]; then
+    echo `~/bin/batcharge.py`
+  fi
 }
 
 ## Main prompt
