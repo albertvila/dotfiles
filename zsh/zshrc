@@ -13,9 +13,9 @@ dirs_to_prepend=(
   "$HOME/dotfiles/bin"
   "$HOME/bin"
   "$HOME/.rvm/bin"
-  "$(brew --prefix ruby)/bin"
-  "$(brew --prefix coreutils)/libexec/gnubin" # Add brew-installed GNU core utilities bin
-  "$(brew --prefix)/share/npm/bin" # Add npm-installed package bin
+#  "$(brew --prefix ruby)/bin"
+#  "$(brew --prefix coreutils)/libexec/gnubin" # Add brew-installed GNU core utilities bin
+#  "$(brew --prefix)/share/npm/bin" # Add npm-installed package bin
 )
 
 # Explicitly configured $PATH
@@ -91,9 +91,9 @@ for file in $HOME/.{shell_exports,shell_aliases,shell_functions,shell_config}; d
 done;
 unset file;
 
-if [ -f `brew --prefix`/etc/bash_completion ]; then
+#if [ -f `brew --prefix`/etc/bash_completion ]; then
   #. `brew --prefix`/etc/bash_completion
-fi
+#fi
 
 # Automatically list directory contents on `cd`.
 # auto-ls () {

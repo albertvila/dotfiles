@@ -12,8 +12,10 @@ get_os() {
 
   if [ "$OS_NAME" == "Darwin" ]; then
     echo "osx"
-    elif [ "$OS_NAME" == "Linux" ] && [ -e "/etc/lsb-release" ]; then
+    elif [ "$OS_NAME" == "Linux" ]; then
     echo "linux"
+  else
+    echo "unknown"
   fi
 }
 
@@ -65,7 +67,7 @@ symbolic_link() {
   if [ ! -e "$targetFile" ]; then
     execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
     elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
-    print_success "$targetFile → $sourceFile"
+    print_success "Link already exists for $targetFile"
   else
     ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
     if answer_is_yes; then
@@ -81,12 +83,16 @@ move_existing_dotfiles() {
   echo "Move any existing dotfiles in homedir to ~/.dotfiles_old directory if needed"
   # Move any existing dotfiles in homedir to dotfiles_old directory
   for i in ${FILES_TO_SYMLINK[@]}; do
-    file=${i##*/}
+    file="$HOME/.${i##*/}"
 
     # Only move the file if it's not a symbolic link
-    if [ ! -h "$HOME/.$file" ]; then
-      echo "Moving the .$file dotfile from ~ to $DOTFILES_BACKUP_DIR"
-      mv ~/.$file $DOTFILES_BACKUP_DIR
+    if [ -f $file ] && [ ! -L $file ]; then
+      mv $file $DOTFILES_BACKUP_DIR
+      if [ ! $? ]; then
+        print_success "$file moved to $DOTFILES_BACKUP_DIR"
+      else
+        print_error "Error moving $file to $DOTFILES_BACKUP_DIR"
+      fi
     fi
   done
   print_done
@@ -97,7 +103,7 @@ install_dotfiles() {
   local sourceFile=''
   local targetFile=''
 
-  echo "Creating symbolic links for config files"
+  echo "Creating symbolic links for config files if needed"
   for i in ${FILES_TO_SYMLINK[@]}; do
     sourceFile="$DOTFILES_DIR/$i"
     targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
@@ -111,7 +117,7 @@ install_dotfiles() {
   # Copy binaries
   mkdir -p $HOME/bin
 
-  echo "Creating symbolic links for binaries in ~/bin"
+  echo "Creating symbolic links for binaries in ~/bin if needed"
   for i in ${BINARIES[@]}; do
     sourceFile="$DOTFILES_DIR/bin/$i"
     targetFile="$HOME/bin/$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
@@ -237,6 +243,7 @@ git config --global core.excludesfile '~/.gitignore'
 # Terminal & iTerm 2 & tmuxinator                                             #
 ###############################################################################
 
+mkdir -p $HOME/.tmuxinator
 ln -fs "$DOTFILES_DIR/tmux/titirrineta.yml" $HOME/.tmuxinator/titirrineta.yml
 
 # initialize Vim plugins

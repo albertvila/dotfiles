@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 echo "Checking atom packages ..."
 
-if ! test $(which atom)
-then
-  print_error "atom not installed"
-else
-  install_atom_packages
-fi
-print_done
-
 function install_atom_packages() {
   packages=(
     Sublime-Style-Column-Selection
@@ -41,3 +33,11 @@ function install_atom_packages() {
     fi
   done
 }
+
+if ! test $(which atom)
+then
+  print_error "atom not installed"
+else
+  install_atom_packages
+fi
+print_done
