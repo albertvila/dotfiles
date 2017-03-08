@@ -229,7 +229,6 @@ ln -fs $DOTFILES_DIR/zsh/custom/zshrc $HOME/.oh-my-zsh/custom/zshrc.zsh
 ###############################################################################
 
 git config --global push.default simple
-git config --global alias.dag "log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order"
 git config --global core.editor /usr/bin/vim
 git submodule update --init
 git config --global core.excludesfile '~/.gitignore'

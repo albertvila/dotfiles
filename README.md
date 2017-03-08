@@ -36,10 +36,10 @@ $ cd fonts && ./install.sh
 
 Then
 
-- Open iTerm2's preferences.
-- Go to colours, load presets and select Solarized. Make sure that the minimum contrast slider is set to low
+- Open iTerm2's preferences (do this change for all needed profiles).
+- Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
 - Click on text, make sure that "Draw bold text in bright colours" is disabled
-- Change the font to Meslo
+- Change the font to Meslo LG M Regular for Powerline, 12p
 
 echo "\ue0b0 \u00b1 \ue0a0 \u27a6 \u2718 \u26a1 \u2699"
 

@@ -5,6 +5,8 @@ export PATH=$PATH:/Users/albepuig/bin
 alias reset="clear && printf '\e[3J'"
 alias tmx="tmux -CC attach || tmux -CC"
 alias vi='vim'
+alias glog="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n 5"
+alias glogn="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n"
 
 function help-git {
     echo "Showing git help"
@@ -13,7 +15,7 @@ function help-git {
     echo "\nSquash commits"
     echo "git rebase -i"
     echo "\nMerge from a branch into master"
-    echo "git checkout master\ngit merge branch_name\ngit rebase -i\ngit pull -r\ngit push"
+    echo "git checkout master\ngit pull -r\ngit merge branch_name\ngit rebase -i\ngit pull -r\ngit push"
     echo "\nMove last 2 local commits into a branch"
     echo "git branch new_branch_name \ngit reset --hard HEAD~2"
     echo "\nRollback last local commit to stagged phase"
