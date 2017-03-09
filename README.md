@@ -23,6 +23,10 @@ $ chmod +x setup.sh
 $ ./setup.sh
 ```
 
+### issues
+- Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
+```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
+
 ## Manual steps after first setup
 
 ### iterm2
