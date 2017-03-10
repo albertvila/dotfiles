@@ -207,7 +207,6 @@ declare -a FILES_TO_SYMLINK=(
 )
 
 declare -a BINARIES=(
-  'batcharge.py'
 )
 
 move_existing_dotfiles
@@ -221,13 +220,14 @@ fi
 
 install_dotfiles
 install_zsh
+./iterm/powerline/fonts/install.sh
 
 ###############################################################################
 # Zsh                                                                         #
 ###############################################################################
 
 # Install Zsh settings
-ln -fs $DOTFILES_DIR/zsh/themes/agnoster-albert.zsh-theme $HOME/.oh-my-zsh/themes
+ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
 ln -fs $DOTFILES_DIR/zsh/custom/zshrc $HOME/.oh-my-zsh/custom/zshrc.zsh
 
 ###############################################################################
@@ -244,7 +244,7 @@ git config --global core.excludesfile '~/.gitignore'
 ###############################################################################
 
 mkdir -p $HOME/.tmuxinator
-ln -fs "$DOTFILES_DIR/tmux/titirrineta.yml" $HOME/.tmuxinator/titirrineta.yml
+ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
 
 # initialize Vim plugins
 vim +PluginInstall +qall

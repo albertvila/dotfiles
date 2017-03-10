@@ -2,25 +2,16 @@
 
 This is a collection of dotfiles and scripts I use for customizing OS X/Linux to my liking and setting up the software development tools I use on a day-to-day basis. It can be cloned anywhere. It includes a setup script that creates the symlinks from your home directory to the cloned repository.
 
-The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles of the same name as the dotfile symlinks being created in your home directory.
+The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles.
 
-I also prefer `zsh` as my shell of choice. As such, the setup script will install `oh-my-zsh` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
-
-So, to recap, the install script will:
-
-- back up any existing dotfiles in your home directory to `~/.dotfiles_old/`
-- create symlinks to the dotfiles in your home directory
-- set up `oh-my-zsh` (for use with `zsh`)
-- check to see if `zsh` is installed, if it isn't, try to install it
-- if zsh is installed, run a `chsh -s` to set it as the default shell
+I prefer `zsh` as my shell of choice. As such, the setup script will install `oh-my-zsh` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
 ## Installation
 
 ```sh
 $ git clone https://github.com/albert.vila/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
-$ chmod +x setup.sh
-$ ./setup.sh
+$ sh ./setup.sh
 ```
 
 ### issues
@@ -30,15 +21,6 @@ $ ./setup.sh
 ## Manual steps after first setup
 
 ### iterm2
-
-Install fonts:
-
-```sh
-$ git clone git@github.com:powerline/fonts.git
-$ cd fonts && ./install.sh
-```
-
-Then
 
 - Open iTerm2's preferences (do this change for all needed profiles).
 - Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
