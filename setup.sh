@@ -248,6 +248,7 @@ ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
 
 # initialize Vim plugins
 vim +PluginInstall +qall
+ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
 
 os=$(get_os)
 if [ $os == "osx" ]; then

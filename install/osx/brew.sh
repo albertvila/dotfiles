@@ -52,6 +52,7 @@ done
 pip_apps=(
   isort # Needed by atom if we want to sort python imports
   beautysh # Beautifier for sh files
+  flake8 # Python code checker
 )
 
 for pkg in ${pip_apps[@]}; do

@@ -6,6 +6,15 @@ The setup script is smart enough to back up your existing dotfiles into a `~/.do
 
 I prefer `zsh` as my shell of choice. As such, the setup script will install `oh-my-zsh` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
+Recap
+- Setup dotfiles
+- Install osx dev packages (./install/osx) for brew/pip & atom
+- Install .oh-my-zsh & zsh as shell
+- Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
+- Colors theme solarized (iterm2, vim, intellij)
+    - https://github.com/jkaving/intellij-colors-solarized
+- Fonts poweline
+
 ## Installation
 
 ```sh
