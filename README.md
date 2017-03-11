@@ -30,17 +30,13 @@ $ sh ./setup.sh
 ## Manual steps after first setup
 
 ### iterm2
-
 - Open iTerm2's preferences (do this change for all needed profiles).
 - Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
 - Click on text, make sure that "Draw bold text in bright colours" is disabled
 - Change the font to Meslo LG M Regular for Powerline, 12p
 
-echo "\ue0b0 \u00b1 \ue0a0 \u27a6 \u2718 \u26a1 \u2699"
-
 ### unison
-[link](https://www.cis.upenn.edu/~bcpierce/unison/)
-TODO
+- Configure unison if you want bidirectional file sync [unison](https://www.cis.upenn.edu/~bcpierce/unison/)
 
 ## Links
 
@@ -75,29 +71,3 @@ Tmuxinator
 - Create a ~/.dotfiles every time and use it to check if the script is run for the first time
     - If so, execute osx defaults, add theme to iterm, ...
 - Create a --force flag to run previous checks even if the ~/.dotfiles file exist
-
-# MacOS Install
-
-- Atom
-  - sublime-style-column-selection
-  - atom-beatify
-  - file-icons
-  - git-plus
-  - highlight-selected
-  - linter
-  - linter-pep8
-  - minimap
-  - minimap-git-diff
-  - minimap-highlight-selected
-  - pretty-json
-  - project-manager
-  - todo-show
-  - tree-view-git-status
-  - linter-perl (disabled)
-
-- Firefox
-- Alfred
-- Feedly
-- IntelliJ
-- Spotify
-- VLC
