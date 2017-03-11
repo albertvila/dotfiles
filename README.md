@@ -35,8 +35,20 @@ $ sh ./setup.sh
 - Click on text, make sure that "Draw bold text in bright colours" is disabled
 - Change the font to Meslo LG M Regular for Powerline, 12p
 
+### intellij
+1. Clone git repository
+```sh
+$ git clone git@github.com:jkaving/intellij-colors-solarized.git
+```
+2. Go to `File | Import Settings...` and specify the `intellij-colors-solarized` directory
+ Click `OK` in the dialog that appears.
+
+3. Restart IntelliJ IDEA
+
+4. Go to `Preferences | Editor | Colors & Fonts` and select one of the new color themes.
+
 ### unison
-- Configure unison if you want bidirectional file sync [unison](https://www.cis.upenn.edu/~bcpierce/unison/)
+- Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))
 
 ## Links
 
