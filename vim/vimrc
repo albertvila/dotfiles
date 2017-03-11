@@ -1,9 +1,7 @@
-"=== Vundle
-" necessary for Vundle invokation / installation
-set nocompatible " be iMproved, required
-set backspace=2
-filetype off " required
+set nocompatible              " be iMproved, required
+filetype off                  " required
 
+" https://github.com/VundleVim/Vundle.vim
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -11,12 +9,31 @@ call vundle#begin()
 "call vundle#begin('~/some/path/here')
 
 " let Vundle manage Vundle, required
-Plugin 'gmarik/Vundle.vim'
+Plugin 'VundleVim/Vundle.vim'
 
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+let g:airline_theme = 'solarized'
+set termguicolors
+let g:airline_powerline_fonts = 1
+
+syntax enable
+set background=dark
+colorscheme solarized
+let g:solarized_termcolors=256
+
+Plugin 'mhinz/vim-startify'
+
+
+
+
+" Pending to review
+
+
+set backspace=2
 Plugin 'scrooloose/nerdtree.git'
 Plugin 'kien/ctrlp.vim'
 Plugin 'scrooloose/syntastic'
-Plugin 'bling/vim-airline'
 Plugin 'majutsushi/tagbar'
 Plugin 'flazz/vim-colorschemes'
 " NOT USED Plugin 'terryma/vim-multiple-cursors'
@@ -74,8 +91,10 @@ set nu " print the line number in front of each line
 set ic " ignore case in search patterns
 set hlsearch " highlight search matches
 
+
 " 256-color terminal
 set t_Co=256
+
 " colorscheme darkblue
 colorscheme Benokai
 
