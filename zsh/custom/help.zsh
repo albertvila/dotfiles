@@ -1,21 +1,3 @@
-source ~/.tmuxinator.zsh
-
-export PATH=$PATH:/Users/albepuig/bin
-
-alias reset="clear && printf '\e[3J'"
-alias tmx="tmux -CC attach || tmux -CC"
-alias vi='vim'
-alias glog="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n 5"
-alias glogn="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n"
-
-function infinite {
-  while true
-  do
-    eval $1
-    sleep 2
-  done
-}
-
 function help-git {
   echo "Showing git help"
   echo "----------------"
@@ -49,4 +31,35 @@ function help-git {
   echo "gstp -> git stash pop"
   echo "gstl -> git stash list"
   echo "grh -> git reset HEAD"
+}
+
+function help-vim {
+  echo "Showing vim help"
+  echo "----------------"
+
+  echo "ctrl+p -> Search & open files"
+  echo "(ctrl+n)*c -> Multiple cursors"
+  echo ",+c+space Toggle comment line"
+  echo "ctrl+v + select lines with cursor + previous command to toggle comment multiple lines"
+}
+
+function help-tmux {
+  echo "Showing tmux/tmuxinator help"
+  echo "----------------"
+
+  echo "tmx -> Attaches last tmux session or creates a new one (because of the alias)"
+  echo "mux list -> List tmuxinator projects"
+  echo "mux X -> Starts tmuxinator project X"
+  echo "mux stop X -> Stops tmuxinator project X"
+  echo "ctrl+b n -> Next window"
+  echo "ctrl+b p -> Previous window"
+  echo "ctrl+b arrows -> Select panel"
+}
+
+function help-gradle {
+  echo "Showing gradle help"
+  echo "----------------"
+
+  echo "./gradlew bootRun -> Runs the application"
+  echo "./gradlew clean test --tests \"*ApplicationConfigTest\" -> Run a single test"
 }

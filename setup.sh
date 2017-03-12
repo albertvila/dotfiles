@@ -148,28 +148,18 @@ install_zsh () {
       chsh -s $(which zsh)
     fi
   else
-    echo "TODO PENDING, use the get_os method"
-
-    # If zsh isn't installed, get the platform of the current machine
-    platform=$(uname);
-    # If the platform is Linux, try an apt-get to install zsh and then recurse
-    if [[ $platform == 'Linux' ]]; then
-      if [[ -f /etc/redhat-release ]]; then
-        echo "linux"
-        #sudo yum install zsh
-        #install_zsh
-      fi
-      if [[ -f /etc/debian_version ]]; then
-        echo "debian"
-        #sudo apt-get install zsh
-        #install_zsh
-      fi
-      # If the platform is OS X, tell the user to install zsh :)
-      elif [[ $platform == 'Darwin' ]]; then
-      echo "We'll install zsh, then re-run this script!"
-      #brew install zsh
-      exit
+    ask_for_confirmation "Zsh not found, zsh installation has not been tested, do you wanna proceed?"
+    if answer_is_yes; then
+        echo "We'll try to install zsh, then re-run this script!"
+        os=$(get_os)
+        if [ $os == "osx" ]; then
+            brew install zsh
+        elif [ $os == "linux" ]; then
+            sudo apt-get install zsh
+        fi
     fi
+    echo "Aborting..."
+    exit
   fi
 }
 
@@ -227,7 +217,11 @@ install_zsh
 
 # Install Zsh settings
 ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
-ln -fs $DOTFILES_DIR/zsh/custom/zshrc $HOME/.oh-my-zsh/custom/zshrc.zsh
+
+DOTFILES_CUSTOM_DIR="$DOTFILES_DIR/zsh/custom/"
+for entry in `ls $DOTFILES_CUSTOM_DIR`; do
+    ln -fs $DOTFILES_DIR/zsh/custom/$entry $HOME/.oh-my-zsh/custom/$entry
+done
 
 ###############################################################################
 # Git                                                                         #
