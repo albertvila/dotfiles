@@ -205,6 +205,9 @@ move_existing_dotfiles
 os=$(get_os)
 if [ $os == "osx" ]; then
   . "$DOTFILES_DIR/install/osx/brew.sh"
+  . "$DOTFILES_DIR/install/osx/brew_cask.sh"
+  . "$DOTFILES_DIR/install/osx/gem.sh"
+  . "$DOTFILES_DIR/install/osx/pip.sh"
   . "$DOTFILES_DIR/install/osx/atom.sh"
 fi
 
