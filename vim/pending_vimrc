@@ -1,0 +1,78 @@
+" DONT WORK
+" Code autocompletion (https://github.com/Valloric/YouCompleteMe)
+" Plugin 'valloric/youcompleteme'
+" It requires vim with-lua support (https://github.com/Shougo/neocomplete.vim)
+" Once done, type :NeoCompleteEnable and it should work
+" Plugin 'Shougo/neocomplete.vim'
+
+
+Plugin 'vim-syntastic/syntastic'
+"== Syntatic options
+" Use :lnext :lprev to navigate between errors/warnings
+" :lclose to close the errors panel, :Errors to open it again
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+let g:syntastic_perl_checkers = ['perl']
+let g:syntastic_enable_perl_checker = 1
+
+let g:syntastic_loc_list_height = 2
+let g:syntastic_python_flake8_args = "--max-line-length=120"
+
+
+" Not Used, if enabled just type :TagbarToggle
+"https://github.com/majutsushi/tagbar
+Plugin 'majutsushi/tagbar'
+
+" Plugin 'flazz/vim-colorschemes'
+
+" install UtilSnips plugin
+" Track the engine.
+" Problem in cloud host because it needs vim >= 7.4 and we have 7.2 (use the
+" vim from the /apollo/env/envImprovements/bin/vim
+"Plugin 'SirVer/ultisnips'
+
+" Snippets are separated from the engine. Add this if you want them:
+Plugin 'honza/vim-snippets'
+
+" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
+let g:UltiSnipsExpandTrigger="<tab>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
+
+" install markdown highlighter
+Plugin 'godlygeek/tabular'
+Plugin 'plasticboy/vim-markdown'
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_new_list_item_indent = 0
+
+" Plugin 'fisadev/vim-isort'
+" Plugin 'Lokaltog/vim-easymotion'
+" Plugin 'klen/python-mode'
+
+
+
+" 256-color terminal
+set t_Co=256
+
+"=== vim-isort configuration
+" let g:vim_isort_map = '<C-i>'
+
+command! -nargs=0 -range SortWords call SortWords()
+function! SortWords()
+    normal! gvy
+    call setreg('"', join(sort(split(getreg('"'), ", ")), ", "))
+    " gv - reselect previously selected area
+    normal! gv
+    " "0p - paste from buffer
+    normal! "0p
+endfunction

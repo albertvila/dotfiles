@@ -2,6 +2,14 @@
 runtime plugins.vim
 
 " *** Custom config
+set nu " print the line number in front of each line
+set ic " ignore case in search patterns
+set hlsearch " highlight search matches
+set backspace=2 " use backspace to delete
+
+set expandtab " expand tab to spaces
+set shiftwidth=4 " number of spaces to use for each step of (auto)indent.  Used for 'cindent', >>, <<, etc.
+set softtabstop=4
 
 " *** Plugins config
 " ** Airline **
@@ -15,3 +23,17 @@ set laststatus=2
 syntax enable
 set background=dark
 colorscheme solarized
+
+" ** vim-gitgutter
+let g:gitgutter_map_keys = 0 "Remove all mappings, not used
+
+" ** neocomplete
+let g:neocomplete#enable_at_startup = 1
+
+" ** autocompletion
+filetype plugin indent on
+filetype on
+syntax on
+
+" ** nerdcommenter
+let mapleader=","

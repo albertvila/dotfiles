@@ -27,6 +27,22 @@ Plugin 'scrooloose/nerdtree.git'
 " Search files inside vim using Ctrl+p
 Plugin 'ctrlpvim/ctrlp.vim'
 
+" https://github.com/terryma/vim-multiple-cursors
+Plugin 'terryma/vim-multiple-cursors'
+
+" Show a git diff on the left (https://github.com/airblade/vim-gitgutter)
+Plugin 'airblade/vim-gitgutter'
+
+" Perl autocomplete, it works typing ctrl+x + ctrl+o
+Plugin 'c9s/perlomni.vim'
+
+" The following 2 plugins allows the autocompletion to show as you type
+Plugin 'othree/vim-autocomplpop'
+Plugin 'eparreno/vim-l9'
+
+" Comment functions so powerful (https://github.com/scrooloose/nerdcommenter)
+Plugin 'scrooloose/nerdcommenter'
+
 "*** Add your plugins above ***
 
 " All of your Plugins must be added before the following line
