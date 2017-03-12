@@ -61,7 +61,7 @@ fi
 # Install pip apps
 pip_apps=(
   isort # Needed by atom if we want to sort python imports
-  beautysh # Beautifier for sh files
+  beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
 )
 

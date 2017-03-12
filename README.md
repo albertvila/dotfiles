@@ -12,7 +12,6 @@ Recap
 - Install .oh-my-zsh & zsh as shell
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
 - Colors theme solarized (iterm2, vim, intellij)
-    - https://github.com/jkaving/intellij-colors-solarized
 - Fonts poweline
 
 ## Installation
@@ -30,10 +29,13 @@ $ sh ./setup.sh
 ## Manual steps after first setup
 
 ### iterm2
-- Open iTerm2's preferences (do this change for all needed profiles).
-- Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
-- Click on text, make sure that "Draw bold text in bright colours" is disabled
-- Change the font to Meslo LG M Regular for Powerline, 12p
+1. Open iTerm2's preferences (do this change for all needed profiles).
+
+2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
+
+3. Click on text, make sure that "Draw bold text in bright colours" is disabled
+
+4. Change the font to Meslo LG M Regular for Powerline, 12p
 
 ### intellij
 1. Clone git repository
