@@ -220,7 +220,6 @@ fi
 
 install_dotfiles
 install_zsh
-./iterm/powerline/fonts/install.sh
 
 ###############################################################################
 # Zsh                                                                         #
@@ -246,8 +245,11 @@ git config --global core.excludesfile '~/.gitignore'
 mkdir -p $HOME/.tmuxinator
 ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
 
+./iterm/powerline/fonts/install.sh
+
 # initialize Vim plugins
 vim +PluginInstall +qall
+mkdir -p $HOME/.vim/colors
 ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
 
 os=$(get_os)

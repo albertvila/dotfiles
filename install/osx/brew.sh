@@ -37,6 +37,7 @@ brew_apps=(
   wget
   gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   tmux
+  # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
 )
 
 for pkg in ${brew_apps[@]}; do
@@ -44,9 +45,18 @@ for pkg in ${brew_apps[@]}; do
     print_success "[brew] Package '$pkg' is already installed"
   else
     echo "[brew] Package '$pkg' is not installed"
+    if [ $pck == "vim" ]; then
+        brew install "$pkg" --with-lua
+    fi
     brew install "$pkg"
   fi
 done
+
+if vim --version | egrep -q '\-lua'; then
+    print_error "[brew] Vim package installed without lua support. Lua support is needed for some plugins. Run:"
+    print_error "brew unlink vim"
+    print_error "brew install vim --with-lua"
+fi
 
 # Install pip apps
 pip_apps=(
