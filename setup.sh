@@ -209,6 +209,8 @@ if [ $os == "osx" ]; then
   . "$DOTFILES_DIR/install/osx/gem.sh"
   . "$DOTFILES_DIR/install/osx/pip.sh"
   . "$DOTFILES_DIR/install/osx/atom.sh"
+else
+    print_error "Not implemented yet, pending to install some packages, see install/osx folder"
 fi
 
 install_dotfiles
