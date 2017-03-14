@@ -33,12 +33,12 @@ for pkg in ${brew_apps[@]}; do
 done
 
 if vim --version | egrep -q '\-lua'; then
-    print_error "[brew] Vim package installed without lua support. Lua support is needed for some plugins. Run:"
-    print_error "brew unlink vim"
-    print_error "brew install vim --with-lua"
+    error "[brew] Vim package installed without lua support. Lua support is needed for some plugins. Run:"
+    error "brew unlink vim"
+    error "brew install vim --with-lua"
 fi
 
-print_done
+ok
 #brew install pkg-config
 #brew install pandoc
 #brew install chrome-cli

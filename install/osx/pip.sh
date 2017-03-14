@@ -17,4 +17,4 @@ for pkg in ${pip_apps[@]}; do
   fi
 done
 
-print_done
+ok

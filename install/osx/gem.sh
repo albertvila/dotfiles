@@ -15,4 +15,4 @@ for pkg in ${gem_apps[@]}; do
   fi
 done
 
-print_done
+ok

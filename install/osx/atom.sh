@@ -40,4 +40,5 @@ then
 else
   install_atom_packages
 fi
-print_done
+
+ok

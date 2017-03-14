@@ -22,4 +22,4 @@ for pkg in ${brew_cask_apps[@]}; do
   fi
 done
 
-print_done
+ok

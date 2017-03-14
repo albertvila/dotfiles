@@ -4,6 +4,9 @@
 # This is safe to run multiple times and will prompt you about anything unclear
 # A backup is kept under ~/.dotfiles_old
 
+# include my library helpers for colorized echo and require_brew, etc
+source ./lib/echos.sh
+
 ###############################################################################
 # Utils                                                                       #
 ###############################################################################
@@ -19,45 +22,9 @@ get_os() {
   fi
 }
 
-answer_is_yes() {
-  [[ "$REPLY" =~ ^[Yy]$ ]] && return 0 || return 1
-}
-
-ask_for_confirmation() {
-  print_question "$1 (y/n) "
-  read -n 1
-  printf "\n"
-}
-
 execute() {
   $1 &> /dev/null
-  print_result $? "${2:-$1}"
-}
-
-print_error() {
-  printf "\e[0;31m  [✖] $1 $2\e[0m\n"
-}
-
-print_question() {
-  printf "\e[0;33m  [?] $1\e[0m"
-}
-
-print_success() {
-  printf "\e[0;32m  [✔] $1\e[0m\n"
-}
-
-print_result() {
-  [ $1 -eq 0 ] \
-  && print_success "$2" \
-  || print_error "$2"
-
-  [ "$3" == "true" ] && [ $1 -ne 0 ] \
-  && exit
-}
-
-print_done() {
-  icon=$'\xf0\x9f\x8d\xa9' # donut
-  printf "$icon  done\n"
+  result $? "${2:-$1}"
 }
 
 symbolic_link() {
@@ -67,14 +34,14 @@ symbolic_link() {
   if [ ! -e "$targetFile" ]; then
     execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
     elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
-    print_success "Link already exists for $targetFile"
+    ok "Link already exists for $targetFile"
   else
     ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
     if answer_is_yes; then
       rm -rf "$targetFile"
       execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
     else
-      print_error "$targetFile → $sourceFile"
+      error "$targetFile → $sourceFile"
     fi
   fi
 }
@@ -89,13 +56,13 @@ move_existing_dotfiles() {
     if [ -f $file ] && [ ! -L $file ]; then
       mv $file $DOTFILES_BACKUP_DIR
       if [ ! $? ]; then
-        print_success "$file moved to $DOTFILES_BACKUP_DIR"
+        ok "$file moved to $DOTFILES_BACKUP_DIR"
       else
-        print_error "Error moving $file to $DOTFILES_BACKUP_DIR"
+        error "Error moving $file to $DOTFILES_BACKUP_DIR"
       fi
     fi
   done
-  print_done
+  ok
 }
 
 install_dotfiles() {
@@ -110,7 +77,7 @@ install_dotfiles() {
 
     symbolic_link $sourceFile $targetFile
   done
-  print_done
+  ok
 
   unset FILES_TO_SYMLINK
 
@@ -127,7 +94,7 @@ install_dotfiles() {
     echo "Changing access permissions for binary script :: ~/bin/${i##*/}"
     chmod +rwx $HOME/bin/${i##*/}
   done
-  print_done
+  ok
 
   unset BINARIES
 }
@@ -184,7 +151,7 @@ DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOTFILES_BACKUP_DIR=~/.dotfiles_old
 echo "Creating $DOTFILES_BACKUP_DIR for backup of any existing dotfiles in ~..."
 mkdir -p $DOTFILES_BACKUP_DIR
-print_done
+ok
 
 declare -a FILES_TO_SYMLINK=(
   'vim'
@@ -203,14 +170,14 @@ move_existing_dotfiles
 
 # Package managers & packages
 os=$(get_os)
-if [ $os == "osx" ]; then
+if [ $os == "blaosx" ]; then
   . "$DOTFILES_DIR/install/osx/brew.sh"
   . "$DOTFILES_DIR/install/osx/brew_cask.sh"
   . "$DOTFILES_DIR/install/osx/gem.sh"
   . "$DOTFILES_DIR/install/osx/pip.sh"
   . "$DOTFILES_DIR/install/osx/atom.sh"
 else
-    print_error "Not implemented yet, pending to install some packages, see install/osx folder"
+    error "Not implemented yet, pending to install some packages, see install/osx folder"
 fi
 
 install_dotfiles
@@ -247,7 +214,9 @@ ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
 ./iterm/powerline/fonts/install.sh
 
 # initialize Vim plugins
-vim +PluginInstall +qall
+echo "Installing vim plugins"
+vim +PluginInstall +qall > /dev/null 2>&1
+ok
 mkdir -p $HOME/.vim/colors
 ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
 
