@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Checking brew cask packages ..."
+bot "Checking brew cask packages ..."
 
 # Install Caskroom
 brew tap caskroom/cask
@@ -15,9 +15,9 @@ brew_cask_apps=(
 
 for pkg in ${brew_cask_apps[@]}; do
   if brew cask list -1 | grep -q "^${pkg}"; then
-    print_success "[brew cask] Package '$pkg' is already installed"
+    ok "[brew cask] Package '$pkg' is already installed"
   else
-    echo "[brew cask] Package '$pkg' is not installed"
+    warn "[brew cask] Package '$pkg' is not installed"
     brew cask install "$pkg"
   fi
 done

@@ -11,20 +11,24 @@ COL_MAGENTA=$ESC_SEQ"35;01m"
 COL_CYAN=$ESC_SEQ"36;01m"
 DONE_ICON=$'\xf0\x9f\x8d\xa9' # donut
 
+function bot() {
+  printf "$COL_BLUE[._.]$COL_RESET $1\n"
+}
+
 function ok() {
   if [ -n "$1" ]; then
-    printf "$COL_GREEN [✔] $1 $COL_RESET\n"
+    printf "$COL_GREEN [✔]$COL_RESET $1\n"
   else
-    printf "$DONE_ICON  done\n"
+    printf "$DONE_ICON\n"
   fi
 }
 
 function warn() {
-  echo -e "$COL_YELLOW[warning]$COL_RESET "$1
+  printf "$COL_YELLOW [✔]$COL_RESET $1\n"
 }
 
 function error() {
-  printf "$COL_RED [✖] $1 $2 $COL_RESET\n"
+  printf "$COL_RED [✖]$COL_RESET $1 $2\n"
 }
 
 function result() {
@@ -33,7 +37,7 @@ function result() {
 }
 
 function ask() {
-  printf "$COL_YELLOW [?] $1 $COL_RESET"
+  printf "$COL_YELLOW [?]$COL_RESET $1"
 }
 
 function ask_for_confirmation() {

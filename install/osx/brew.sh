@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Checking brew packages ..."
+bot "Checking brew packages ..."
 
 # install homebrew
 which -s brew
@@ -22,9 +22,9 @@ brew_apps=(
 
 for pkg in ${brew_apps[@]}; do
   if brew list -1 | grep -q "^${pkg}\$"; then
-    print_success "[brew] Package '$pkg' is already installed"
+    ok "[brew] Package '$pkg' is already installed"
   else
-    echo "[brew] Package '$pkg' is not installed"
+    warn "[brew] Package '$pkg' is not installed"
     if [ $pck == "vim" ]; then
         brew install "$pkg" --with-lua
     fi

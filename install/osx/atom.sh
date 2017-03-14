@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Checking atom packages ..."
+bot "Checking atom packages ..."
 
 function install_atom_packages() {
   packages=(
@@ -26,17 +26,17 @@ function install_atom_packages() {
   for pkg in ${packages[@]}; do
     if [[ ! -d "$HOME/.atom/packages/$package" ]]
     then
-      echo "[atom] Package '$pkg' is not installed"
+      warn "[atom] Package '$pkg' is not installed"
       apm install $package
     else
-      print_success "[atom] Package '$pkg' is already installed"
+      ok "[atom] Package '$pkg' is already installed"
     fi
   done
 }
 
 if ! test $(which atom)
 then
-  print_error "atom not installed"
+  error "atom not installed"
 else
   install_atom_packages
 fi

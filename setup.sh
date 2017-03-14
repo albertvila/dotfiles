@@ -47,7 +47,7 @@ symbolic_link() {
 }
 
 move_existing_dotfiles() {
-  echo "Move any existing dotfiles in homedir to ~/.dotfiles_old directory if needed"
+  bot "Move any existing dotfiles in homedir to ~/.dotfiles_old directory if needed"
   # Move any existing dotfiles in homedir to dotfiles_old directory
   for i in ${FILES_TO_SYMLINK[@]}; do
     file="$HOME/.${i##*/}"
@@ -70,7 +70,7 @@ install_dotfiles() {
   local sourceFile=''
   local targetFile=''
 
-  echo "Creating symbolic links for config files if needed"
+  bot "Creating symbolic links for config files if needed"
   for i in ${FILES_TO_SYMLINK[@]}; do
     sourceFile="$DOTFILES_DIR/$i"
     targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
@@ -84,14 +84,14 @@ install_dotfiles() {
   # Copy binaries
   mkdir -p $HOME/bin
 
-  echo "Creating symbolic links for binaries in ~/bin if needed"
+  bot "Creating symbolic links for binaries in ~/bin if needed"
   for i in ${BINARIES[@]}; do
     sourceFile="$DOTFILES_DIR/bin/$i"
     targetFile="$HOME/bin/$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
 
     symbolic_link $sourceFile $targetFile
 
-    echo "Changing access permissions for binary script :: ~/bin/${i##*/}"
+    bot "Changing access permissions for binary script :: ~/bin/${i##*/}"
     chmod +rwx $HOME/bin/${i##*/}
   done
   ok
@@ -149,7 +149,7 @@ DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Create dotfiles_old for backup in homedir
 DOTFILES_BACKUP_DIR=~/.dotfiles_old
-echo "Creating $DOTFILES_BACKUP_DIR for backup of any existing dotfiles in ~..."
+bot "Creating $DOTFILES_BACKUP_DIR for backup of any existing dotfiles in ~..."
 mkdir -p $DOTFILES_BACKUP_DIR
 ok
 
@@ -170,7 +170,7 @@ move_existing_dotfiles
 
 # Package managers & packages
 os=$(get_os)
-if [ $os == "blaosx" ]; then
+if [ $os == "osx" ]; then
   . "$DOTFILES_DIR/install/osx/brew.sh"
   . "$DOTFILES_DIR/install/osx/brew_cask.sh"
   . "$DOTFILES_DIR/install/osx/gem.sh"
@@ -214,7 +214,7 @@ ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
 ./iterm/powerline/fonts/install.sh
 
 # initialize Vim plugins
-echo "Installing vim plugins"
+bot "Installing vim plugins"
 vim +PluginInstall +qall > /dev/null 2>&1
 ok
 mkdir -p $HOME/.vim/colors
