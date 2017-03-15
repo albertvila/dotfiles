@@ -10,17 +10,7 @@ else
 fi
 
 # Install brew packages
-brew_apps=(
-  coreutils
-  vim
-  htop
-  wget
-  gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
-  tmux
-  # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
-)
-
-for pkg in ${brew_apps[@]}; do
+for pkg in ${BREW_APPS[@]}; do
   if brew list -1 | grep -q "^${pkg}\$"; then
     ok "[brew] Package '$pkg' is already installed"
   else

@@ -2,11 +2,7 @@
 bot "Checking gem packages ..."
 
 # Install gem apps
-gem_apps=(
-  tmuxinator # https://github.com/tmuxinator/tmuxinator
-)
-
-for pkg in ${gem_apps[@]}; do
+for pkg in ${GEM_APPS[@]}; do
   if gem list | grep "^${pkg}"; then
     ok "[gem] Package '$pkg' is already installed"
   else
