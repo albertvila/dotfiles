@@ -6,6 +6,20 @@ function install_osx_packages() {
   _install_gem
   _install_pip
   _install_atom
+  _setup_osx
+}
+
+function _setup_osx() {
+  # show full pathes in Finder
+  defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
+
+  # Disable and kill Dashboard
+  # Can be reverted with:
+  # defaults write com.apple.dashboard mcx-disabled -boolean NO; killall Doc
+  #defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock
+
+  # Install the Solarized Dark theme for iTerm
+  #open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
 }
 
 function _install_brew() {
@@ -31,6 +45,7 @@ function _install_brew() {
       brew install "$pkg"
     fi
   done
+  unset BREW_APPS
 
   if vim --version | egrep -q '\-lua'; then
     error "[brew] Vim package installed without lua support. Lua support is needed for some plugins. Run:"
@@ -60,6 +75,7 @@ function _install_brew_cask() {
       brew cask install "$pkg"
     fi
   done
+  unset BREW_CASK_APPS
 
   ok
 }
@@ -76,6 +92,7 @@ function _install_gem() {
       gem install "$pkg"
     fi
   done
+  unset GEM_APPS
 
   ok
 }
@@ -92,6 +109,7 @@ function _install_pip() {
       pip install "$pkg"
     fi
   done
+  unset PIP_APPS
 
   ok
 }
@@ -106,6 +124,7 @@ function _install_atom_packages() {
       ok "[atom] Package '$pkg' is already installed"
     fi
   done
+  unset ATOM_PACKAGES
 }
 
 function _install_atom() {
