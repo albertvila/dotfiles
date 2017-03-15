@@ -17,11 +17,8 @@ move_existing_dotfiles
 # Package managers & packages
 os=$(get_os)
 if [ $os == "osx" ]; then
-  . "$DOTFILES_DIR/lib/osx/brew.sh"
-  . "$DOTFILES_DIR/lib/osx/brew_cask.sh"
-  . "$DOTFILES_DIR/lib/osx/gem.sh"
-  . "$DOTFILES_DIR/lib/osx/pip.sh"
-  . "$DOTFILES_DIR/lib/osx/atom.sh"
+  source ./lib/osx.sh
+  install_osx_packages
 else
   error "Not implemented yet, pending to install some packages, see lib/osx folder"
 fi
