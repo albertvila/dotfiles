@@ -11,6 +11,10 @@ COL_MAGENTA=$ESC_SEQ"35;01m"
 COL_CYAN=$ESC_SEQ"36;01m"
 DONE_ICON=$'\xf0\x9f\x8d\xa9' # donut
 
+function blue() {
+  printf "$COL_BLUE$1$COL_RESET"
+}
+
 function bot() {
   printf "$COL_BLUE[._.]$COL_RESET $1\n"
 }

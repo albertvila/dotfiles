@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 
+INSTALLATION_MODE='update'
+
+function start() {
+  if [ ! -e "$HOME/.dotfiles" ]; then
+    bot "Installing dotfiles for the first time"
+    INSTALLATION_MODE='install'
+  else
+    last_updated=$(sed = $HOME/.dotfiles | sed -n '$p')
+    blue=$(blue "$last_updated")
+    bot "Dotfiles alreay installed/updated at $blue"
+  fi
+
+  _confirm_execution
+}
+
+function end() {
+  echo $(date) >> "$HOME/.dotfiles"
+}
+
+function get_installation_mode () {
+  echo $INSTALLATION_MODE
+}
+
 function get_os() {
   declare -r OS_NAME="$(uname -s)"
 
@@ -12,7 +35,7 @@ function get_os() {
   fi
 }
 
-function confirm_execution {
+function _confirm_execution {
   while true; do
     read -p "Warning: this will overwrite your current dotfiles. Continue? [y/n] " yn
     case $yn in

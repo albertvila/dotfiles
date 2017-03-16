@@ -10,16 +10,19 @@ function install_osx_packages() {
 }
 
 function _setup_osx() {
-  # show full pathes in Finder
+  # show full paths in Finder
   defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
 
-  # Disable and kill Dashboard
-  # Can be reverted with:
-  # defaults write com.apple.dashboard mcx-disabled -boolean NO; killall Doc
-  #defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock
+  installation_mode=$(get_installation_mode)
+  if [ $installation_mode == "install" ]; then
+    # Disable and kill Dashboard
+    # Can be reverted with:
+    # defaults write com.apple.dashboard mcx-disabled -boolean NO; killall Doc
+    defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock
 
-  # Install the Solarized Dark theme for iTerm
-  #open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
+    # Install the Solarized Dark theme for iTerm
+    open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
+  fi
 }
 
 function _install_brew() {

@@ -12,9 +12,12 @@ source ./lib/zsh.sh
 # Get current dir (so run this script from anywhere)
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-confirm_execution
+start
+
 install_os_packages
 install_dotfiles
 install_zsh
 install_git
 install_vim
+
+end
