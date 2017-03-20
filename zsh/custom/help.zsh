@@ -62,4 +62,5 @@ function help-gradle {
 
   echo "./gradlew bootRun -> Runs the application"
   echo "./gradlew clean test --tests \"*ApplicationConfigTest\" -> Run a single test"
+  echo "./gradlew build --continuous"
 }
