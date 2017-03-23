@@ -27,6 +27,7 @@ declare -a BREW_CASK_APPS=(
   sshfs
   google-chrome
   atom
+  mysqlworkbench
 )
 
 declare -a GEM_APPS=(
@@ -40,22 +41,25 @@ declare -a PIP_APPS=(
 )
 
 declare -a ATOM_PACKAGES=(
-  Sublime-Style-Column-Selection
   atom-beautify
   atom-material-syntax
   atom-material-ui
   atom-sync@
+  busy-signal
   file-icons
   git-plus
   highlight-selected
+  language-mediawiki
   linter
   linter-perl
   linter-pycodestyle
+  linter-ui-default
   minimap
   minimap-git-diff
   minimap-highlight-selected
   pretty-json
   project-manager
+  Sublime-Style-Column-Selection
   todo-show
   tree-view-git-status
 )
