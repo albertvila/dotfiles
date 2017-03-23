@@ -1,33 +1,33 @@
 #!/usr/bin/env bash
 
 declare -a FILES_TO_SYMLINK=(
-  'vim'
-  'vim/vimrc'
   'git/gitignore'
   'misc/isort.cfg'
-  'zsh/zshrc'
   'tmux/tmux.conf'
   'tmux/tmuxinator.zsh'
+  'vim'
+  'vim/vimrc'
+  'zsh/zshrc'
 )
 
 declare -a BINARIES=()
 
 declare -a BREW_APPS=(
   coreutils
-  vim
-  htop
-  wget
-  gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
-  tmux
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
+  gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
+  htop
+  tmux
+  vim
+  wget
 )
 
 declare -a BREW_CASK_APPS=(
-  iterm2
-  sshfs
-  google-chrome
   atom
+  google-chrome
+  iterm2
   mysqlworkbench
+  sshfs
 )
 
 declare -a GEM_APPS=(
@@ -35,9 +35,9 @@ declare -a GEM_APPS=(
 )
 
 declare -a PIP_APPS=(
-  isort # Needed by atom if we want to sort python imports
   beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
+  isort # Needed by atom if we want to sort python imports
 )
 
 declare -a ATOM_PACKAGES=(
