@@ -59,6 +59,7 @@ function install_os_packages() {
     install_osx_packages
   else
     error "Not implemented yet, pending to install some packages, see lib/osx folder"
+    error "Check if this could be useful http://linuxbrew.sh/ or just use apt commands"
   fi
 }
 
