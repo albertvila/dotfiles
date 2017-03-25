@@ -16,6 +16,7 @@ declare -a BREW_APPS=(
   coreutils
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
   gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
+  gradle
   htop
   tmux
   vim
@@ -47,6 +48,7 @@ declare -a ATOM_PACKAGES=(
   atom-sync@
   busy-signal
   file-icons
+  git-diff
   git-plus
   highlight-selected
   language-mediawiki
