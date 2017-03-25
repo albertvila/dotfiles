@@ -82,6 +82,13 @@ Tmuxinator
 ## Future ToDo
 
 - Check [Prezto](http://jr0cket.co.uk/2013/09/hey-prezto-zsh-for-command-line-heaven.html)
-- Create a ~/.dotfiles every time and use it to check if the script is run for the first time
-    - If so, execute osx defaults, add theme to iterm, ...
 - Create a --force flag to run previous checks even if the ~/.dotfiles file exist
+- Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
+- Think about updating packages with a flag, or checking if the package is not in the last version, for instance
+```sh
+brew install gradle
+Error: gradle-3.3 already installed
+To install this version, first `brew unlink gradle`
+
+brew upgrade gradle worked
+```
