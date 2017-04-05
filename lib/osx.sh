@@ -42,7 +42,7 @@ function _install_brew() {
       ok "[brew] Package '$pkg' is already installed"
     else
       warn "[brew] Package '$pkg' is not installed"
-      if [ $pck == "vim" ]; then
+      if [ $pkg == "vim" ]; then
         brew install "$pkg" --with-lua
       fi
       brew install "$pkg"

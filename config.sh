@@ -13,6 +13,7 @@ declare -a FILES_TO_SYMLINK=(
 declare -a BINARIES=()
 
 declare -a BREW_APPS=(
+  ack
   coreutils
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
   gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
@@ -28,6 +29,7 @@ declare -a BREW_CASK_APPS=(
   google-chrome
   iterm2
   mysqlworkbench
+  spectacle
   sshfs
 )
 
