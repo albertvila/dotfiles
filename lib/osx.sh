@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 function install_osx_packages() {
-  _install_brew
   _install_brew_cask
+  _install_brew
   _install_gem
   _install_pip
   _install_atom
@@ -119,10 +119,10 @@ function _install_pip() {
 
 function _install_atom_packages() {
   for pkg in ${ATOM_PACKAGES[@]}; do
-    if [[ ! -d "$HOME/.atom/packages/$package" ]]
+    if [[ ! -d "$HOME/.atom/packages/$pkg" ]]
     then
       warn "[atom] Package '$pkg' is not installed"
-      apm install $package
+      apm install $pkg
     else
       ok "[atom] Package '$pkg' is already installed"
     fi

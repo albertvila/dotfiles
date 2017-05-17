@@ -20,21 +20,24 @@ declare -a BREW_APPS=(
   gradle
   htop
   tmux
+  sshfs
   vim
   wget
 )
 
 declare -a BREW_CASK_APPS=(
+  alfred
   atom
   google-chrome
+  intellij-idea-ce
   iterm2
-  mysqlworkbench
+  java
+  # mysqlworkbench
   spectacle
-  sshfs
 )
 
 declare -a GEM_APPS=(
-  tmuxinator # https://github.com/tmuxinator/tmuxinator
+  # tmuxinator # https://github.com/tmuxinator/tmuxinator
 )
 
 declare -a PIP_APPS=(
