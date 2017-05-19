@@ -28,11 +28,22 @@ $ sh ./setup.sh
 
 ## Manual steps after first setup
 
+### general
+1. Open OSX mouse settings and select Natural scroll on trackpad
+2. Open OSX keyboard settings and remove spotlight shortcut
+3. Open Alfred and set spotlight shortcut, also select to be opened at login
+4. Open spectacle and select to be opened at login
+
 ### iterm2
 1. Open iTerm2's preferences (do this change for all needed profiles).
 2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
 3. Click on text, make sure that "Draw bold text in bright colours" is disabled
 4. Change the font to Meslo LG M Regular for Powerline, 12p
+5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
+6. Add two more mappings to jump at the beginning/end of line
+    FOR  ACTION         SEND
+    ⌘←  "HEX CODE"      0x01
+    ⌘→  "HEX CODE"      0x05
 
 ### intellij
 1. Clone git repository
