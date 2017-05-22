@@ -20,7 +20,7 @@ declare -a BREW_APPS=(
   gradle
   htop
   tmux
-  sshfs
+  # sshfs
   vim
   wget
 )
