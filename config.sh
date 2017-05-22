@@ -34,6 +34,7 @@ declare -a BREW_CASK_APPS=(
   java
   # mysqlworkbench
   spectacle
+  spotify
 )
 
 declare -a GEM_APPS=(
