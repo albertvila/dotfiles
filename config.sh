@@ -28,6 +28,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   alfred
   atom
+  dropbox
   google-chrome
   intellij-idea-ce
   iterm2
@@ -35,6 +36,7 @@ declare -a BREW_CASK_APPS=(
   # mysqlworkbench
   spectacle
   spotify
+  # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
 )
 
 declare -a GEM_APPS=(
