@@ -57,9 +57,12 @@ function install_os_packages() {
   if [ $os == "osx" ]; then
     source ./lib/osx.sh
     install_osx_packages
+    elif [ $os == "linux" ]; then
+    source ./lib/linux.sh
+    install_linux_packages
   else
-    error "Not implemented yet, pending to install some packages, see lib/osx folder"
-    error "Check if this could be useful http://linuxbrew.sh/ or just use apt commands"
+    error "OS $os not supported"
+    exit;
   fi
 }
 
