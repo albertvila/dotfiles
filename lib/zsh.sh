@@ -53,6 +53,7 @@ function _setup_zsh() {
   ok
 }
 
+# https://github.com/robbyrussell/oh-my-zsh
 function _install_oh_my_zsh() {
   bot "Installing oh_my_zsh if needed"
 
@@ -93,6 +94,8 @@ function _install_prezto() {
     for rcfile in `${ZDOTDIR:-$HOME}/.zprezto/runcoms/^README.md(.N)`; do
       ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
     done
+
+    # If we want to uninstall it, just remove the ~/.zprezto folder
   fi
 
   ok
