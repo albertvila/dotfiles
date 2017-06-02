@@ -8,6 +8,8 @@ declare -a FILES_TO_SYMLINK=(
   'vim'
   'vim/vimrc'
   'zsh/zshrc'
+  'zsh/oh-my-zshrc'
+  'zsh/preztorc'
 )
 
 declare -a BINARIES=()

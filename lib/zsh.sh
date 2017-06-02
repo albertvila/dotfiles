@@ -2,44 +2,23 @@
 
 function install_zsh() {
   _install_zsh
+
+  # Pending to ask if user wants to install oh-my-zsh or prezto
+  #_install_oh_my_zsh
+  #_setup_oh_my_zsh
+
+  _install_prezto
+  _setup_prezto
+
   _setup_zsh
 }
 
-function _setup_zsh() {
-  bot "Setting up zsh & terminal"
-  # Install Zsh settings
-  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
-
-  DOTFILES_CUSTOM_DIR="$DOTFILES_DIR/zsh/custom/"
-  for entry in `ls $DOTFILES_CUSTOM_DIR`; do
-    ln -fs $DOTFILES_DIR/zsh/custom/$entry $HOME/.oh-my-zsh/custom/$entry
-  done
-
-  mkdir -p $HOME/.tmuxinator
-  ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
-
-  $DOTFILES_DIR/iterm/powerline/fonts/install.sh
-
-  ok
-}
-
-function _install_zsh () {
+function _install_zsh() {
   bot "Installing zsh if needed"
 
   # Test to see if zshell is installed.  If it is:
   if [ -f /bin/zsh -o -f /usr/bin/zsh ]; then
-    # Install Oh My Zsh if it isn't already present
-    if [[ ! -d $HOME/.oh-my-zsh/ ]]; then
-      sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-
-      # If we want to uninstall it
-      #sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/uninstall.sh)"
-    fi
-
-    # Set the default shell to zsh if it isn't currently set to zsh
-    if [[ ! $(echo $SHELL) == $(which zsh) ]]; then
-      chsh -s $(which zsh)
-    fi
+    ok "zsh is already installed"
   else
     ask_for_confirmation "Zsh not found, zsh installation has not been tested, do you wanna proceed?"
     if answer_is_yes; then
@@ -55,5 +34,81 @@ function _install_zsh () {
     exit
   fi
 
+  ok
+}
+
+function _setup_zsh() {
+  bot "Setting up zsh & terminal"
+
+  # Set the default shell to zsh if it isn't currently set to zsh
+  if [[ ! $(echo $SHELL) == $(which zsh) ]]; then
+    chsh -s $(which zsh)
+  fi
+
+  # mkdir -p $HOME/.tmuxinator
+  # ln -fs "$DOTFILES_DIR/tmux/titi.yml" $HOME/.tmuxinator/titi.yml
+
+  $DOTFILES_DIR/iterm/powerline/fonts/install.sh
+
+  ok
+}
+
+function _install_oh_my_zsh() {
+  bot "Installing oh_my_zsh if needed"
+
+  # Install Oh My Zsh if it isn't already present
+  if [[ ! -d $HOME/.oh-my-zsh/ ]]; then
+    sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+
+    # If we want to uninstall it
+    #sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/uninstall.sh)"
+  fi
+
+  ok
+}
+
+function _setup_oh_my_zsh() {
+  bot "Setting up oh_my_zsh"
+
+  # Install Zsh settings
+  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
+
+  DOTFILES_CUSTOM_DIR="$DOTFILES_DIR/zsh/custom/"
+  for entry in `ls $DOTFILES_CUSTOM_DIR`; do
+    ln -fs $DOTFILES_DIR/zsh/custom/$entry $HOME/.oh-my-zsh/custom/$entry
+  done
+
+  ok
+}
+
+# https://github.com/sorin-ionescu/prezto
+function _install_prezto() {
+  bot "Intalling prezto if needed"
+
+  # Install Prezo if it isn't already present
+  if [[ ! -d $HOME/.zprezto/ ]]; then
+    git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
+
+    setopt EXTENDED_GLOB
+    for rcfile in `${ZDOTDIR:-$HOME}/.zprezto/runcoms/^README.md(.N)`; do
+      ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
+    done
+  fi
+
+  ok
+}
+
+function _setup_prezto() {
+  bot "Setting up prezto"
+
+  # Install Powerline theme
+  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.zprezto/modules/prompt/external/powerlevel9k
+  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k/powerlevel9k.zsh-theme $HOME/.zprezto/modules/prompt/functions/prompt_powerlevel9k_setup
+
+  ln -fs $DOTFILES_DIR/zsh/custom $HOME/.zprezto/modules
+  ln -fs $DOTFILES_DIR/zsh/z $HOME/.zprezto/modules
+
+  # ToDo
+  #  - Go back to the previous folder by typing just -
   ok
 }

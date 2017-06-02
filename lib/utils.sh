@@ -66,7 +66,7 @@ function install_os_packages() {
   fi
 }
 
-function install_git() {
+function setup_git() {
   bot "Setting up git config"
 
   git config --global push.default simple
@@ -77,7 +77,7 @@ function install_git() {
   ok
 }
 
-function install_vim() {
+function setup_vim() {
   # initialize Vim plugins
   bot "Installing vim plugins and fonts"
 

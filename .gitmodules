@@ -8,3 +8,6 @@
 [submodule "iterm/powerline/fonts"]
 	path = iterm/powerline/fonts
 	url = git@github.com:powerline/fonts.git
+[submodule "zsh/z"]
+	path = zsh/z
+	url = git@github.com:rupa/z.git

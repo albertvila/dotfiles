@@ -17,7 +17,7 @@ start
 install_os_packages
 install_dotfiles
 install_zsh
-install_git
-install_vim
+setup_git
+setup_vim
 
 end
