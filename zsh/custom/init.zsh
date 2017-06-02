@@ -1,13 +1,12 @@
 # This init.zsh file is only needed by prezto, because custom folder is installed as a prezto module
 if [[ -d "$HOME/.zprezto" ]]; then
   source "${0:h}/aliases.zsh"
-  source "${0:h}/default.zsh"
   source "${0:h}/functions.zsh"
   source "${0:h}/help.zsh"
 
   # Copy/paste from https://github.com/robbyrussell/oh-my-zsh/blob/master/plugins/git/git.plugin.zsh
   # Not needed by oh-my-zsh because it's used with the git plugin
-  
+
   #
   # Aliases
   # (sorted alphabetically)

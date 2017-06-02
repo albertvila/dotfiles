@@ -1,6 +1,6 @@
 
 if [[ -d "$HOME/.zprezto" ]]; then
-  source "$HOME/.preztorc"
+  source "$HOME/.prezto.rc"
 
   if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
     source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
@@ -11,5 +11,12 @@ if [[ -d "$HOME/.zprezto" ]]; then
 fi
 
 if [[ -d "$HOME/.oh-my-zsh" ]]; then
-  source "$HOME/.oh-my-zshrc"
+  source "$HOME/.oh-my-zsh.rc"
 fi
+
+source ~/.tmuxinator.zsh
+
+export PATH=~/bin:$PATH
+
+# Needed when running tmux inside iTerm2 locally
+export TERM="xterm-256color"
