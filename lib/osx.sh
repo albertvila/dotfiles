@@ -40,6 +40,12 @@ function _install_brew() {
   for pkg in ${BREW_APPS[@]}; do
     if brew list -1 | grep -q "^${pkg}\$"; then
       ok "[brew] Package '$pkg' is already installed"
+
+      # Checking if the package needs update
+      if brew outdated --quiet | grep -q "^${pkg}\$"; then
+        warn "[brew] Package '$pkg' is not up to date, updating it ..."
+        brew upgrade "$pkg"
+      fi
     else
       warn "[brew] Package '$pkg' is not installed"
       if [ $pkg == "vim" ]; then
@@ -73,6 +79,12 @@ function _install_brew_cask() {
   for pkg in ${BREW_CASK_APPS[@]}; do
     if brew cask list -1 | grep -q "^${pkg}"; then
       ok "[brew cask] Package '$pkg' is already installed"
+
+      # Checking if the package needs update
+      if brew cask outdated --quiet | grep -q "^${pkg}"; then
+        warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
+        brew cask reinstall "$pkg"
+      fi
     else
       warn "[brew cask] Package '$pkg' is not installed"
       brew cask install "$pkg"
@@ -107,6 +119,13 @@ function _install_pip() {
   for pkg in ${PIP_APPS[@]}; do
     if pip list --format=legacy | grep "^${pkg}"; then
       ok "[pip] Package '$pkg' is already installed"
+
+      # Checking if the package needs update
+      if pip list --outdated --format=legacy | grep "^${pkg}"; then
+        warn "[pip] Package '$pkg' is not up to date, updating it ..."
+        pip install "$pkg" --upgrade
+      fi
+
     else
       warn "[pip] Package '$pkg' is not installed"
       pip install "$pkg"
