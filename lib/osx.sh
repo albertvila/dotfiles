@@ -25,6 +25,11 @@ function _setup_osx() {
   fi
 }
 
+# [Some brew commands]
+# brew outdated -> list outdated packages
+# brew upgrade -> upgrade all
+# brew pin mysql -> keep mysql packages to the current version to avoid upgrading it
+# brew upgrade mysql
 function _install_brew() {
   bot "Checking brew packages ..."
 

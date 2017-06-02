@@ -41,9 +41,11 @@ $ sh ./setup.sh
 4. Change the font to Meslo LG M Regular for Powerline, 12p
 5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
 6. Add two more mappings to jump at the beginning/end of line
+```
     FOR  ACTION         SEND
     ⌘←  "HEX CODE"      0x01
     ⌘→  "HEX CODE"      0x05
+```
 
 ### intellij
 1. Clone git repository
@@ -57,6 +59,7 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 
 ### unison
 - Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))
+- GUI interface ([link](http://www.cs.haifa.ac.il/~shuly/unison/))
 
 ## External links
 
@@ -82,16 +85,3 @@ Tmuxinator
 - Check [Prezto](http://jr0cket.co.uk/2013/09/hey-prezto-zsh-for-command-line-heaven.html)
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
-- Think about updating packages with a flag, or checking if the package is not in the last version, for instance
-```sh
-brew install gradle
-Error: gradle-3.3 already installed
-To install this version, first `brew unlink gradle`
-
-brew outdated -> list outdated packages
-brew upgrade -> upgrade all
-brew pin mysql -> keep mysql packages to the current version to avoid upgrading it
-brew upgrade gradle
-
-
-```
