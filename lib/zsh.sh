@@ -96,6 +96,9 @@ function _install_prezto() {
     done
 
     # If we want to uninstall it, just remove the ~/.zprezto folder
+  else
+    cd $HOME/.zprezto/
+    git pull && git submodule update --init --recursive
   fi
 
   ok
