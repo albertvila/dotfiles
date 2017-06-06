@@ -111,7 +111,5 @@ function _setup_prezto() {
   ln -fs $DOTFILES_DIR/zsh/custom $HOME/.zprezto/modules
   ln -fs $DOTFILES_DIR/zsh/z $HOME/.zprezto/modules
 
-  # ToDo
-  #  - Go back to the previous folder by typing just -
   ok
 }
