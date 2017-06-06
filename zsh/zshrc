@@ -11,8 +11,8 @@ if [[ -d "$HOME/.oh-my-zsh" ]]; then
   source "$HOME/.oh-my-zsh.rc"
 fi
 
-source $HOME/.scripts/aliases.zsh
 source $HOME/.scripts/aliases.git.plugin.zsh
+source $HOME/.scripts/aliases.zsh
 source $HOME/.scripts/functions.zsh
 source $HOME/.scripts/help.zsh
 
