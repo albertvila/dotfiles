@@ -7,9 +7,10 @@ declare -a FILES_TO_SYMLINK=(
   'tmux/tmuxinator.zsh'
   'vim'
   'vim/vimrc'
-  'zsh/zshrc'
   'zsh/oh-my-zsh.rc'
   'zsh/prezto.rc'
+  'zsh/scripts'
+  'zsh/zshrc'
 )
 
 declare -a BINARIES=()
@@ -18,6 +19,7 @@ declare -a BREW_APPS=(
   ack
   coreutils
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
+  fasd
   gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop

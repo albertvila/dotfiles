@@ -5,18 +5,17 @@ if [[ -d "$HOME/.zprezto" ]]; then
   if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
     source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
   fi
-
-  # There is no prezto z module yet, loading the sh file directly as per https://github.com/rupa/z
-  . $HOME/.zprezto/modules/z/z.sh
 fi
 
 if [[ -d "$HOME/.oh-my-zsh" ]]; then
   source "$HOME/.oh-my-zsh.rc"
 fi
 
+source $HOME/.scripts/aliases.zsh
+source $HOME/.scripts/aliases.git.plugin.zsh
+source $HOME/.scripts/functions.zsh
+source $HOME/.scripts/help.zsh
+
 export PATH=~/bin:$PATH
-
-# Needed when running tmux inside iTerm2 locally
-export TERM="xterm-256color"
-
+export TERM="xterm-256color" # Needed when running tmux inside iTerm2 locally
 export EDITOR="vim"

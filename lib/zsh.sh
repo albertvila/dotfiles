@@ -74,11 +74,6 @@ function _setup_oh_my_zsh() {
   # Install Zsh settings
   ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
 
-  DOTFILES_CUSTOM_DIR="$DOTFILES_DIR/zsh/custom/"
-  for entry in `ls $DOTFILES_CUSTOM_DIR`; do
-    ln -fs $DOTFILES_DIR/zsh/custom/$entry $HOME/.oh-my-zsh/custom/$entry
-  done
-
   ok
 }
 
@@ -110,9 +105,6 @@ function _setup_prezto() {
   # Install Powerline theme
   ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.zprezto/modules/prompt/external/powerlevel9k
   ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k/powerlevel9k.zsh-theme $HOME/.zprezto/modules/prompt/functions/prompt_powerlevel9k_setup
-
-  ln -fs $DOTFILES_DIR/zsh/custom $HOME/.zprezto/modules
-  ln -fs $DOTFILES_DIR/zsh/z $HOME/.zprezto/modules
 
   ok
 }

@@ -1,19 +1,9 @@
-# This init.zsh file is only needed by prezto, because custom folder is installed as a prezto module
+# Copy/paste from https://github.com/robbyrussell/oh-my-zsh/blob/master/plugins/git/git.plugin.zsh
 if [[ -d "$HOME/.zprezto" ]]; then
-  source "${0:h}/aliases.zsh"
-  source "${0:h}/functions.zsh"
-  source "${0:h}/help.zsh"
-
-  # Copy/paste from https://github.com/robbyrussell/oh-my-zsh/blob/master/plugins/git/git.plugin.zsh
-  # Not needed by oh-my-zsh because it's used with the git plugin
-
-  #
-  # Functions
-  #
 
   # Next function copied from https://github.com/apjanke/oh-my-zsh/blob/master/lib/git.zsh to avoid
   #  error "command not found: git_current_branch"
-  
+
   # Outputs the name of the current branch
   # Usage example: git pull origin $(git_current_branch)
   # Using '--quiet' with 'symbolic-ref' will not cause a fatal error (128) if
@@ -28,6 +18,14 @@ if [[ -d "$HOME/.zprezto" ]]; then
     fi
     echo ${ref#refs/heads/}
   }
+
+  # Query/use custom command for `git`.
+  zstyle -s ":vcs_info:git:*:-all-" "command" _omz_git_git_cmd
+  : ${_omz_git_git_cmd:=git}
+
+  #
+  # Functions
+  #
 
   # The name of the current branch
   # Back-compatibility wrapper for when this function was defined here in

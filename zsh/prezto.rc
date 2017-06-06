@@ -32,10 +32,14 @@ zstyle ':prezto:load' pmodule \
   'spectrum' \
   'utility' \
   'completion' \
-  'prompt' \
+  'fasd' \
   'history-substring-search' \
   'git' \
-  'custom'
+  'ssh' \
+  'prompt'
+
+#  'archive' \
+#  'syntax-highlighting' \
 
 #
 # Autosuggestions

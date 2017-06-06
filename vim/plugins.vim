@@ -43,6 +43,9 @@ Plugin 'eparreno/vim-l9'
 " Comment functions so powerful (https://github.com/scrooloose/nerdcommenter)
 Plugin 'scrooloose/nerdcommenter'
 
+" When you do searches will show you "Match 2 of 4" in the status line"
+Plugin 'henrik/vim-indexed-search'
+
 "*** Add your plugins above ***
 
 " All of your Plugins must be added before the following line
