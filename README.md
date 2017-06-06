@@ -11,7 +11,7 @@ If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomme
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors)
 - Install osx dev packages (./install/osx) for brew/pip & atom
-- Install prezto & zsh as shell
+- Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
 - Colors theme solarized (iterm2, vim, intellij)
 - Fonts powerline
