@@ -4,15 +4,17 @@ This is a collection of dotfiles and scripts I use for customizing OS X/Linux to
 
 The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles.
 
-I prefer `zsh` as my shell of choice. As such, the setup script will install `oh-my-zsh` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
+I prefer `zsh` as my shell of choice. As such, the setup script will install `prezto` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
+
+If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomment the install function.
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors)
 - Install osx dev packages (./install/osx) for brew/pip & atom
-- Install .oh-my-zsh & zsh as shell
+- Install prezto & zsh as shell
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
 - Colors theme solarized (iterm2, vim, intellij)
-- Fonts poweline
+- Fonts powerline
 
 ## Installation
 
@@ -81,7 +83,5 @@ Tmuxinator
 - <https://github.com/tmuxinator/tmuxinator>
 
 ## Future ToDo
-
-- Check [Prezto](http://jr0cket.co.uk/2013/09/hey-prezto-zsh-for-command-line-heaven.html)
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
