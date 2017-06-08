@@ -33,6 +33,7 @@ zstyle ':prezto:load' pmodule \
   'utility' \
   'completion' \
   'fasd' \
+  'syntax-highlighting' \
   'history-substring-search' \
   'git' \
   'ssh' \
@@ -53,7 +54,8 @@ zstyle ':prezto:load' pmodule \
 #
 
 # Set the key mapping style to 'emacs' or 'vi'.
-zstyle ':prezto:module:editor' key-bindings 'vi'
+# TODO Be careful enabling the following line, the reverse search mapping ^R will not work (https://github.com/sorin-ionescu/prezto/issues/615)
+# zstyle ':prezto:module:editor' key-bindings 'vi'
 
 # Auto convert .... to ../..
 # zstyle ':prezto:module:editor' dot-expansion 'yes'
