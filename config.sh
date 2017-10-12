@@ -62,9 +62,11 @@ declare -a ATOM_PACKAGES=(
   file-icons
   git-diff
   git-plus
+  goto-definition
   highlight-selected
   language-mediawiki
   linter
+  linter-jshint
   linter-perl
   linter-pycodestyle
   linter-ui-default
