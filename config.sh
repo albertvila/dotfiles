@@ -23,6 +23,7 @@ declare -a BREW_APPS=(
   gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop
+  plenv
   tmux
   # sshfs
   vim
@@ -38,6 +39,7 @@ declare -a BREW_CASK_APPS=(
   iterm2
   java
   # mysqlworkbench
+  slack
   spectacle
   spotify
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)

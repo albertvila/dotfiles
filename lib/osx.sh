@@ -133,7 +133,7 @@ function _install_pip() {
 
     else
       warn "[pip] Package '$pkg' is not installed"
-      pip install "$pkg"
+      pip install "$pkg" --user
     fi
   done
   unset PIP_APPS
