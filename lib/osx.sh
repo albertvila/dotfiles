@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 function install_osx_packages() {
-  _install_brew_cask
   _install_brew
+  _install_brew_cask
   _install_gem
   _install_pip
   _install_atom
@@ -16,9 +16,20 @@ function _setup_osx() {
   installation_mode=$(get_installation_mode)
   if [ $installation_mode == "install" ]; then
     # Disable and kill Dashboard
-    # Can be reverted with:
-    # defaults write com.apple.dashboard mcx-disabled -boolean NO; killall Doc
-    defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock
+    defaults write com.apple.dashboard mcx-disabled -boolean YES
+
+    # Show all file extensions on Finder
+    defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+    # Disable natural trackpad scrolling (TODO however it seems it does not work)
+    defaults write NSGlobalDomain com.apple.swipescrolldirection -bool false
+
+    # Show the ~/Library directory in Finder
+    chflags nohidden "${HOME}/Library"
+    defaults write com.apple.finder ShowStatusBar -bool true
+
+    killall Finder
+    killall Dock
 
     # Install the Solarized Dark theme for iTerm
     open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
@@ -119,6 +130,14 @@ function _install_gem() {
 
 function _install_pip() {
   bot "Checking pip packages ..."
+
+  which -s pip
+  if [[ $? != 0 ]] ; then
+    bot "Going to install pip, if it does not work, maybe it's because the command needs sudo"
+    easy_install pip
+  else
+    pip install --upgrade pip
+  fi
 
   # Install pip apps
   for pkg in ${PIP_APPS[@]}; do
