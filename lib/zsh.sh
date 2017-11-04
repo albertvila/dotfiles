@@ -85,6 +85,7 @@ function _install_prezto() {
   if [[ ! -d $HOME/.zprezto/ ]]; then
     git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
 
+    # TODO The following commands fail under this bash script, but they work if you run them manually on terminal
     setopt EXTENDED_GLOB
     for rcfile in `${ZDOTDIR:-$HOME}/.zprezto/runcoms/^README.md(.N)`; do
       ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
@@ -93,7 +94,9 @@ function _install_prezto() {
     # If we want to uninstall it, just remove the ~/.zprezto folder
   else
     cd $HOME/.zprezto/
+    git stash push -q
     git pull && git submodule update --init --recursive
+    git stash pop -q
   fi
 
   ok
