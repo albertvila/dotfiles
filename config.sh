@@ -19,13 +19,17 @@ declare -a BREW_APPS=(
   ack
   coreutils
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
+  dialog # @Launchmetrics needed for git-pr command
   fasd
-  gnupg2 # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
+  gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop
+  mysql
+  perl-build
   plenv
+  sbt # scala build tool
+  scala
   tmux
-  # sshfs
   vim
   wget
 )
@@ -37,12 +41,13 @@ declare -a BREW_CASK_APPS=(
   google-chrome
   intellij-idea-ce
   iterm2
-  java
-  # mysqlworkbench
+  java8 # TODO Forced version 8 instead of latest one because sbt brew module does not work with java 9
   slack
   spectacle
   spotify
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
+  vagrant
+  virtualbox
 )
 
 declare -a GEM_APPS=(
@@ -59,7 +64,6 @@ declare -a ATOM_PACKAGES=(
   atom-beautify
   atom-material-syntax
   atom-material-ui
-  atom-sync@
   busy-signal
   file-icons
   git-diff
