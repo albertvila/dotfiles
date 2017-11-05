@@ -13,6 +13,7 @@ Recap
 - Install osx dev packages (./install/osx) for brew/pip & atom
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
+![Theme](zsh/theme.png)
 - Colors theme solarized (iterm2, vim, intellij)
 - Fonts powerline
 
