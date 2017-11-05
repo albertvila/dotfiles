@@ -40,8 +40,8 @@ function _setup_osx() {
   defaults write com.apple.dock wvous-br-corner -int 4
   defaults write com.apple.dock wvous-br-modifier -int 0
 
-  # Update clock to show current date and current day of the week
-  defaults write com.apple.menuextra.clock DateFormat 'EEE MMM d  h:mm a'
+  # Update clock to show current date and current day of the week and 24h format
+  defaults write com.apple.menuextra.clock DateFormat 'EEE MMM d  H:mm a'
 
   # Show the ~/Library directory in Finder
   chflags nohidden "${HOME}/Library"
