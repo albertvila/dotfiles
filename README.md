@@ -9,13 +9,15 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomment the install function.
 
 Recap
-- Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors)
-- Install osx dev packages (./install/osx) for brew/pip & atom
+- Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors, just run the script twice)
+- Install osx dev packages for brew/pip/atom and osx defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
+- Colors theme solarized (iterm2, vim, intellij) (http://ethanschoonover.com/solarized)
+- Fonts powerline (https://github.com/powerline/fonts)
+
+The customized theme looks like
 ![Theme](zsh/theme.png)
-- Colors theme solarized (iterm2, vim, intellij)
-- Fonts powerline
 
 ## Installation
 
@@ -32,7 +34,7 @@ $ sh ./setup.sh
 ## Manual steps after first setup
 
 ### general
-1. Open OSX mouse settings and select Natural scroll on trackpad
+1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the setup_osx function from ./lib/osx.sh, pending to check if it works)
 2. Open OSX keyboard settings and remove spotlight shortcut
 3. Open Alfred and set spotlight shortcut, also select to be opened at login
 4. Open spectacle and select to be opened at login
@@ -73,15 +75,7 @@ iTerm and zsh tips
 Tmux
 - <http://mikebuss.com/2014/02/02/a-beautiful-productive-terminal-experience>
 - <http://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/>
-- <https://panovski.me/productivity-tools-tmux-and-zsh/>
-- <https://danielmiessler.com/study/tmux/#gs.5DmuzbE>
-
-- <https://gist.github.com/andreyvit/2921703> (tmux Cheatsheet)
 - <https://tmuxcheatsheet.com/>
-
-Tmuxinator
-- <http://www.avitzurel.com/blog/2014/08/28/my-development-workflow-vim-tmux-terminal-awesomeness/>
-- <https://github.com/tmuxinator/tmuxinator>
 
 ## Future ToDo
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup

@@ -8,7 +8,7 @@ declare -a FILES_TO_SYMLINK=(
   'vim'
   'vim/vimrc'
   'zsh/oh-my-zsh.rc'
-  'zsh/prezto.rc'
+  'zsh/zpreztorc'
   'zsh/scripts'
   'zsh/zshrc'
 )
@@ -21,6 +21,7 @@ declare -a BREW_APPS=(
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
   dialog # @Launchmetrics needed for git-pr command
   fasd
+  git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop
@@ -45,6 +46,7 @@ declare -a BREW_CASK_APPS=(
   slack
   spectacle
   spotify
+  transmission
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
   vagrant
   virtualbox

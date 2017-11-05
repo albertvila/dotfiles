@@ -1,7 +1,7 @@
-# ~/.tmuxinator/titi.yml
+# ~/.tmuxinator/projectX.yml
 
-name: titi
-root: ~/projects/titirrineta
+name: projectX
+root: ~/projects/X
 
 # Optional tmux socket
 # socket_name: foo
@@ -28,7 +28,7 @@ root: ~/projects/titirrineta
 # attach: false
 
 # Runs after everything. Use it to attach to tmux with custom options etc.
-# post: tmux -CC attach -t titirrineta
+# post: tmux -CC attach -t X
 
 windows:
   - editor:
@@ -40,4 +40,4 @@ windows:
         - ls
         - ls
   - server: ls
-  - logs: tail -f logs/titirrineta-dev.log
+  - logs: tail -f logs/X-dev.log
