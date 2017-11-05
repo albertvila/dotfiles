@@ -49,6 +49,18 @@ function _setup_osx() {
   # Show finder status bar
   defaults write com.apple.finder ShowStatusBar -bool true
 
+  # Show home folder on new Finder window instead of All my files
+  defaults write com.apple.finder NewWindowTarget PfHm
+
+  # Put dock on the left
+  defaults write com.apple.dock orientation -string left
+
+  # Avoid creating .DS_Store files on network volumes
+  defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+  # Disable the warning when changing a file extension
+  defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
   killall Dock Finder SystemUIServer
 
   installation_mode=$(get_installation_mode)
