@@ -8,7 +8,7 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 
 If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomment the install function.
 
-Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed.
+Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors, just run the script twice)
@@ -36,7 +36,7 @@ $ sh ./setup.sh
 ## Manual steps after first setup
 
 ### general
-1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the setup_osx function from ./lib/osx.sh, pending to check if it works)
+1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the `setup_osx` function from `./lib/osx.sh`, pending to check if it works)
 2. Open OSX keyboard settings and remove spotlight shortcut
 3. Open Alfred and set spotlight shortcut, also select to be opened at login
 4. Open spectacle and select to be opened at login
@@ -63,6 +63,14 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
  Click `OK` in the dialog that appears.
 3. Restart IntelliJ IDEA
 4. Go to `Preferences | Editor | Colors & Fonts` and select one of the new color themes.
+
+### plenv
+Once you know that perl version to install, run the following commands
+1. plenv install $version
+2. plenv rehash
+3. plenv global $version
+4. plenv install-cpanm
+5. You may need to restart your terminal, just type perl --version to be sure you are running the desired version
 
 ### unison
 - Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))

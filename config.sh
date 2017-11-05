@@ -89,3 +89,4 @@ declare -a ATOM_PACKAGES=(
 )
 
 # Check vim/plugins.vim for enabled plugins
+# Check setup_osx function from lib/osx.sh for osx defaults
