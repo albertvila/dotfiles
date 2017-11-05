@@ -8,6 +8,8 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 
 If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomment the install function.
 
+Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed.
+
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors, just run the script twice)
 - Install osx dev packages for brew/pip/atom and osx defaults
