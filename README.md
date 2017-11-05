@@ -30,7 +30,7 @@ $ sh ./setup.sh
 ```
 
 ## Update
-Just run ./setup.sh from time to time to automatically update all modules and applications
+Just run `./setup.sh` from time to time to automatically update all modules and applications
 
 ### issues
 - Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
