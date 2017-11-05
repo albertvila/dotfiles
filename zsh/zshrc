@@ -1,6 +1,5 @@
 
 if [[ -d "$HOME/.zprezto" ]]; then
-  source "$HOME/.prezto.rc"
 
   if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
     source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
@@ -22,3 +21,7 @@ export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
 export GPG_TTY=$(tty)
+
+export PLENV_ROOT=~/.plenv
+export PLENV_SHELL=zsh
+export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/bin:$PATH"
