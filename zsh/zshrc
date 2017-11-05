@@ -24,4 +24,5 @@ export GPG_TTY=$(tty)
 
 export PLENV_ROOT=~/.plenv
 export PLENV_SHELL=zsh
-export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/bin:$PATH"
+PLENV_VERSION=$(<$PLENV_ROOT/version)
+export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
