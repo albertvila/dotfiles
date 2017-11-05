@@ -27,8 +27,8 @@ function _setup_osx() {
   # Don't automatically rearrange Spaces
   defaults write com.apple.dock mru-spaces -bool false
 
-  # Set column view as preferred Finder view
-  defaults write com.apple.finder FXPreferredViewStyle -string 'clmv'
+  # Set list view as preferred Finder view
+  defaults write com.apple.finder FXPreferredViewStyle -string 'Nlsv'
 
   # Search the current folder by default
   defaults write com.apple.finder FXDefaultSearchScope -string 'SCcf'
