@@ -25,6 +25,7 @@ declare -a BREW_APPS=(
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop
+  mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   mysql
   perl-build
   plenv
@@ -47,6 +48,7 @@ declare -a BREW_CASK_APPS=(
   slack
   spectacle
   spotify
+  suunto-moveslink
   transmission
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
   vagrant
@@ -87,6 +89,12 @@ declare -a ATOM_PACKAGES=(
   Sublime-Style-Column-Selection
   todo-show
   tree-view-git-status
+)
+
+declare -a APP_STORE_APPS=(
+  # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store
+  485812721 # Tweetdeck
+  918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
 )
 
 # Check vim/plugins.vim for enabled plugins

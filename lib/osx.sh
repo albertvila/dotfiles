@@ -6,6 +6,7 @@ function install_osx_packages() {
   _install_gem
   _install_pip
   _install_atom
+  _install_app_store_apps
   _setup_osx
 }
 
@@ -125,6 +126,7 @@ function _install_brew_cask() {
   # Install Caskroom
   brew tap caskroom/cask
   brew tap caskroom/versions
+  brew tap caskroom/drivers
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
@@ -195,6 +197,19 @@ function _install_pip() {
   ok
 }
 
+function _install_atom() {
+  bot "Checking atom packages ..."
+
+  if ! test $(which atom)
+  then
+    error "atom not installed"
+  else
+    _install_atom_packages
+  fi
+
+  ok
+}
+
 function _install_atom_packages() {
   for pkg in ${ATOM_PACKAGES[@]}; do
     if [[ ! -d "$HOME/.atom/packages/$pkg" ]]
@@ -208,15 +223,24 @@ function _install_atom_packages() {
   unset ATOM_PACKAGES
 }
 
-function _install_atom() {
-  bot "Checking atom packages ..."
+function _install_app_store_apps() {
+  bot "Checking app store apps ..."
 
-  if ! test $(which atom)
-  then
-    error "atom not installed"
-  else
-    _install_atom_packages
-  fi
+  for app in ${APP_STORE_APPS[@]}; do
+    if mas list | grep "^${app}"; then
+      ok "[app store] App $app already installed"
+
+      # Checking if the app needs update
+      if mas outdated | grep "^${pkg}"; then
+        warn "[app store] App '$pkg' is not up to date, updating it ..."
+        mas install $app
+      fi
+    else
+      warn "[app store] App '$app' is not installed"
+      mas install $pkg
+    fi
+  done
+  unset ATOM_PACKAGES
 
   ok
 }
