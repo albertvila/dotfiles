@@ -19,7 +19,6 @@ declare -a BREW_APPS=(
   ack
   coreutils
   # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
-  dialog # @Launchmetrics needed for git-pr command
   fasd
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
