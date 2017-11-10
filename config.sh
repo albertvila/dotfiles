@@ -38,6 +38,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   alfred
   atom
+  calibre
   dropbox
   google-chrome
   intellij-idea-ce
