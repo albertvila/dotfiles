@@ -70,6 +70,8 @@ function _setup_osx() {
     # Install the Solarized Dark theme for iTerm
     open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
   fi
+
+  ok
 }
 
 # [Some brew commands]

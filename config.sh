@@ -18,7 +18,6 @@ declare -a BINARIES=()
 declare -a BREW_APPS=(
   ack
   coreutils
-  # ctags # Used by vim plugin https://github.com/majutsushi/tagbar
   fasd
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
@@ -33,6 +32,7 @@ declare -a BREW_APPS=(
   tmux
   vim
   wget
+  zookeeper
 )
 
 declare -a BREW_CASK_APPS=(

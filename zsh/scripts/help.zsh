@@ -42,7 +42,7 @@ function help-vim {
 
   echo "ctrl+p -> Search & open files"
   echo "(ctrl+n)*c -> Multiple cursors"
-  echo ",+c+space Toggle comment line"
+  echo ",+c+space Toggle comment line (also ,cc for comment and ,cu for uncomment)"
   echo "ctrl+v + select lines with cursor + previous command to toggle comment multiple lines"
 }
 
