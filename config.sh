@@ -45,6 +45,7 @@ declare -a BREW_CASK_APPS=(
   iterm2
   java8 # TODO Forced version 8 instead of latest one because sbt brew module does not work with java 9
   movist
+  skype
   slack
   spectacle
   spotify
