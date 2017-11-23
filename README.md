@@ -75,6 +75,9 @@ Once you know that perl version to install, run the following commands
 4. plenv install-cpanm
 5. You may need to restart your terminal, just type perl --version to be sure you are running the desired version
 
+### atom
+- Open Highlight Selected package settings and unselect `Only Highlight Whole Words`
+
 ### unison
 - Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))
 - GUI interface ([link](http://www.cs.haifa.ac.il/~shuly/unison/))
@@ -94,3 +97,4 @@ Tmux
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
 - Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
+- Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')

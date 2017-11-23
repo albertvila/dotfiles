@@ -220,6 +220,10 @@ function _install_atom_packages() {
       apm install $pkg
     else
       ok "[atom] Package '$pkg' is already installed"
+      if apm upgrade -list | grep "${pkg}"; then
+        warn "[atom] Package '${pkg}' is not up to date, updating it ..."
+        apm upgrade $pkg --no-confirm
+      fi
     fi
   done
   unset ATOM_PACKAGES
