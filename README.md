@@ -36,6 +36,10 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
 - Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
 ```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
 
+- If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
+
+- If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
+
 ## Manual steps after first setup
 
 ### general
@@ -74,6 +78,9 @@ Once you know that perl version to install, run the following commands
 3. plenv global $version
 4. plenv install-cpanm
 5. You may need to restart your terminal, just type perl --version to be sure you are running the desired version
+
+### awscli
+- Run `awscli configure` and set up your aws credentials
 
 ### atom
 - Open Highlight Selected package settings and unselect `Only Highlight Whole Words`
