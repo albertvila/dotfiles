@@ -17,6 +17,7 @@ declare -a BINARIES=()
 
 declare -a BREW_APPS=(
   ack
+  awscli
   coreutils
   fasd
   git
@@ -32,6 +33,7 @@ declare -a BREW_APPS=(
   tmux
   vim
   wget
+  yarn
   zookeeper
 )
 
@@ -64,6 +66,10 @@ declare -a PIP_APPS=(
   beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
+)
+
+declare -a YARN_APPS=(
+  serverless
 )
 
 declare -a ATOM_PACKAGES=(

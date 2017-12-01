@@ -5,6 +5,7 @@ function install_osx_packages() {
   _install_brew_cask
   _install_gem
   _install_pip
+  _install_yarn
   _install_atom
   _install_app_store_apps
   _setup_osx
@@ -195,6 +196,27 @@ function _install_pip() {
     fi
   done
   unset PIP_APPS
+
+  ok
+}
+
+function _install_yarn() {
+  bot "Checking yarn packages ..."
+
+  # Install yarn apps
+  for pkg in ${YARN_APPS[@]}; do
+    if yarn global list | grep "^info \"${pkg}" | awk -F\" '{ print $2 }'; then
+      ok "[yarn] Package '$pkg' is already installed"
+
+      # TODO Coudn't find a way to know if the package was outdated
+      warn "[yarn] Going to check if '$pkg' needs an update"
+      yarn global upgrade $pkg
+    else
+      warn "[yarn] Package '$pkg' is not installed"
+      yarn global add "$pkg"
+    fi
+  done
+  unset YARN_APPS
 
   ok
 }
