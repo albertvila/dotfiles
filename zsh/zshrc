@@ -1,6 +1,5 @@
 
 if [[ -d "$HOME/.zprezto" ]]; then
-
   if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
     source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
   fi
@@ -10,10 +9,16 @@ if [[ -d "$HOME/.oh-my-zsh" ]]; then
   source "$HOME/.oh-my-zsh.rc"
 fi
 
-source $HOME/.scripts/aliases.git.plugin.zsh
-source $HOME/.scripts/aliases.zsh
-source $HOME/.scripts/functions.zsh
-source $HOME/.scripts/help.zsh
+for script in $HOME/.scripts/*; do
+  source $script
+done
+
+# Used to import private scripts stored in my bitbucket repository
+if [[ -d "$HOME/.scripts.private" ]]; then
+  for script in $HOME/.scripts.private/*; do
+    source $script
+  done
+fi
 
 export PATH=~/bin:$PATH
 export TERM="xterm-256color" # Needed when running tmux inside iTerm2 locally
@@ -26,3 +31,11 @@ export PLENV_ROOT=~/.plenv
 export PLENV_SHELL=zsh
 PLENV_VERSION=$(<$PLENV_ROOT/version)
 export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
+
+# tabtab source for serverless package, automatically added by serverless yarn package
+# uninstall by removing these lines or running `tabtab uninstall serverless`
+YARN_TABTAB="$HOME/.config/yarn/global/node_modules/tabtab"
+[[ -f $YARN_TABTAB/.completions/serverless.zsh ]] && . $YARN_TABTAB/.completions/serverless.zsh
+# tabtab source for sls package
+# uninstall by removing these lines or running `tabtab uninstall sls`
+[[ -f $YARN_TABTAB/.completions/sls.zsh ]] && . $YARN_TABTAB/.completions/sls.zsh
