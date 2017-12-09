@@ -12,7 +12,7 @@ function _symbolic_link() {
 
   if [ ! -e "$targetFile" ]; then
     execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
-    elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
+  elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
     ok "Link already exists for $targetFile"
   else
     ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
