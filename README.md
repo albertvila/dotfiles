@@ -94,6 +94,7 @@ Once you know that perl version to install, run the following commands
 iTerm and zsh tips
 - <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
 - <https://github.com/robbyrussell/oh-my-zsh/wiki/Cheatsheet>
+- <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
 
 Tmux
 - <http://mikebuss.com/2014/02/02/a-beautiful-productive-terminal-experience>
