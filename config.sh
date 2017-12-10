@@ -7,7 +7,6 @@ declare -a FILES_TO_SYMLINK=(
   'tmux/tmuxinator.zsh'
   'vim'
   'vim/vimrc'
-  'zsh/oh-my-zsh.rc'
   'zsh/zpreztorc'
   'zsh/scripts'
   'zsh/zshrc'

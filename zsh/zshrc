@@ -1,12 +1,5 @@
-
-if [[ -d "$HOME/.zprezto" ]]; then
-  if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
-    source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
-  fi
-fi
-
-if [[ -d "$HOME/.oh-my-zsh" ]]; then
-  source "$HOME/.oh-my-zsh.rc"
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
 for script in $HOME/.scripts/*; do

@@ -6,8 +6,6 @@ The setup script is smart enough to back up your existing dotfiles into a `~/.do
 
 I prefer `zsh` as my shell of choice. As such, the setup script will install `prezto` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
-If you prefer `oh-my-zsh` over `prezto` just edit lib/zsh.sh and comment/uncomment the install function.
-
 Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
 Recap
@@ -93,7 +91,6 @@ Once you know that perl version to install, run the following commands
 
 iTerm and zsh tips
 - <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
-- <https://github.com/robbyrussell/oh-my-zsh/wiki/Cheatsheet>
 - <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
 
 Tmux

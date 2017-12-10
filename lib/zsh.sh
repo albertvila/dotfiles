@@ -3,10 +3,6 @@
 function install_zsh() {
   _install_zsh
 
-  # Pending to ask if user wants to install oh-my-zsh or prezto
-  #_install_oh_my_zsh
-  #_setup_oh_my_zsh
-
   _install_prezto
   _setup_prezto
 
@@ -49,30 +45,6 @@ function _setup_zsh() {
   # ln -fs "$DOTFILES_DIR/tmux/projectX.yml" $HOME/.tmuxinator/projectX.yml
 
   $DOTFILES_DIR/iterm/powerline/fonts/install.sh
-
-  ok
-}
-
-# https://github.com/robbyrussell/oh-my-zsh
-function _install_oh_my_zsh() {
-  bot "Installing oh_my_zsh if needed"
-
-  # Install Oh My Zsh if it isn't already present
-  if [[ ! -d $HOME/.oh-my-zsh/ ]]; then
-    sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-
-    # If we want to uninstall it
-    #sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/uninstall.sh)"
-  fi
-
-  ok
-}
-
-function _setup_oh_my_zsh() {
-  bot "Setting up oh_my_zsh"
-
-  # Install Zsh settings
-  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.oh-my-zsh/themes/powerlevel9k
 
   ok
 }
