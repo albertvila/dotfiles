@@ -19,7 +19,7 @@ function end() {
   echo $(date) >> "$HOME/.dotfiles"
 }
 
-function get_installation_mode () {
+function get_installation_mode() {
   echo $INSTALLATION_MODE
 }
 
@@ -28,22 +28,11 @@ function get_os() {
 
   if [ "$OS_NAME" == "Darwin" ]; then
     echo "osx"
-    elif [ "$OS_NAME" == "Linux" ]; then
+  elif [ "$OS_NAME" == "Linux" ]; then
     echo "linux"
   else
     echo "unknown"
   fi
-}
-
-function _confirm_execution {
-  while true; do
-    read -p "Warning: this will overwrite your current dotfiles. Continue? [y/n] " yn
-    case $yn in
-      [Yy]* ) break;;
-      [Nn]* ) exit;;
-      * ) echo "Please answer yes or no.";;
-    esac
-  done
 }
 
 function execute() {
@@ -52,12 +41,11 @@ function execute() {
 }
 
 function install_os_packages() {
-  # Package managers & packages
   os=$(get_os)
   if [ $os == "osx" ]; then
     source ./lib/osx.sh
     install_osx_packages
-    elif [ $os == "linux" ]; then
+  elif [ $os == "linux" ]; then
     source ./lib/linux.sh
     install_linux_packages
   else
@@ -78,7 +66,6 @@ function setup_git() {
 }
 
 function setup_vim() {
-  # initialize Vim plugins
   bot "Installing vim plugins and fonts"
 
   vim +PluginInstall +qall > /dev/null 2>&1
@@ -86,4 +73,15 @@ function setup_vim() {
   ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
 
   ok
+}
+
+function _confirm_execution() {
+  while true; do
+    read -p "Warning: this will overwrite your current dotfiles. Continue? [y/n] " yn
+    case $yn in
+      [Yy]* ) break ;;
+      [Nn]* ) exit ;;
+      * ) echo "Please answer yes or no." ;;
+    esac
+  done
 }
