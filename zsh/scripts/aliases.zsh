@@ -6,6 +6,7 @@ alias glog="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an
 alias glogn="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n"
 
 alias -- -="cd -"
+alias cat='pygmentize -g'
 
 # From Fasd https://github.com/clvv/fasd
 alias a='fasd -a'        # any
