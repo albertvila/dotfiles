@@ -29,6 +29,7 @@ declare -a BREW_APPS=(
   plenv
   sbt # scala build tool
   scala
+  terraform
   tmux
   vim
   wget
@@ -44,8 +45,9 @@ declare -a BREW_CASK_APPS=(
   google-chrome
   intellij-idea-ce
   iterm2
-  java8 # TODO Forced version 8 instead of latest one because sbt brew module does not work with java 9
+  java
   movist
+  plex-media-server
   skype
   slack
   spectacle
@@ -65,6 +67,7 @@ declare -a PIP_APPS=(
   beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
+  pygments
 )
 
 declare -a YARN_APPS=(
@@ -81,11 +84,12 @@ declare -a ATOM_PACKAGES=(
   git-plus
   goto-definition
   highlight-selected
-  language-mediawiki
+  language-terraform
   linter
   linter-jshint
   linter-perl
   linter-pycodestyle
+  linter-terraform-syntax
   linter-ui-default
   minimap
   minimap-git-diff
