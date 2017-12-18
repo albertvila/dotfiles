@@ -37,6 +37,11 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
 - If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
 
 - If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
+```
+  plenv global system
+  ./setup.sh
+  plenv global 5.14.2
+```
 
 ## Manual steps after first setup
 
