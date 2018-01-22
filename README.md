@@ -73,6 +73,15 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
  Click `OK` in the dialog that appears.
 3. Restart IntelliJ IDEA
 4. Go to `Preferences | Editor | Colors & Fonts` and select one of the new color themes.
+5. Check `Preferences > Editor > General > Ensure line feed at file end on save`
+6. UnCheck `Preferences > Editor > Code Style > Java > Code Generation > Line comment at first column`
+7. Check `Preferences > Editor > Code Style > Java > Code Generation > Add a space at comment start`
+8. Check `Preferences > Editor > Code Style > Wrap on typing` on Right margin option
+9. Update `Editor > Code Style > Java > Imports tab set Class count to use import with '*'` and `Names count to use static import with '*'` to 999
+
+### jenv
+https://gist.github.com/branneman/3d2658bf5586029878e47557e544b4b6
+https://www.linkedin.com/pulse/manage-multiple-java-mac-os-x-dinesh-prajapati/
 
 ### plenv
 Once you know that perl version to install, run the following commands
