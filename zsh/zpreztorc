@@ -109,7 +109,7 @@ zstyle ':prezto:module:git:alias' skip 'yes'
 # Auto set to 'off' on dumb terminals.
 zstyle ':prezto:module:prompt' theme 'powerlevel9k'
 
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon context dir vcs)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon context dir vcs terraform)
 POWERLEVEL9K_CONTEXT_TEMPLATE="%n"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status ssh time)
