@@ -62,8 +62,9 @@ function help-tmux {
 function help-gradle {
   echo "Showing gradle help"
   echo "----------------"
-
-  echo "./gradlew bootRun -> Runs the application"
-  echo "./gradlew clean test --tests \"*ApplicationConfigTest\" -> Run a single test"
-  echo "./gradlew build --continuous"
+  echo " All commands works with ./gradlew if the file exists or gradle"
+  echo "gradle bootRun -> Runs the application"
+  echo "gradle clean test --tests \"*ApplicationConfigTest\" -> Run a single test"
+  echo "gradle build --continuous"
+  echo "gradle clean build -x test -> Excludes test phase"
 }
