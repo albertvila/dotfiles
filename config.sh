@@ -23,6 +23,7 @@ declare -a BREW_APPS=(
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   htop
+  jenv
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   mysql
   perl-build
@@ -84,6 +85,7 @@ declare -a ATOM_PACKAGES=(
   git-plus
   goto-definition
   highlight-selected
+  language-gradle
   language-terraform
   linter
   linter-jshint
