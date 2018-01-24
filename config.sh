@@ -93,6 +93,7 @@ declare -a ATOM_PACKAGES=(
   linter-pycodestyle
   linter-terraform-syntax
   linter-ui-default
+  markdown-preview
   minimap
   minimap-git-diff
   minimap-highlight-selected
