@@ -19,6 +19,9 @@ Recap
 The customized theme looks like
 ![Theme](zsh/theme.png)
 
+And with terraform default workspace looks link
+![Theme](zsh/theme_terraform.png)
+
 ## Installation
 
 ```sh
