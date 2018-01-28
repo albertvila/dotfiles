@@ -59,8 +59,10 @@ function setup_git() {
 
   git config --global push.default simple
   git config --global core.editor /usr/bin/vim
-  git submodule update --init
   git config --global core.excludesfile '~/.gitignore'
+  git config --global merge.ff false
+  git config --global pull.rebase preserve
+  git submodule update --init
 
   ok
 }
