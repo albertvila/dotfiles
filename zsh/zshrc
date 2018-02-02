@@ -13,7 +13,7 @@ if [[ -d "$HOME/.scripts.private" ]]; then
   done
 fi
 
-export PATH=~/bin:$PATH
+export PATH=.:~/bin:$PATH
 export TERM="xterm-256color" # Needed when running tmux inside iTerm2 locally
 export EDITOR="vim"
 
