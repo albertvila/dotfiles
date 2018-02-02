@@ -81,6 +81,9 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 7. Check `Preferences > Editor > Code Style > Java > Code Generation > Add a space at comment start`
 8. Check `Preferences > Editor > Code Style > Wrap on typing` on Right margin option
 9. Update `Editor > Code Style > Java > Imports tab set Class count to use import with '*'` and `Names count to use static import with '*'` to 999
+10. Install the following Plugins
+- ChecksStyle-IDEA
+- Lombok
 
 ### jenv
 https://gist.github.com/branneman/3d2658bf5586029878e47557e544b4b6
