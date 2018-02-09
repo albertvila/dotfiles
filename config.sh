@@ -72,6 +72,7 @@ declare -a PIP_APPS=(
 )
 
 declare -a YARN_APPS=(
+  mocha
   serverless
 )
 
