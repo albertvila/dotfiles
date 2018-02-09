@@ -68,3 +68,14 @@ function help-gradle {
   echo "gradle build --continuous"
   echo "gradle clean build -x test -> Excludes test phase"
 }
+
+function help-terraform {
+  echo "Showing terraform help"
+  echo "----------------------"
+  echo "terraform init"
+  echo "terraform workspace list"
+  echo "terraform workspace new staging"
+  echo "terraform workspace select staging"
+  echo "terraform plan -var-file='environment/staging.tfvars'"
+  echo "terraform apply -var-file='environment/staging.tfvars'"
+}
