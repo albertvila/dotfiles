@@ -33,6 +33,7 @@ function help-git {
   echo "gsta -> git stash save"
   echo "gstp -> git stash pop"
   echo "gstl -> git stash list"
+  echo "gstd stash@{0} -> git stash drop stash@{0}"
   echo "grh -> git reset HEAD"
 }
 
@@ -78,4 +79,12 @@ function help-terraform {
   echo "terraform workspace select staging"
   echo "terraform plan -var-file='environment/staging.tfvars'"
   echo "terraform apply -var-file='environment/staging.tfvars'"
+}
+
+function help-serverless {
+  echo "Showing serverless help"
+  echo "----------------------"
+  echo "sls package --package artifact -> Creates the serverless zip into the artifact folder, to check what will be deployed (only if node)"
+  echo "sls deploy --stage dev --verbose -> Deploys for dev environment"
+  echo "sls remove --stage dev --verbose -> Removes the dev stack"
 }
