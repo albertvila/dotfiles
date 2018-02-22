@@ -12,6 +12,9 @@ function help-git {
   echo "git reset --soft HEAD~1"
   echo "\nCreating a branch from another branch"
   echo "gcb new_branch_name origin/from_branch\nggp"
+  echo "\Deleting a branch"
+  echo "local -> git branch -d XXX"
+  echo "remote -> git push origin --delete XXX"
 
   echo "\nzsh git plugin"
   echo "--------------"
