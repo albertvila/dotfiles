@@ -136,10 +136,16 @@ function _install_brew_cask() {
     if brew cask list -1 | grep -q "^${pkg}"; then
       ok "[brew cask] Package '$pkg' is already installed"
 
-      # Checking if the package needs update
-      if brew cask outdated --quiet | grep -q "^${pkg}"; then
-        warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
-        brew cask reinstall "$pkg"
+      # TODO The next cases to be fixed, otherwise they are returned always
+      # dropbox (latest) != latest
+      # movist (latest) != latest
+      # spotify (latest) != latest
+      if [[ $pkg != dropbox && $pkg != movist && $pkg != spotify ]]; then
+        # Checking if the package needs update
+        if brew cask outdated --greedy --quiet | grep -q "^${pkg}"; then
+          warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
+          brew cask reinstall "$pkg"
+        fi
       fi
     else
       warn "[brew cask] Package '$pkg' is not installed"
