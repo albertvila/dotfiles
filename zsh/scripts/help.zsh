@@ -91,3 +91,14 @@ function help-serverless {
   echo "sls deploy --stage dev --verbose -> Deploys for dev environment"
   echo "sls remove --stage dev --verbose -> Removes the dev stack"
 }
+
+function help-docker {
+  echo "Showing docker help"
+  echo "-------------------"
+  echo "You must start Docker.app first"
+  echo "docker images -a -> In order to list all docker images"
+  echo "docker rmi IMAGE_NAME -> To delete an image, use --force to force it"
+  echo "docker build -t IMAGE_NAME -f ./config/docker/Dockerfile . -> To build a new docker image"
+  echo "docker run -it IMAGE_NAME /bin/bash"
+  echo "docker pull XXX"
+}
