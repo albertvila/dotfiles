@@ -66,6 +66,7 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
     ⌘←  "HEX CODE"      0x01
     ⌘→  "HEX CODE"      0x05
 ```
+7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
 
 ### intellij
 1. Clone git repository
