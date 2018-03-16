@@ -42,6 +42,7 @@ declare -a BREW_CASK_APPS=(
   alfred
   atom
   calibre
+  docker
   dropbox
   google-chrome
   intellij-idea-ce
@@ -69,6 +70,7 @@ declare -a PIP_APPS=(
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pygments
+  wakatime
 )
 
 declare -a YARN_APPS=(
