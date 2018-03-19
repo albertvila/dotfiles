@@ -22,7 +22,7 @@ function _install_zsh() {
       os=$(get_os)
       if [ $os == "osx" ]; then
         brew install zsh
-        elif [ $os == "linux" ]; then
+      elif [ $os == "linux" ]; then
         sudo apt-get install zsh
       fi
     fi
@@ -51,7 +51,7 @@ function _setup_zsh() {
 
 # https://github.com/sorin-ionescu/prezto
 function _install_prezto() {
-  bot "Intalling prezto if needed"
+  bot "Intalling/Updating prezto if needed"
 
   # Install Prezo if it isn't already present
   if [[ ! -d $HOME/.zprezto/ ]]; then
