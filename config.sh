@@ -57,8 +57,8 @@ declare -a BREW_CASK_APPS=(
   suunto-moveslink
   transmission
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
-  vagrant
-  virtualbox
+  # vagrant
+  # virtualbox
 )
 
 declare -a GEM_APPS=(
