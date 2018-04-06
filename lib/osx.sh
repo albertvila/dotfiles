@@ -182,7 +182,7 @@ function _install_pip() {
     bot "Going to install pip, if it does not work, maybe it's because the command needs sudo"
     easy_install pip
   else
-    pip install --upgrade pip
+    pip install --upgrade --user pip
   fi
 
   # Install pip apps
@@ -193,7 +193,7 @@ function _install_pip() {
       # Checking if the package needs update
       if pip list --outdated --format=legacy | grep "^${pkg}"; then
         warn "[pip] Package '$pkg' is not up to date, updating it ..."
-        pip install "$pkg" --upgrade
+        pip install "$pkg" --upgrade --user
       fi
 
     else
