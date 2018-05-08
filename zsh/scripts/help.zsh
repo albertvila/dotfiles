@@ -96,6 +96,7 @@ function help-docker {
   echo "Showing docker help"
   echo "-------------------"
   echo "You must start Docker.app first"
+  echo "If the command requires login, just run $(aws ecr get-login --no-include-email --region eu-west-1)"
   echo "docker images -a -> In order to list all docker images"
   echo "docker rmi IMAGE_NAME -> To delete an image, use --force to force it"
   echo "docker build -t IMAGE_NAME -f ./config/docker/Dockerfile . -> To build a new docker image"

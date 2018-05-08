@@ -46,6 +46,8 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
   plenv global 5.14.2
 ```
 
+- If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
+
 ## Manual steps after first setup
 
 ### general
@@ -123,4 +125,5 @@ Tmux
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
 - Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
+-   npm install -g aws-sam-local
 - Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')
