@@ -84,7 +84,6 @@ declare -a ATOM_PACKAGES=(
   atom-material-ui
   busy-signal
   file-icons
-  git-diff
   git-plus
   goto-definition
   highlight-selected
@@ -96,7 +95,6 @@ declare -a ATOM_PACKAGES=(
   linter-pycodestyle
   linter-terraform-syntax
   linter-ui-default
-  markdown-preview
   minimap
   minimap-git-diff
   minimap-highlight-selected

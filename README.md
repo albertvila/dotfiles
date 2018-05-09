@@ -127,3 +127,4 @@ Tmux
 - Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
 -   npm install -g aws-sam-local
 - Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')
+- Check to avoid running ./setup.sh if git submodules are not present
