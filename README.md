@@ -105,6 +105,7 @@ Once you know that perl version to install, run the following commands
 
 ### atom
 - Open Highlight Selected package settings and unselect `Only Highlight Whole Words`
+- Open Linter-perl settings and add ., lib, conf to the Inc Paths from Project Root
 
 ### unison
 - Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))
