@@ -29,6 +29,8 @@ Before installing make sure you have the `git` command. If not, just open a `Ter
 ```sh
 $ git clone https://github.com/albert.vila/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
+$ git submodule init
+$ git submodule update
 $ sh ./setup.sh
 ```
 
@@ -47,6 +49,8 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
   ./setup.sh
   plenv global 5.14.2
 ```
+
+- Permission issues with pip, run the following command `sudo easy_install pip`
 
 - If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
 
