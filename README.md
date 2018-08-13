@@ -24,6 +24,8 @@ And with terraform default workspace looks link
 
 ## Installation
 
+Before installing make sure you have the `git` command. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`
+
 ```sh
 $ git clone https://github.com/albert.vila/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
