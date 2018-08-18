@@ -41,9 +41,6 @@ function _setup_zsh() {
     chsh -s $(which zsh)
   fi
 
-  # mkdir -p $HOME/.tmuxinator
-  # ln -fs "$DOTFILES_DIR/tmux/projectX.yml" $HOME/.tmuxinator/projectX.yml
-
   $DOTFILES_DIR/iterm/powerline/fonts/install.sh
 
   ok

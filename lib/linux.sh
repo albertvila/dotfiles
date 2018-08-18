@@ -10,7 +10,6 @@ function install_linux_packages() {
 # # Needed just for linux OS (pending to be tested)
 # declare -a APT_GET_APPS=(
 #   python-pip # To install the PIP_APPS
-#   tmux
 #   spotify-client # https://www.spotify.com/ie/download/linux/
 #   atom # http://tipsonubuntu.com/2016/08/05/install-atom-text-editor-ubuntu-16-04/
 #   zsh # https://gist.github.com/tsabat/1498393

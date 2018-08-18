@@ -1,5 +1,4 @@
 alias reset="clear && printf '\e[3J'"
-alias tmx="tmux -CC attach || tmux -CC"
 alias vi="vim"
 
 alias glog="git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%C(auto)%d%C(reset)%n%s' --date-order -n 5"
@@ -21,3 +20,6 @@ alias zz='fasd_cd -d -i' # cd with interactive selection
 
 # Sometimes the sound stops working
 alias fixSound="sudo killall coreaudiod"
+
+# Git stash only for not added files
+alias gstk="git stash --keep-index"

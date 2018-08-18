@@ -14,7 +14,6 @@ if [[ -d "$HOME/.scripts.private" ]]; then
 fi
 
 export PATH=.:~/bin:$PATH
-export TERM="xterm-256color" # Needed when running tmux inside iTerm2 locally
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
@@ -36,4 +35,5 @@ YARN_TABTAB="$HOME/.config/yarn/global/node_modules/tabtab"
 # Adding colors to more & less commands, cat is also colored with an alias
 export MORE='-R'
 export LESSOPEN='|pygmentize %s'
+
 eval "$(jenv init -)"

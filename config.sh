@@ -3,8 +3,6 @@
 declare -a FILES_TO_SYMLINK=(
   'git/gitignore'
   'misc/isort.cfg'
-  'tmux/tmux.conf'
-  'tmux/tmuxinator.zsh'
   'vim'
   'vim/vimrc'
   'zsh/zpreztorc'
@@ -26,12 +24,10 @@ declare -a BREW_APPS=(
   jenv
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   mysql
+  openvpn
   perl-build
   plenv
-  sbt # scala build tool
-  scala
   terraform
-  tmux
   vim
   wget
   yarn
@@ -57,12 +53,9 @@ declare -a BREW_CASK_APPS=(
   suunto-moveslink
   transmission
   # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
-  # vagrant
-  # virtualbox
 )
 
 declare -a GEM_APPS=(
-  # tmuxinator # https://github.com/tmuxinator/tmuxinator
 )
 
 declare -a PIP_APPS=(

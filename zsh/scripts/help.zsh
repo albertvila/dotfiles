@@ -37,6 +37,7 @@ function help-git {
   echo "gstp -> git stash pop"
   echo "gstl -> git stash list"
   echo "gstd stash@{0} -> git stash drop stash@{0}"
+  echo "gstk -> git stash --keep-index"
   echo "grh -> git reset HEAD"
 }
 
@@ -48,19 +49,6 @@ function help-vim {
   echo "(ctrl+n)*c -> Multiple cursors"
   echo ",+c+space Toggle comment line (also ,cc for comment and ,cu for uncomment)"
   echo "ctrl+v + select lines with cursor + previous command to toggle comment multiple lines"
-}
-
-function help-tmux {
-  echo "Showing tmux/tmuxinator help"
-  echo "----------------"
-
-  echo "tmx -> Attaches last tmux session or creates a new one (because of the alias)"
-  echo "mux list -> List tmuxinator projects"
-  echo "mux X -> Starts tmuxinator project X"
-  echo "mux stop X -> Stops tmuxinator project X"
-  echo "ctrl+b n -> Next window"
-  echo "ctrl+b p -> Previous window"
-  echo "ctrl+b arrows -> Select panel"
 }
 
 function help-gradle {

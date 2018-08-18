@@ -123,11 +123,6 @@ iTerm and zsh tips
 - <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
 - <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
 
-Tmux
-- <http://mikebuss.com/2014/02/02/a-beautiful-productive-terminal-experience>
-- <http://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/>
-- <https://tmuxcheatsheet.com/>
-
 ## Future ToDo
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
