@@ -113,9 +113,8 @@ Once you know that perl version to install, run the following commands
 - Open Highlight Selected package settings and unselect `Only Highlight Whole Words`
 - Open Linter-perl settings and add ., lib, conf to the Inc Paths from Project Root
 
-### unison
-- Configure unison if you want bidirectional file sync ([link](https://www.cis.upenn.edu/~bcpierce/unison/))
-- GUI interface ([link](http://www.cs.haifa.ac.il/~shuly/unison/))
+### alfred workflows
+- SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
 ## External links
 
@@ -128,5 +127,6 @@ iTerm and zsh tips
 - Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
 - Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
 -   npm install -g aws-sam-local
+-   npm install --global alfred-goodreads-workflow
 - Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')
 - Check to avoid running ./setup.sh if git submodules are not present

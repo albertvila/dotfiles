@@ -40,7 +40,7 @@ declare -a BREW_CASK_APPS=(
   calibre
   docker
   dropbox
-  google-chrome
+  google-chrome-canary
   intellij-idea-ce
   iterm2
   java
@@ -52,7 +52,6 @@ declare -a BREW_CASK_APPS=(
   spotify
   suunto-moveslink
   transmission
-  # unison # either brew cask or brew, try it before (http://www.cs.haifa.ac.il/~shuly/unison/)
 )
 
 declare -a GEM_APPS=(
