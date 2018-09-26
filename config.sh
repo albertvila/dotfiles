@@ -20,10 +20,10 @@ declare -a BREW_APPS=(
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
+  gradle-completion
   htop
   jenv
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
-  mysql
   openvpn
   perl-build
   plenv
@@ -40,7 +40,7 @@ declare -a BREW_CASK_APPS=(
   calibre
   docker
   dropbox
-  google-chrome-canary
+  google-chrome
   intellij-idea-ce
   iterm2
   java

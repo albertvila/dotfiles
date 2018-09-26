@@ -124,9 +124,9 @@ iTerm and zsh tips
 
 ## Future ToDo
 - Create a --force flag that removes the ~/.dotfiles and then continues with the setup
-- Instead of zsh gradle plugin check and use https://github.com/gradle/gradle-completion
 - Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
 -   npm install -g aws-sam-local
 -   npm install --global alfred-goodreads-workflow
 - Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')
 - Check to avoid running ./setup.sh if git submodules are not present
+- Perl alfred workflow example -> https://github.com/2shortplanks/alfred-metacpan
