@@ -63,6 +63,12 @@ function _setup_osx() {
   # Disable the warning when changing a file extension
   defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
+  # Setting iterm custom folder config
+  sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
+  defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
+  defaults write com.googlecode.iterm2 "LoadPrefsFromCustomFolder" -bool true
+  ok "iTerm's custom config folder set"
+
   killall Dock Finder SystemUIServer
 
   installation_mode=$(get_installation_mode)
