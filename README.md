@@ -9,7 +9,7 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
 Recap
-- Setup dotfiles (Note that the first time you ran the setup script it may throw some vim errors, just run the script twice)
+- Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx dev packages for brew/pip/atom and osx defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
@@ -60,21 +60,8 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
 1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the `setup_osx` function from `./lib/osx.sh`, pending to check if it works)
 2. Open OSX keyboard settings and remove spotlight shortcut
 3. Open Alfred and set spotlight shortcut, also select to be opened at login
-4. Open spectacle and select to be opened at login
-
-### iterm2
-1. Open iTerm2's preferences (do this change for all needed profiles).
-2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
-3. Click on text, make sure that "Draw bold text in bright colours" is disabled
-4. Change the font to Meslo LG M Regular for Powerline, 12p
-5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
-6. Add two more mappings to jump at the beginning/end of line
-```
-    FOR  ACTION         SEND
-    ⌘←  "HEX CODE"      0x01
-    ⌘→  "HEX CODE"      0x05
-```
-7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
+4. Import this Alfred Dark Theme from https://www.alfredapp.com/extras/theme/24fhXfBld7/
+5. Open spectacle and select to be opened at login
 
 ### intellij
 1. Clone git repository
@@ -116,17 +103,25 @@ Once you know that perl version to install, run the following commands
 ### alfred workflows
 - SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
+## Old manual steps
+Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
+
+### iterm2
+1. Open iTerm2's preferences (do this change for all needed profiles).
+2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
+3. Click on text, make sure that "Draw bold text in bright colours" is disabled
+4. Change the font to Meslo LG M Regular for Powerline, 12p
+5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
+6. Add two more mappings to jump at the beginning/end of line
+```
+    FOR  ACTION         SEND
+    ⌘←  "HEX CODE"      0x01
+    ⌘→  "HEX CODE"      0x05
+```
+7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
+
 ## External links
 
 iTerm and zsh tips
 - <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
 - <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
-
-## Future ToDo
-- Create a --force flag that removes the ~/.dotfiles and then continues with the setup
-- Be able to install npm modules https://www.leeboonstra.com/developer/mac-osx-how-to-install-jshint-to-the-commandline-sublime-text-with-node/
--   npm install -g aws-sam-local
--   npm install --global alfred-goodreads-workflow
-- Check the chequegourmet page every day and send a notification with the pending amount (osascript -e 'display notification "Hello world!" with title "Hi!" sound name "default"')
-- Check to avoid running ./setup.sh if git submodules are not present
-- Perl alfred workflow example -> https://github.com/2shortplanks/alfred-metacpan
