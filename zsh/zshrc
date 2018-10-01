@@ -13,6 +13,12 @@ if [[ -d "$HOME/.scripts.private" ]]; then
   done
 fi
 
+# Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
+precmd () {
+  window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
+  echo -ne "$window_title"
+}
+
 export PATH=.:~/bin:$PATH
 export EDITOR="vim"
 
