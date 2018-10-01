@@ -28,8 +28,6 @@ function get_os() {
 
   if [ "$OS_NAME" == "Darwin" ]; then
     echo "osx"
-  elif [ "$OS_NAME" == "Linux" ]; then
-    echo "linux"
   else
     echo "unknown"
   fi
@@ -45,9 +43,6 @@ function install_os_packages() {
   if [ $os == "osx" ]; then
     source ./lib/osx.sh
     install_osx_packages
-  elif [ $os == "linux" ]; then
-    source ./lib/linux.sh
-    install_linux_packages
   else
     error "OS $os not supported"
     exit;
