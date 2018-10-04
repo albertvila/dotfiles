@@ -24,6 +24,7 @@ declare -a BREW_APPS=(
   htop
   jenv
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
+  node
   openvpn
   perl-build
   plenv
@@ -95,6 +96,12 @@ declare -a ATOM_PACKAGES=(
   Sublime-Style-Column-Selection
   todo-show
   tree-view-git-status
+)
+
+declare -a NPM_PACKAGES=(
+  alfred-goodreads-workflow
+  aws-sam-local
+  npm-check-updates # Needed to check if the other packages are up to date
 )
 
 declare -a APP_STORE_APPS=(

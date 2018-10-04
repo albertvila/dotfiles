@@ -8,6 +8,7 @@ function install_osx_packages() {
   _install_yarn
   _install_atom
   _install_app_store_apps
+  _install_npm
   _setup_osx
 }
 
@@ -275,6 +276,27 @@ function _install_app_store_apps() {
     fi
   done
   unset ATOM_PACKAGES
+
+  ok
+}
+
+function _install_npm() {
+  bot "Checking npm packages ..."
+
+  for pkg in ${NPM_PACKAGES[@]}; do
+    if npm ls -g ${pkg} | grep "${pkg}"; then
+      ok "[npm] Package '$pkg' is already installed"
+
+      if which ncu &>/dev/null && ncu -g -f ${pkg} | grep "${pkg}"; then
+        warn "[npm] Package '$pkg' is not up to date, updating it ..."
+        npm install -g "$pkg"
+      fi
+    else
+      warn "[npm] Package '$pkg' is not installed"
+      npm install -g "$pkg"
+    fi
+  done
+  unset NPM_PACKAGES
 
   ok
 }
