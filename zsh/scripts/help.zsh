@@ -10,6 +10,7 @@ function help-dotfiles {
   print ".." "Instead of cd .."
   print "-" "Goes back to the previous folder"
   print "help-[TAB]" "Displays other available helps"
+  print "fixSound" "Fixes an issue with OSX when the sound does not work"
 }
 
 function help-git {
