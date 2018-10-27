@@ -106,8 +106,8 @@ declare -a NPM_PACKAGES=(
 
 declare -a APP_STORE_APPS=(
   # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store
-  485812721 # Tweetdeck
   918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
+  904280696 # Things3
 )
 
 # Check vim/plugins.vim for enabled plugins
