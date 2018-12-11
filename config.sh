@@ -16,6 +16,7 @@ declare -a BREW_APPS=(
   ack
   awscli
   coreutils
+  ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   fasd
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
@@ -53,6 +54,7 @@ declare -a BREW_CASK_APPS=(
   spotify
   suunto-moveslink
   transmission
+  visual-studio-code
 )
 
 declare -a GEM_APPS=(
@@ -102,6 +104,26 @@ declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
   aws-sam-local
   npm-check-updates # Needed to check if the other packages are up to date
+)
+
+declare -a VSCODE_PACKAGES=(
+  akamud.vscode-theme-onedark
+  alefragnani.project-manager
+  brpaz.file-templates
+  dbaeumer.vscode-eslint
+  eamodio.gitlens
+  GabrielBB.vscode-lombok
+  henriiik.vscode-perl
+  JerryHong.autofilename
+  mohsen1.prettify-json
+  ms-vscode.atom-keybindings
+  redhat.java
+  RoscoP.ActiveFileInStatusBar
+  sfodje.perltidy
+  sfodje.perlcritic
+  vscjava.vscode-java-debug
+  vscjava.vscode-java-test
+  WakaTime.vscode-wakatime
 )
 
 declare -a APP_STORE_APPS=(

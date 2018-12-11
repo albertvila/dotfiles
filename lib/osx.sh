@@ -9,6 +9,7 @@ function install_osx_packages() {
   _install_atom
   _install_app_store_apps
   _install_npm
+  _install_vsc
   _setup_osx
 }
 
@@ -299,4 +300,32 @@ function _install_npm() {
   unset NPM_PACKAGES
 
   ok
+}
+
+function _install_vsc() {
+  bot "Checking visual studio code packages ..."
+
+  ln -fs $DOTFILES_DIR/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
+
+  if ! test $(which code)
+  then
+    error "visual studio code not installed"
+  else
+    _install_vsc_packages
+  fi
+
+  ok
+}
+
+function _install_vsc_packages() {
+  for pkg in ${VSCODE_PACKAGES[@]}; do
+    if code --list-extensions | grep "${pkg}"; then
+      ok "[vsc] Package '$pkg' is already installed"
+      code --install-extension --force $pkg
+    else
+      warn "[vsc] Package '$pkg' is not installed"
+      code --install-extension $pkg
+    fi
+  done
+  unset VSCODE_PACKAGES
 }

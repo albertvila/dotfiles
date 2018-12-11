@@ -1,0 +1,58 @@
+{
+    "telemetry.enableTelemetry": false,
+    "workbench.colorTheme": "Atom One Dark",
+    "workbench.statusBar.feedback.visible": false,
+    "editor.scrollBeyondLastLine": false,
+    "search.location": "panel",
+    "workbench.colorCustomizations": {
+        //"editor.lineHighlightBackground": "#220815",
+        "editor.selectionBackground": "#7288a8",
+        "editor.wordHighlightBackground": "#3f2c33",
+        //"editorCursor.foreground": "#F12360"
+    },
+    "perl.perltidy": "",
+    "gitlens.mode.active": "zen",
+    "atomKeymap.promptV3Features": true,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "editor.formatOnPaste": false,
+    "todohighlight.include": [
+        "**/*.js",
+        "**/*.jsx",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.html",
+        "**/*.php",
+        "**/*.css",
+        "**/*.scss",
+        "**/*.t",
+        "**/*.pl",
+        "**/*.pm"
+    ],
+    "todohighlight.isEnable": true,
+    "window.zoomLevel": 0,
+    "extensions.ignoreRecommendations": false,
+
+    // It should not be necessary because I'm using jenv enable-plugin export to export JAVA_HOME
+    "java.home": "/Users/albert/.jenv/versions/1.8",
+
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.6/server/lombok.jar\" -Xbootclasspath/a:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.6/server/lombok.jar\"",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        //"**/bin": true,
+        "**/out": true,
+        "**/.project": true,
+        "**/.classpath": true,
+        "**/.settings": true,
+        "**/.gradle": true,
+        "**/.idea": true,
+        "**/.serverless": true,
+        ".vstags": true
+    },
+    "files.hotExit": "onExitAndWindowClose",
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false
+}
