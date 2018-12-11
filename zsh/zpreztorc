@@ -27,8 +27,9 @@ zstyle ':prezto:load' pmodule \
   'environment' \
   'terminal' \
   'editor' \
-  'history' \
   'directory' \
+  'autosuggestions' \
+  'history' \
   'spectrum' \
   'utility' \
   'completion' \
@@ -39,15 +40,16 @@ zstyle ':prezto:load' pmodule \
   'ssh' \
   'prompt'
 
+#  'directory' \ -> Removed in favor of fasd + aliases
 #  'archive' \
-#  'syntax-highlighting' \
 
 #
 # Autosuggestions
 #
+zstyle ':prezto:module:autosuggestions' color 'yes'
 
 # Set the query found color.
-# zstyle ':prezto:module:autosuggestions:color' found ''
+zstyle ':prezto:module:autosuggestions:color' found ''
 
 #
 # Editor
@@ -116,6 +118,7 @@ POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status ssh time)
 POWERLEVEL9K_STATUS_VERBOSE=false
 POWERLEVEL9K_SHORTEN_STRATEGY="truncate_middle"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
+#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(icons_test)
 
 # Set how themes that use promptpwd function display the pwd, can be 'short', 'long', or 'full'
 # zstyle ':prezto:module:prompt' pwd-length 'short'
@@ -157,13 +160,13 @@ POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
 
 # Set syntax highlighters.
 # By default, only the main highlighter is enabled.
-# zstyle ':prezto:module:syntax-highlighting' highlighters \
-#   'main' \
-#   'brackets' \
-#   'pattern' \
-#   'line' \
-#   'cursor' \
-#   'root'
+zstyle ':prezto:module:syntax-highlighting' highlighters \
+  'main' \
+  'brackets' \
+  'pattern' \
+  'line' \
+  'cursor' \
+  'root'
 #
 # Set syntax highlighting styles.
 # zstyle ':prezto:module:syntax-highlighting' styles \
