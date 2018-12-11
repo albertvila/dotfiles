@@ -79,6 +79,10 @@ function _install_dotfiles() {
     bot "Changing access permissions for binary script :: ~/bin/${i##*/}"
     chmod +rwx $HOME/bin/${i##*/}
   done
+
+  # Enabling export plugin to automatically expose JAVA_HOME
+  jenv enable-plugin export
+
   ok
 
   unset BINARIES
