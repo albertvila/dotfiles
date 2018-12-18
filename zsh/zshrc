@@ -41,5 +41,6 @@ YARN_TABTAB="$HOME/.config/yarn/global/node_modules/tabtab"
 # Adding colors to more & less commands, cat is also colored with an alias
 export MORE='-R'
 export LESSOPEN='|pygmentize %s'
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
 eval "$(jenv init -)"
