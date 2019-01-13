@@ -15,27 +15,13 @@
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.formatOnPaste": false,
-    "todohighlight.include": [
-        "**/*.js",
-        "**/*.jsx",
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.html",
-        "**/*.php",
-        "**/*.css",
-        "**/*.scss",
-        "**/*.t",
-        "**/*.pl",
-        "**/*.pm"
-    ],
-    "todohighlight.isEnable": true,
     "window.zoomLevel": 0,
     "extensions.ignoreRecommendations": false,
 
     // It should not be necessary because I'm using jenv enable-plugin export to export JAVA_HOME
     "java.home": "/Users/albert/.jenv/versions/1.8",
 
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.6/server/lombok.jar\" -Xbootclasspath/a:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.6/server/lombok.jar\"",
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.7/server/lombok.jar\" -Xbootclasspath/a:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.7/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -54,5 +40,24 @@
     },
     "files.hotExit": "onExitAndWindowClose",
     "explorer.confirmDelete": false,
-    "explorer.confirmDragAndDrop": false
+    "explorer.confirmDragAndDrop": false,
+
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "diffEditor.renderSideBySide": false,
+    "workbench.activityBar.visible": true,
+    "todo-tree.defaultHighlight": {},
+    "todo-tree.customHighlight": {
+        "TODO": {
+            "foreground": "magenta"
+        },
+        "FIXME": {
+            "foreground": "red"
+        }
+    },
+    "workbench.iconTheme": "material-icon-theme",
+    "terminal.external.osxExec": "iTerm.app",
+    "terminal.integrated.fontFamily": "Meslo LG M for Powerline"
 }
