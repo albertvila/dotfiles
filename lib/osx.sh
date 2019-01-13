@@ -6,7 +6,7 @@ function install_osx_packages() {
   _install_gem
   _install_pip
   _install_yarn
-  _install_atom
+  #_install_atom
   _install_app_store_apps
   _install_npm
   _install_vsc
