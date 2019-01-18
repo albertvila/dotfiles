@@ -4,6 +4,7 @@
     "workbench.statusBar.feedback.visible": false,
     "editor.scrollBeyondLastLine": false,
     "search.location": "panel",
+    "explorer.autoReveal": false,
     "workbench.colorCustomizations": {
         //"editor.lineHighlightBackground": "#220815",
         "editor.selectionBackground": "#7288a8",
