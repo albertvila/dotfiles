@@ -82,8 +82,11 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 - Lombok
 
 ### jenv
-https://gist.github.com/branneman/3d2658bf5586029878e47557e544b4b6
-https://www.linkedin.com/pulse/manage-multiple-java-mac-os-x-dinesh-prajapati/
+1. Execute `/usr/libexec/java_home -V` to know all java versions installed on your computer
+2. `jenv add ...` to add them
+3. `jenv global ...` to set up the version you want to use
+
+More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-os-x-dinesh-prajapati/)
 
 ### plenv
 Once you know that perl version to install, run the following commands

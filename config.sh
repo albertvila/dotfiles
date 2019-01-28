@@ -42,6 +42,7 @@ declare -a BREW_CASK_APPS=(
   calibre
   docker
   dropbox
+  firefox
   google-chrome
   intellij-idea-ce
   iterm2
@@ -116,6 +117,7 @@ declare -a VSCODE_PACKAGES=(
   Gruntfuggly.todo-tree
   henriiik.vscode-perl
   JerryHong.autofilename
+  mauve.terraform
   mohsen1.prettify-json
   ms-vscode.atom-keybindings
   pkief.material-icon-theme
