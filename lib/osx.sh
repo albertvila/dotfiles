@@ -193,7 +193,7 @@ function _install_pip() {
       ok "[pip] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if pip list --outdated | grep "^${pkg}"; then
+      if pip -qq list --outdated | grep "^${pkg}"; then
         warn "[pip] Package '$pkg' is not up to date, updating it ..."
         pip install "$pkg" --upgrade --user
       fi
