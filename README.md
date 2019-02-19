@@ -97,6 +97,9 @@ Once you know that perl version to install, run the following commands
 4. plenv install-cpanm
 5. You may need to restart your terminal, just type perl --version to be sure you are running the desired version
 
+Note: If you get Segmentation fault installing perl versions, just install the perl-build as a plugin using the following command
+`git clone git://github.com/tokuhirom/Perl-Build.git $(plenv root)/plugins/perl-build/`
+
 ### awscli
 - Run `awscli configure` and set up your aws credentials
 
