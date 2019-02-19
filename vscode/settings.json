@@ -11,7 +11,9 @@
         "editor.wordHighlightBackground": "#3f2c33",
         //"editorCursor.foreground": "#F12360"
     },
-    "perl.perltidy": "",
+    "workbench.settings.useSplitJSON": true,
+    "perl.perltidy": "/opt/plenv/shims/perltidy",
+    "perl.perltidyArgs": [],
     "gitlens.mode.active": "zen",
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
@@ -29,7 +31,6 @@
         "**/.hg": true,
         "**/CVS": true,
         "**/.DS_Store": true,
-        //"**/bin": true,
         "**/out": true,
         "**/.project": true,
         "**/.classpath": true,
@@ -37,7 +38,8 @@
         "**/.gradle": true,
         "**/.idea": true,
         "**/.serverless": true,
-        ".vstags": true
+        ".vstags": true,
+        "**/.factorypath": true
     },
     "files.hotExit": "onExitAndWindowClose",
     "explorer.confirmDelete": false,
@@ -60,5 +62,5 @@
     },
     "workbench.iconTheme": "material-icon-theme",
     "terminal.external.osxExec": "iTerm.app",
-    "terminal.integrated.fontFamily": "Meslo LG M for Powerline"
+    "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
 }

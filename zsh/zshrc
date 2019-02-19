@@ -44,3 +44,7 @@ export LESSOPEN='|pygmentize %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
 eval "$(jenv init -)"
+
+# tabtab source for slss package
+# uninstall by removing these lines or running `tabtab uninstall slss`
+[[ -f /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh ]] && . /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh

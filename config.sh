@@ -117,13 +117,13 @@ declare -a VSCODE_PACKAGES=(
   Gruntfuggly.todo-tree
   henriiik.vscode-perl
   JerryHong.autofilename
+  kaktus.perltidy-more
   mauve.terraform
   mohsen1.prettify-json
   ms-vscode.atom-keybindings
   pkief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar
-  sfodje.perltidy
   sfodje.perlcritic
   vscjava.vscode-java-debug
   vscjava.vscode-java-test

@@ -25,9 +25,10 @@ And with terraform default workspace looks link
 ## Installation
 
 Before installing make sure you have the `git` command. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`
+Also make sure you have the `brew` command. If not, install it using `$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
 
 ```sh
-$ git clone https://github.com/albert.vila/dotfiles.git ~/dotfiles
+$ git clone https://github.com/albertvila/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
 $ git submodule init
 $ git submodule update
