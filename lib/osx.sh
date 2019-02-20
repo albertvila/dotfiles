@@ -179,6 +179,9 @@ function _install_gem() {
 function _install_pip() {
   bot "Checking pip packages ..."
 
+  # In order to silence the DEPRECATION: Python 2.7 will reach the end of its life on January 1st, 2020 warning
+  export PYTHONWARNINGS=ignore
+
   which -s pip
   if [[ $? != 0 ]] ; then
     bot "Going to install pip, if it does not work, maybe it's because the command needs sudo"
@@ -193,7 +196,7 @@ function _install_pip() {
       ok "[pip] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if pip -qq list --outdated | grep "^${pkg}"; then
+      if pip list --outdated | grep "^${pkg}"; then
         warn "[pip] Package '$pkg' is not up to date, updating it ..."
         pip install "$pkg" --upgrade --user
       fi
