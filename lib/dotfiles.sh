@@ -80,9 +80,6 @@ function _install_dotfiles() {
     chmod +rwx $HOME/bin/${i##*/}
   done
 
-  # Enabling export plugin to automatically expose JAVA_HOME
-  jenv enable-plugin export
-
   ok
 
   unset BINARIES

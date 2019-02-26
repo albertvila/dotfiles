@@ -43,7 +43,14 @@ export MORE='-R'
 export LESSOPEN='|pygmentize %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
-eval "$(jenv init -)"
+# To enable shims and autocompletion add to your profile:
+if which jenv > /dev/null; then eval "$(jenv init -)"; fi
+
+# To use Homebrew's directories rather than ~/.jenv add to your profile:
+#export JENV_ROOT=/usr/local/opt/jenv
+
+# Enabling export plugin to automatically expose JAVA_HOME
+eval "$(jenv enable-plugin export)"
 
 # tabtab source for slss package
 # uninstall by removing these lines or running `tabtab uninstall slss`
