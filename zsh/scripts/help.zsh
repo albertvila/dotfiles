@@ -69,11 +69,16 @@ function help-gradle {
   echo "----------------"
   echo "All commands works with ./gradlew if the file exists or gradle, the command autocompletion is enabled\n"
 
+  print "gradle init" "Project generator based on some templates"
+  print "gradle tasks" "Lists all available gradle tasks"
   print "gradle COMMAND" "Executes the given command"
-  print "gradle bootRun" "Runs the application if it contains the bootRun command"
-  print "gradle clean test --tests \"*ApplicationConfigTest\"" "Run a single test"
+  print "gradle dependencies" "Displays all project dependencies"
+  print "gradle bootRun/run" "Runs the application if it contains the bootRun command for sprintboot apps/application"
+  print "gradle clean test --tests \"com.lm.ApplicationConfigTest\"" "Run a single test"
   print "gradle build --continuous" "Automatically builds the project for every file change"
   print "gradle clean build -x test" "Excludes test phase"
+  print "gradle build --refresh-dependencie" "Forces to refresh all project dependencies"
+  print "gradle wrapper --gradle-version 5.2.1" "Updates the project gradle wraper to that version"
 }
 
 function help-terraform {
