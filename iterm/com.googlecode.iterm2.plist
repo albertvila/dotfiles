@@ -173,15 +173,15 @@
 	<key>NSWindow Frame NSColorPanel</key>
 	<string>38 78 224 280 0 0 1680 1027 </string>
 	<key>NSWindow Frame NSFontPanel</key>
-	<string>866 33 445 77 0 0 1440 877 </string>
+	<string>1284 33 445 77 0 0 1920 1057 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>669 498 620 392 0 0 1920 1057 </string>
+	<string>428 363 620 392 0 0 1440 877 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>269 194 609 401 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
-	<string>412 345 918 495 0 0 1440 877 </string>
+	<string>412 419 928 394 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>38 0 1402 877 0 0 1440 877 </string>
+	<string>36 0 1884 1057 0 0 1920 1057 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>364 272 570 452 0 0 1440 877 </string>
 	<key>NeverWarnAboutShortLivedSessions_58DDB820-8490-4931-A3FA-A481B9DBF488</key>
@@ -882,6 +882,8 @@
 			<string>/Users/albert</string>
 		</dict>
 	</array>
+	<key>NoSyncHaveRequestedFullDiskAccess</key>
+	<true/>
 	<key>NoSyncHaveWarnedAboutPasteConfirmationChange</key>
 	<true/>
 	<key>NoSyncInstallationId</key>
@@ -971,13 +973,13 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2018-10-27T17:13:44Z</date>
+	<date>2019-03-14T14:17:13Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>ShowBookmarkName</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
-	<true/>
+	<false/>
 	<key>URLHandlersByGuid</key>
 	<dict/>
 	<key>WindowNumber</key>
@@ -987,7 +989,7 @@
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>iTerm Version</key>
-	<string>3.2.2</string>
+	<string>3.2.7</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>

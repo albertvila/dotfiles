@@ -12,7 +12,7 @@
         //"editorCursor.foreground": "#F12360"
     },
     "workbench.settings.useSplitJSON": true,
-    "perl.perltidy": "/opt/plenv/shims/perltidy",
+    "perl.perltidy": "/Users/albert/.plenv/shims/perltidy",
     "perl.perltidyArgs": [],
     "gitlens.mode.active": "zen",
     "atomKeymap.promptV3Features": true,
@@ -63,4 +63,6 @@
     "workbench.iconTheme": "material-icon-theme",
     "terminal.external.osxExec": "iTerm.app",
     "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
 }
