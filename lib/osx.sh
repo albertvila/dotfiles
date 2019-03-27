@@ -131,10 +131,8 @@ function _install_brew() {
 function _install_brew_cask() {
   bot "Checking brew cask packages ..."
 
-  # Install Caskroom
-  brew tap caskroom/cask
-  brew tap caskroom/versions
-  brew tap caskroom/drivers
+  # Install HomeBrew casks
+  brew tap homebrew/cask-versions
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do

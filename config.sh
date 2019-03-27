@@ -114,6 +114,7 @@ declare -a VSCODE_PACKAGES=(
   dbaeumer.vscode-eslint
   eamodio.gitlens
   GabrielBB.vscode-lombok
+  GitHub.vscode-pull-request-github
   Gruntfuggly.todo-tree
   henriiik.vscode-perl
   JerryHong.autofilename
@@ -121,10 +122,11 @@ declare -a VSCODE_PACKAGES=(
   mauve.terraform
   mohsen1.prettify-json
   ms-vscode.atom-keybindings
-  Pkief.material-icon-theme
+  pkief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar
   sfodje.perlcritic
+  VisualStudioExptTeam.vscodeintellicode
   vscjava.vscode-java-debug
   vscjava.vscode-java-test
   WakaTime.vscode-wakatime
