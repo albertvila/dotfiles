@@ -122,7 +122,7 @@ declare -a VSCODE_PACKAGES=(
   mauve.terraform
   mohsen1.prettify-json
   ms-vscode.atom-keybindings
-  pkief.material-icon-theme
+  PKief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar
   sfodje.perlcritic
