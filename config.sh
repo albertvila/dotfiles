@@ -38,7 +38,6 @@ declare -a BREW_APPS=(
 
 declare -a BREW_CASK_APPS=(
   alfred
-  atom
   calibre
   docker
   dropbox
@@ -74,33 +73,6 @@ declare -a YARN_APPS=(
   serverless
 )
 
-declare -a ATOM_PACKAGES=(
-  atom-beautify
-  atom-material-syntax
-  atom-material-ui
-  busy-signal
-  file-icons
-  git-plus
-  goto-definition
-  highlight-selected
-  language-gradle
-  language-terraform
-  linter
-  linter-jshint
-  linter-perl
-  linter-pycodestyle
-  linter-terraform-syntax
-  linter-ui-default
-  minimap
-  minimap-git-diff
-  minimap-highlight-selected
-  pretty-json
-  project-manager
-  Sublime-Style-Column-Selection
-  todo-show
-  tree-view-git-status
-)
-
 declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
   aws-sam-local
@@ -126,7 +98,9 @@ declare -a VSCODE_PACKAGES=(
   redhat.java
   RoscoP.ActiveFileInStatusBar
   sfodje.perlcritic
+  softwaredotcom.swdc-vscode
   VisualStudioExptTeam.vscodeintellicode
+  vncz.vscode-apielements
   vscjava.vscode-java-debug
   vscjava.vscode-java-test
   WakaTime.vscode-wakatime

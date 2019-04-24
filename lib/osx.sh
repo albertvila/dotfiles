@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 function install_osx_packages() {
-  _install_brew
   _install_brew_cask
+  _install_brew
   _install_gem
   _install_pip
   _install_yarn
-  #_install_atom
   _install_app_store_apps
   _install_npm
   _install_vsc
@@ -228,36 +227,6 @@ function _install_yarn() {
   unset YARN_APPS
 
   ok
-}
-
-function _install_atom() {
-  bot "Checking atom packages ..."
-
-  if ! test $(which atom)
-  then
-    error "atom not installed"
-  else
-    _install_atom_packages
-  fi
-
-  ok
-}
-
-function _install_atom_packages() {
-  for pkg in ${ATOM_PACKAGES[@]}; do
-    if [[ ! -d "$HOME/.atom/packages/$pkg" ]]
-    then
-      warn "[atom] Package '$pkg' is not installed"
-      apm install $pkg
-    else
-      ok "[atom] Package '$pkg' is already installed"
-      if apm upgrade -list | grep "${pkg}"; then
-        warn "[atom] Package '${pkg}' is not up to date, updating it ..."
-        apm upgrade $pkg --no-confirm
-      fi
-    fi
-  done
-  unset ATOM_PACKAGES
 }
 
 function _install_app_store_apps() {

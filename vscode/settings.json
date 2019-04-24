@@ -65,4 +65,7 @@
     "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
     "editor.suggestSelection": "first",
     "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "showMusicMetrics": false,
+    "showGitMetrics": false,
+    "showWeeklyRanking": false,
 }
