@@ -119,6 +119,9 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 ### alfred workflows
 - SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
+### airmail
+- In order to open mailto: links with Airmail, just open Mail > Preferences and set Airmail as the default Email Reader
+
 ## Old manual steps
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
 
