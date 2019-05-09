@@ -9,9 +9,13 @@ function infinite {
 function prompt_terraform() {
 
   if [[ -n *.tf(#qN) ]]; then
-    WORKSPACE=$(terraform workspace show 2> /dev/null) || return
+    WORKSPACE=$("terraform" workspace show 2> /dev/null) || return
     "$1_prompt_segment" "$0" "$2" "$DEFAULT_COLOR" "red" "tf:$WORKSPACE"
   fi
+}
+
+function _terraform() {
+  "terraform" "$@" | landscape
 }
 
 # an osx substitution for linux 'free' command

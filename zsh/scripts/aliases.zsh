@@ -17,6 +17,9 @@ alias fixSound="sudo killall coreaudiod"
 # Git stash only for not added files
 alias gstk="git stash --keep-index"
 
+# Using a custon function for terraform in order to append the | landscape command for prettr printing the output
+alias terraform="_terraform"
+
 gbranch() {
     git fetch
 
