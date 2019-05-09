@@ -64,6 +64,9 @@ function _setup_osx() {
   # Disable the warning when changing a file extension
   defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
+  # Store screenshots on Downloads folder
+  defaults write com.apple.screencapture location ~/Downloads
+
   # Setting iterm custom folder config
   sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
