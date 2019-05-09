@@ -29,7 +29,8 @@ declare -a BREW_APPS=(
   openvpn
   perl-build
   plenv
-  terraform
+  #terraform # Just commented to avoid updating it and causing issues on SRE production pipeline
+  terraform_landscape
   vim
   wget
   yarn
@@ -48,6 +49,7 @@ declare -a BREW_CASK_APPS=(
   java
   movist
   plex-media-server
+  postman
   skype
   slack
   spectacle
