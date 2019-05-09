@@ -139,6 +139,10 @@ Those are now configured automatically, however, I prefer to keep the manual ste
 ```
 7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
 
+### Chrome DarkReader extension
+- In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
+- For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
+
 ## External links
 
 iTerm and zsh tips
