@@ -24,7 +24,7 @@
     // It should not be necessary because I'm using jenv enable-plugin export to export JAVA_HOME
     "java.home": "/Users/albert/.jenv/versions/1.8",
 
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.7/server/lombok.jar\" -Xbootclasspath/a:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.7/server/lombok.jar\"",
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.8/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -67,5 +67,5 @@
     "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
     "showMusicMetrics": false,
     "showGitMetrics": false,
-    "showWeeklyRanking": false,
+    "showWeeklyRanking": false
 }
