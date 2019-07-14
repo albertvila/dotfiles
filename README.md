@@ -122,6 +122,9 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 ### airmail
 - In order to open mailto: links with Airmail, just open Mail > Preferences and set Airmail as the default Email Reader
 
+### Google drive
+- If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
+
 ## Old manual steps
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
 
@@ -138,6 +141,10 @@ Those are now configured automatically, however, I prefer to keep the manual ste
     ⌘→  "HEX CODE"      0x05
 ```
 7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
+8. Install the Shell integration for the [automatic profile switching](https://iterm2.com/documentation-automatic-profile-switching.html) using (`curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash`), more info [here](https://iterm2.com/documentation-shell-integration.html) (re run the setup script after this command, because it overrides the .zshrc symbolic link)
+
+^(\w+)@([\w.-]+):.+\$
+^\w+@[\w.-]+:([^$]+)\$
 
 ### Chrome DarkReader extension
 - In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
