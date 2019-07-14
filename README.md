@@ -140,8 +140,7 @@ Those are now configured automatically, however, I prefer to keep the manual ste
     ⌘←  "HEX CODE"      0x01
     ⌘→  "HEX CODE"      0x05
 ```
-7. Follow https://wakatime.com/terminal instructions to enable wakatime in iterm2
-8. Install the Shell integration for the [automatic profile switching](https://iterm2.com/documentation-automatic-profile-switching.html) using (`curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash`), more info [here](https://iterm2.com/documentation-shell-integration.html) (re run the setup script after this command, because it overrides the .zshrc symbolic link)
+7. Install the Shell integration for the [automatic profile switching](https://iterm2.com/documentation-automatic-profile-switching.html) using (`curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash`), more info [here](https://iterm2.com/documentation-shell-integration.html) (re run the setup script after this command, because it overrides the .zshrc symbolic link)
 
 ^(\w+)@([\w.-]+):.+\$
 ^\w+@[\w.-]+:([^$]+)\$

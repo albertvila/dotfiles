@@ -67,7 +67,6 @@ declare -a PIP_APPS=(
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pygments
-  wakatime
 )
 
 declare -a YARN_APPS=(
@@ -100,12 +99,11 @@ declare -a VSCODE_PACKAGES=(
   redhat.java
   RoscoP.ActiveFileInStatusBar
   sfodje.perlcritic
-  softwaredotcom.swdc-vscode
+  softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
   VisualStudioExptTeam.vscodeintellicode
   vncz.vscode-apielements
   vscjava.vscode-java-debug
   vscjava.vscode-java-test
-  WakaTime.vscode-wakatime
 )
 
 declare -a APP_STORE_APPS=(
