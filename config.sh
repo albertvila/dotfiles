@@ -2,6 +2,7 @@
 
 declare -a FILES_TO_SYMLINK=(
   'git/gitignore'
+  'git/gitconfig'
   'misc/isort.cfg'
   'vim'
   'vim/vimrc'

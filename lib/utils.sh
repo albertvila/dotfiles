@@ -49,14 +49,10 @@ function install_os_packages() {
   fi
 }
 
+# Config --global entries configured using the git/gitconfig file
 function setup_git() {
   bot "Setting up git config"
 
-  git config --global push.default simple
-  git config --global core.editor /usr/bin/vim
-  git config --global core.excludesfile '~/.gitignore'
-  git config --global merge.ff false
-  git config --global pull.rebase preserve
   git submodule update --init
 
   ok

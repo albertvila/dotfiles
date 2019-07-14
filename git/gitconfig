@@ -1,0 +1,18 @@
+[push]
+	default = simple
+[core]
+	editor = /usr/bin/vim
+	excludesfile = ~/.gitignore
+    hooksPath = /Users/albert/workspace/GIS-lm-build/git-hooks
+[user]
+	name = Albert Vila
+	email = albert.vila@launchmetrics.com
+	signingkey = D6A13AF86F2F2B32
+[merge]
+	ff = false
+[pull]
+	rebase = preserve
+[commit]
+	gpgsign = true
+[user "jira"]
+[user "github"]
