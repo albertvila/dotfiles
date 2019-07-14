@@ -12,8 +12,8 @@
         //"editorCursor.foreground": "#F12360"
     },
     "workbench.settings.useSplitJSON": true,
-    "perl.perltidy": "/Users/albert/.plenv/shims/perltidy",
-    "perl.perltidyArgs": [],
+    //"perl.perltidy": "/Users/albert/.plenv/shims/perltidy",
+    //"perl.perltidyArgs": [],
     "gitlens.mode.active": "zen",
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
@@ -67,5 +67,8 @@
     "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
     "showMusicMetrics": false,
     "showGitMetrics": false,
-    "showWeeklyRanking": false
+    "showWeeklyRanking": false,
+    "[perl]": {
+        "editor.defaultFormatter": "Kaktus.perltidy-more"
+    }
 }
