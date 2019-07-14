@@ -15,7 +15,11 @@ function prompt_terraform() {
 }
 
 function _terraform() {
-  "terraform" "$@" | landscape
+  if [[ "$@" =~ "destroy" ]]; then
+    "terraform" "$@"
+  else
+    "terraform" "$@" | landscape
+  fi
 }
 
 # an osx substitution for linux 'free' command
