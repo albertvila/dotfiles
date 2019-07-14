@@ -15,6 +15,14 @@ function blue() {
   printf "$COL_BLUE$1$COL_RESET"
 }
 
+function magenta() {
+  printf "$COL_MAGENTA$1$COL_RESET"
+}
+
+function cyan() {
+  printf "$COL_MAGENTA$1$COL_RESET"
+}
+
 function bot() {
   printf "$COL_BLUE[._.]$COL_RESET $1\n"
 }

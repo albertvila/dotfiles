@@ -19,5 +19,6 @@ install_dotfiles
 install_zsh
 setup_git
 setup_vim
+cleanup
 
 end

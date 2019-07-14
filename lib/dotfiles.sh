@@ -6,6 +6,34 @@ function install_dotfiles() {
   _install_dotfiles
 }
 
+# It does a cleanup every 30 days
+function cleanup() {
+  if [ ! -e "$HOME/.dotfiles_cleanup" ]; then
+    # First execution, doing nothin
+    echo $(date) >> "$HOME/.dotfiles_cleanup"
+    return
+  else
+    lastCleanup=$(sed = $HOME/.dotfiles_cleanup | sed -n '$p')
+    cyan=$(cyan "$lastCleanup")
+  fi
+
+  todayMinus30Days=$(gdate -d "-30 days" +%Y%m%d)
+  lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
+  if [[ "$todayMinus30Days" > "$lastCleanupFormatted" ]]; then
+    bot "Last cleanup done at $cyan, doing another clean up now ..."
+
+    # Cleaning up gradle cache (https://github.com/gradle/gradle/issues/2304)
+    find ~/.gradle -type f -atime +30 -delete
+    find ~/.gradle -type d -mindepth 1 -empty -delete
+    ok "Gradle cache cleaned"
+
+    docker image prune -f
+    ok "Docker imge prune"
+
+    echo $(date) >> "$HOME/.dotfiles_cleanup"
+  fi
+}
+
 function _symbolic_link() {
   sourceFile=$1
   targetFile=$2
