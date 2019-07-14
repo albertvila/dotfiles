@@ -67,6 +67,9 @@ function _setup_osx() {
   # Store screenshots on Downloads folder
   defaults write com.apple.screencapture location ~/Downloads
 
+  # dark mode
+  defaults write "Apple Global Domain" "AppleInterfaceStyle" "Dark"
+
   # Setting iterm custom folder config
   sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
