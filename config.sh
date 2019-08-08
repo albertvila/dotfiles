@@ -16,6 +16,7 @@ declare -a BINARIES=()
 declare -a BREW_APPS=(
   ack
   awscli
+  aws-sam-cli
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   fasd
@@ -64,10 +65,12 @@ declare -a GEM_APPS=(
 )
 
 declare -a PIP_APPS=(
+  autopep8 # Needed by python
   beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pygments
+  pylint # Needed by python
 )
 
 declare -a YARN_APPS=(
@@ -77,8 +80,8 @@ declare -a YARN_APPS=(
 
 declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
-  aws-sam-local
   npm-check-updates # Needed to check if the other packages are up to date
+  eslint # Needed to check js code on vscode
 )
 
 declare -a VSCODE_PACKAGES=(
@@ -93,8 +96,11 @@ declare -a VSCODE_PACKAGES=(
   henriiik.vscode-perl
   JerryHong.autofilename
   Kaktus.perltidy-more
+  mathiasfrohlich.kotlin
   mauve.terraform
   mohsen1.prettify-json
+  ms-azuretools.vscode-docker
+  ms-python.python
   ms-vscode.atom-keybindings
   PKief.material-icon-theme
   redhat.java
