@@ -23,11 +23,13 @@ function cleanup() {
     bot "Last cleanup done at $cyan, doing another clean up now ..."
 
     # Cleaning up gradle cache (https://github.com/gradle/gradle/issues/2304)
+    bot "Starting gradle cache cleaning, please be patient..."
     find ~/.gradle -type f -atime +30 -delete
     find ~/.gradle -type d -mindepth 1 -empty -delete
     ok "Gradle cache cleaned"
 
-    docker image prune -f
+    bot "Starting docker system prune, please be patient..."
+    docker system prune -a --volumes
     ok "Docker imge prune"
 
     echo $(date) >> "$HOME/.dotfiles_cleanup"
