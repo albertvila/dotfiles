@@ -31,7 +31,7 @@ declare -a BREW_APPS=(
   openvpn
   perl-build
   plenv
-  #terraform # Just commented to avoid updating it and causing issues on SRE production pipeline
+  terraform
   terraform_landscape
   vim
   wget
@@ -96,12 +96,13 @@ declare -a VSCODE_PACKAGES=(
   henriiik.vscode-perl
   JerryHong.autofilename
   Kaktus.perltidy-more
-  mathiasfrohlich.kotlin
+  mathiasfrohlich.Kotlin
   mauve.terraform
   mohsen1.prettify-json
   ms-azuretools.vscode-docker
   ms-python.python
   ms-vscode.atom-keybindings
+  nsfilho.tosnippet
   PKief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar
