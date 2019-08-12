@@ -70,5 +70,7 @@
     "showWeeklyRanking": false,
     "[perl]": {
         "editor.defaultFormatter": "Kaktus.perltidy-more"
-    }
+    },
+    "python.jediEnabled": false,
+    "editor.minimap.enabled": true
 }
