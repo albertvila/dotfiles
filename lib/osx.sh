@@ -70,6 +70,9 @@ function _setup_osx() {
   # dark mode
   defaults write "Apple Global Domain" "AppleInterfaceStyle" "Dark"
 
+  # stop itunes to autorun when a device is connected
+  defaults write com.apple.iTunesHelper ignore-devices 1
+
   # Setting iterm custom folder config
   sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
