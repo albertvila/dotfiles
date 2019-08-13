@@ -30,8 +30,6 @@ Also make sure you have the `brew` command. If not, install it using `$ /usr/bin
 ```sh
 $ git clone https://github.com/albertvila/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
-$ git submodule init
-$ git submodule update
 $ sh ./setup.sh
 ```
 
