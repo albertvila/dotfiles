@@ -45,7 +45,7 @@ function install_os_packages() {
   if [ $os == "osx" ]; then
     source ./lib/osx.sh
     install_osx_packages
-  elif [ $os == "linux"]; then
+  elif [ $os == "linux" ]; then
     source ./lib/osx.sh
     install_linux_packages
   else
