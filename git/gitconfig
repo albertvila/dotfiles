@@ -3,7 +3,6 @@
 [core]
 	editor = /usr/bin/vim
 	excludesfile = ~/.gitignore
-    hooksPath = /Users/albert/workspace/GIS-lm-build/git-hooks
 [user]
 	name = Albert Vila
 	email = albert.vila@launchmetrics.com
@@ -11,8 +10,9 @@
 [merge]
 	ff = false
 [pull]
-	rebase = preserve
+	rebase = merges
 [commit]
 	gpgsign = true
-[user "jira"]
-[user "github"]
+	verbose = true
+[includeIf "gitdir:~/workspace/"]
+	path = ~/.gitconfig-lm
