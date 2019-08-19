@@ -29,7 +29,7 @@ function cleanup() {
     ok "Gradle cache cleaned"
 
     bot "Starting docker system prune, please be patient..."
-    docker system prune -a --volumes
+    docker system prune -a -f --volumes
     ok "Docker imge prune"
 
     echo $(date) >> "$HOME/.dotfiles_cleanup"
