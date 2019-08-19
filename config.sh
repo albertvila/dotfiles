@@ -90,6 +90,7 @@ declare -a VSCODE_PACKAGES=(
   brpaz.file-templates
   dbaeumer.vscode-eslint
   eamodio.gitlens
+  foxundermoon.shell-format
   GabrielBB.vscode-lombok
   GitHub.vscode-pull-request-github
   Gruntfuggly.todo-tree
