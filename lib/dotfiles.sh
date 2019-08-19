@@ -17,8 +17,15 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
-  todayMinus30Days=$(date --date "30 days ago" +"%Y%m%d")
-  lastCleanupFormatted=$(date --date "${lastCleanup}" +%Y%m%d)
+  os=$(get_os)
+  if [ $os == "osx" ]; then
+    todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
+    lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
+  else
+    todayMinus30Days=$(date -d "30 days ago" +"%Y%m%d")
+    lastCleanupFormatted=$(date -d "${lastCleanup}" +%Y%m%d)
+  fi
+
   if [[ "$todayMinus30Days" > "$lastCleanupFormatted" ]]; then
     bot "Last cleanup done at $cyan, doing another clean up now ..."
 

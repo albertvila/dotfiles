@@ -12,6 +12,16 @@ function install_osx_packages() {
   _setup_osx
 }
 
+function install_linux_packages() {
+  _install_brew
+  _install_gem
+  _install_pip
+  _install_yarn
+  _install_npm
+  _install_vsc
+  _install_apt
+}
+
 function _setup_osx() {
   bot "Setting up osx ..."
 
@@ -311,4 +321,15 @@ function _install_vsc_packages() {
     fi
   done
   unset VSCODE_PACKAGES
+}
+
+function _install_apt() {
+  bot "Checking apt-get packages ..."
+
+  for pkg in ${APT_GET_APPS[@]}; do
+    sudo apt-get install ${pkg}
+  done
+  unset APT_GET_APPS
+
+  ok
 }

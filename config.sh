@@ -39,6 +39,13 @@ declare -a BREW_APPS=(
   zookeeper
 )
 
+declare -a APT_GET_APPS=(
+  build-essential
+  curl
+  file
+  git
+)
+
 declare -a BREW_CASK_APPS=(
   alfred
   calibre
@@ -69,7 +76,7 @@ declare -a PIP_APPS=(
   beautysh # Beautifier for sh files (used by atom)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
-  pygments
+  Pygments
   pylint # Needed by python
 )
 
