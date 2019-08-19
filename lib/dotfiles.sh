@@ -17,20 +17,24 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
-  todayMinus30Days=$(gdate -d "-30 days" +%Y%m%d)
-  lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
+  todayMinus30Days=$(date --date "30 days ago" +"%Y%m%d")
+  lastCleanupFormatted=$(date --date "${lastCleanup}" +%Y%m%d)
   if [[ "$todayMinus30Days" > "$lastCleanupFormatted" ]]; then
     bot "Last cleanup done at $cyan, doing another clean up now ..."
 
-    # Cleaning up gradle cache (https://github.com/gradle/gradle/issues/2304)
-    bot "Starting gradle cache cleaning, please be patient..."
-    find ~/.gradle -type f -atime +30 -delete
-    find ~/.gradle -type d -mindepth 1 -empty -delete
-    ok "Gradle cache cleaned"
+    if [ -e "$HOME/.gradle" ]; then
+      # Cleaning up gradle cache (https://github.com/gradle/gradle/issues/2304)
+      bot "Starting gradle cache cleaning, please be patient..."
+      find ~/.gradle -type f -atime +30 -delete
+      find ~/.gradle -type d -mindepth 1 -empty -delete
+      ok "Gradle cache cleaned"
+    fi
 
-    bot "Starting docker system prune, please be patient..."
-    docker system prune -a -f --volumes
-    ok "Docker imge prune"
+    if [ -x "$(command -v docker)" ]; then
+      bot "Starting docker system prune, please be patient..."
+      docker system prune -a -f --volumes
+      ok "Docker imge prune"
+    fi
 
     echo $(date) >> "$HOME/.dotfiles_cleanup"
   fi
