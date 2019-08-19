@@ -28,6 +28,8 @@ function get_os() {
 
   if [ "$OS_NAME" == "Darwin" ]; then
     echo "osx"
+  elif [ "$OS_NAME" == "Linux" ]; then
+    echo "linux"
   else
     echo "unknown"
   fi

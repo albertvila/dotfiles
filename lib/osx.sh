@@ -100,8 +100,7 @@ function _install_brew() {
   bot "Checking brew packages ..."
 
   # install homebrew
-  which -s brew
-  if [[ $? != 0 ]] ; then
+  if [[ $(command -v brew) == "" ]]; then
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   else
     brew update
@@ -189,8 +188,7 @@ function _install_pip() {
   # In order to silence the DEPRECATION: Python 2.7 will reach the end of its life on January 1st, 2020 warning
   export PYTHONWARNINGS=ignore
 
-  which -s pip
-  if [[ $? != 0 ]] ; then
+  if [[ $(command -v pip) == "" ]]; then
     bot "Going to install pip, if it does not work, maybe it's because the command needs sudo"
     easy_install pip
   else
@@ -285,7 +283,12 @@ function _install_npm() {
 function _install_vsc() {
   bot "Checking visual studio code packages ..."
 
-  ln -fs $DOTFILES_DIR/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
+  os=$(get_os)
+  if [ $os == "osx" ]; then
+    ln -fs $DOTFILES_DIR/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
+  elif [ $os == "linux" ]; then
+    ln -fs $DOTFILES_DIR/vscode/settings.json ~/.config/Code/User/settings.json
+  fi
 
   if ! test $(which code)
   then
