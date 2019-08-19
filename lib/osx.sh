@@ -327,7 +327,19 @@ function _install_apt() {
   bot "Checking apt-get packages ..."
 
   for pkg in ${APT_GET_APPS[@]}; do
-    sudo apt-get install ${pkg}
+    exists=$(apt -qq list "${pkg}" 2>/dev/null)
+
+    if [[ $exists ]]; then
+      ok "[apt] Package '$pkg' is already installed"
+
+      if apt list --upgradable 2>/dev/null | grep "^${pkg}"; then
+        warn "[apt] Package '$pkg' is not up to date, updating it ..."
+        sudo apt-get install ${pkg}
+      fi
+    else
+      warn "[apt] Package '$pkg' is not installed"
+      sudo apt-get install ${pkg}
+    fi
   done
   unset APT_GET_APPS
 
