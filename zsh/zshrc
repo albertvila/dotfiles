@@ -25,10 +25,12 @@ export EDITOR="vim"
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
 export GPG_TTY=$(tty)
 
-export PLENV_ROOT=~/.plenv
-export PLENV_SHELL=zsh
-PLENV_VERSION=$(<$PLENV_ROOT/version)
-export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
+if [[ -d ~/.plenv ]]; then
+  export PLENV_ROOT=~/.plenv
+  export PLENV_SHELL=zsh
+  PLENV_VERSION=$(<$PLENV_ROOT/version)
+  export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
+fi
 
 # tabtab source for serverless package, automatically added by serverless yarn package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
@@ -50,6 +52,7 @@ if which jenv > /dev/null; then eval "$(jenv init -)"; fi
 #export JENV_ROOT=/usr/local/opt/jenv
 
 # Enabling export plugin to automatically expose JAVA_HOME
+# This command fails on linux, enable-plugin command not found
 eval "$(jenv enable-plugin export)"
 
 # tabtab source for slss package
