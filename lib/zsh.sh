@@ -12,17 +12,16 @@ function install_zsh() {
 function _install_zsh() {
   bot "Installing zsh if needed"
 
-  # Test to see if zshell is installed.  If it is:
+  # Test to see if zshell is installed
   if [ -f /bin/zsh -o -f /usr/bin/zsh ]; then
     ok "zsh is already installed"
   else
     ask_for_confirmation "Zsh not found, zsh installation has not been tested, do you wanna proceed?"
     if answer_is_yes; then
       echo "We'll try to install zsh, then re-run this script!"
-      os=$(get_os)
-      if [ $os == "osx" ]; then
+      if is_osx; then
         brew install zsh
-      elif [ $os == "linux" ]; then
+      elif is_linux; then
         sudo apt-get install zsh
       fi
     fi
@@ -56,6 +55,8 @@ function _install_prezto() {
 
     # TODO The following commands fail under this bash script, but they work if you run them manually on terminal
     setopt EXTENDED_GLOB
+
+    # The following command fails on Linux, command substitution: syntax error near unexpected token '.N'
     for rcfile in `${ZDOTDIR:-$HOME}/.zprezto/runcoms/^README.md(.N)`; do
       ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
     done

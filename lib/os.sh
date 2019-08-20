@@ -1,25 +1,35 @@
 #!/usr/bin/env bash
 
-function install_osx_packages() {
+function install_os_packages() {
+  if is_osx; then
+    _install_osx_packages
+  elif is_linux; then
+    _install_linux_packages
+  else
+    error "Operating System not supported"
+    exit;
+  fi
+}
+
+function _install_osx_packages() {
   _install_brew_cask
-  _install_brew
-  _install_gem
-  _install_pip
-  _install_yarn
+  _install_common_packages
   _install_app_store_apps
-  _install_npm
-  _install_vsc
   _setup_osx
 }
 
-function install_linux_packages() {
+function _install_linux_packages() {
+  _install_common_packages
+  _install_apt
+}
+
+function _install_common_packages() {
   _install_brew
   _install_gem
   _install_pip
   _install_yarn
   _install_npm
   _install_vsc
-  _install_apt
 }
 
 function _setup_osx() {
@@ -91,10 +101,8 @@ function _setup_osx() {
 
   killall Dock Finder SystemUIServer
 
-  installation_mode=$(get_installation_mode)
-  if [ $installation_mode == "install" ]; then
-
-    # Install the Solarized Dark theme for iTerm
+  # Install the Solarized Dark theme for iTerm just the first time
+  if is_first_execution; then
     open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
   fi
 
@@ -293,10 +301,9 @@ function _install_npm() {
 function _install_vsc() {
   bot "Checking visual studio code packages ..."
 
-  os=$(get_os)
-  if [ $os == "osx" ]; then
+  if is_osx; then
     ln -fs $DOTFILES_DIR/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
-  elif [ $os == "linux" ]; then
+  elif is_linux; then
     ln -fs $DOTFILES_DIR/vscode/settings.json ~/.config/Code/User/settings.json
   fi
 
@@ -325,6 +332,12 @@ function _install_vsc_packages() {
 
 function _install_apt() {
   bot "Checking apt-get packages ..."
+
+  # TODO To check if they are really needed to install latest openjdk
+  if is_first_execution; then
+    sudo add-apt-repository ppa:openjdk-r/ppa
+    sudo apt-get update
+  fi
 
   for pkg in ${APT_GET_APPS[@]}; do
     exists=$(apt -qq list "${pkg}" 2>/dev/null)

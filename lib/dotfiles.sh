@@ -4,6 +4,8 @@ function install_dotfiles() {
   _backup_existing_dotfiles
 
   _install_dotfiles
+  _setup_git
+  _setup_vim
 }
 
 # It does a cleanup every 30 days
@@ -17,11 +19,10 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
-  os=$(get_os)
-  if [ $os == "osx" ]; then
+  if is_osx; then
     todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
     lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
-  else
+  elif is_linux; then
     todayMinus30Days=$(date -d "30 days ago" +"%Y%m%d")
     lastCleanupFormatted=$(date -d "${lastCleanup}" +%Y%m%d)
   fi
@@ -45,6 +46,25 @@ function cleanup() {
 
     echo $(date) >> "$HOME/.dotfiles_cleanup"
   fi
+}
+
+# Config --global entries configured using the git/gitconfig file
+function _setup_git() {
+  bot "Setting up git config"
+
+  git submodule update --init
+
+  ok
+}
+
+function _setup_vim() {
+  bot "Installing vim plugins and fonts"
+
+  vim +PluginInstall +qall > /dev/null 2>&1
+  mkdir -p $HOME/.vim/colors
+  ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
+
+  ok
 }
 
 function _symbolic_link() {

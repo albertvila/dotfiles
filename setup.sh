@@ -7,6 +7,7 @@ source ./config.sh
 source ./lib/echos.sh
 source ./lib/utils.sh
 source ./lib/dotfiles.sh
+source ./lib/os.sh
 source ./lib/zsh.sh
 
 # Get current dir (so run this script from anywhere)
@@ -16,9 +17,7 @@ start
 
 install_os_packages
 install_dotfiles
-setup_git
 install_zsh
-setup_vim
 cleanup
 
 end
