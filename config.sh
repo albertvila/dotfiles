@@ -40,10 +40,11 @@ declare -a BREW_APPS=(
 )
 
 declare -a APT_GET_APPS=(
-  build-essential
-  curl
-  file
-  git
+  build-essential # Needed by linuxBrew
+  curl # Needed by linuxBrew
+  file # Needed by linuxBrew
+  git # Needed by linuxBrew
+  default-jdk
 )
 
 declare -a BREW_CASK_APPS=(

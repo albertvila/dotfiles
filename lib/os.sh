@@ -21,6 +21,7 @@ function _install_osx_packages() {
 function _install_linux_packages() {
   _install_common_packages
   _install_apt
+  _setup_linux
 }
 
 function _install_common_packages() {
@@ -109,6 +110,17 @@ function _setup_osx() {
   ok
 }
 
+function _setup_linux {
+  bot "Setting up linux ..."
+
+  # Install the Powerline fonts needed by Gnome-terminal (https://linuxhint.com/install_zsh_shell_ubuntu_1804)
+  if is_first_execution; then
+    sudo apt-get install powerline fonts-powerline
+  fi
+
+  ok
+}
+
 # [Some brew commands]
 # brew outdated -> list outdated packages
 # brew upgrade -> upgrade all
@@ -119,7 +131,11 @@ function _install_brew() {
 
   # install homebrew
   if [[ $(command -v brew) == "" ]]; then
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    if is_osx; then
+      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    elif is_linux; then
+      sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+    fi
   else
     brew update
   fi

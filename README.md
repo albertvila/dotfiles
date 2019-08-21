@@ -6,14 +6,14 @@ The setup script is smart enough to back up your existing dotfiles into a `~/.do
 
 I prefer `zsh` as my shell of choice. As such, the setup script will install `prezto` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
-Check `config.sh` file if you want to know all packages/modules to install and the `lib/osx.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
+Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx/linux defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
-- Install osx dev packages for brew/pip/atom and osx defaults
+- Install osx/linux dev packages for brew/pip/npm/gem/yarn/vscode/brew cask/apt and osx/linux defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
-- Colors theme solarized (iterm2, vim, intellij) (http://ethanschoonover.com/solarized)
+- Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
 - Fonts powerline (https://github.com/powerline/fonts)
 
 The customized theme looks like
@@ -23,9 +23,7 @@ And with terraform default workspace looks link
 ![Theme](zsh/theme_terraform.png)
 
 ## Installation
-
-Before installing make sure you have the `git` command. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`
-Also make sure you have the `brew` command. If not, install it using `$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
 
 ```sh
 $ git clone https://github.com/albertvila/dotfiles.git ~/dotfiles
@@ -110,10 +108,6 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 ### aws
 - Run `aws configure` and set up your aws credentials
 
-### atom
-- Open Highlight Selected package settings and unselect `Only Highlight Whole Words`
-- Open Linter-perl settings and add ., lib, conf to the Inc Paths from Project Root
-
 ### alfred workflows
 - SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
@@ -122,6 +116,32 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 
 ### Google drive
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
+
+### Chrome DarkReader extension
+- In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
+- For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
+
+### Gnome-terminal
+- Open preferences and select Solarized Dark theme, also change the colors theme accordingly (open a file with vi to see if changes are applied properly). Also you need to untoggle the bold checkbox
+
+### Albert for linux (Alfred alternative)
+- Use the following commands to install Albert
+```
+wget -nv https://download.opensuse.org/repositories/home:manuelschneid3r/xUbuntu_18.04/Release.key -O Release.key
+sudo apt-key add - < Release.key
+sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/manuelschneid3r/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/home:manuelschneid3r.list"
+sudo apt update
+sudo apt install albert
+```
+
+- Additionally, to delete the repository and the trusted key, run the following commands:
+```
+sudo rm /etc/apt/sources.list.d/home:manuelschneid3r.list
+sudo apt-key del E192A257
+sudo apt clean
+sudo apt update
+```
+- Then open a Terminal and type `albert`, configure the needed extensions, toggle the enable at login checkbox and set the desired keyword shortcut.
 
 ## Old manual steps
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
@@ -142,10 +162,6 @@ Those are now configured automatically, however, I prefer to keep the manual ste
 
 ^(\w+)@([\w.-]+):.+\$
 ^\w+@[\w.-]+:([^$]+)\$
-
-### Chrome DarkReader extension
-- In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
-- For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
 ## External links
 
