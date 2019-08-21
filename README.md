@@ -60,6 +60,20 @@ Error: Cask java8 exists in multiple taps:
 
   Then you should remove one of the taps, you can see all of them using `brew tap` and remove one using `brew untap XXX`
 
+### Chrome extensions
+- AdBlock plus
+- Bear Chrome
+- Dark Reader
+- GIFs for Github
+- Google Docs Offline
+- I don't care about cookies
+- JSON Formatter
+- Keepa - Amazon Price Tracker
+- LastPass: Free Password Manager
+- Pushbullet
+- Refined GitHub
+- Tampermonkey
+
 ## Manual steps after first setup
 
 ### general
