@@ -191,7 +191,7 @@
 	<key>NSWindow Frame SharedPreferences</key>
 	<string>241 143 918 514 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>36 0 1884 1057 0 0 1920 1057 </string>
+	<string>36 0 1404 877 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>36 590 570 467 0 0 1920 1057 </string>
 	<key>NeverWarnAboutShortLivedSessions_58DDB820-8490-4931-A3FA-A481B9DBF488</key>
@@ -3267,9 +3267,9 @@
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
 		<key>screenFrame</key>
-		<string>{{0, 0}, {1440, 900}}</string>
+		<string>{{0, 0}, {1920, 1080}}</string>
 		<key>topLeft</key>
-		<string>{269, 595}</string>
+		<string>{269, 877}</string>
 	</dict>
 	<key>NoSyncHaveRequestedFullDiskAccess</key>
 	<true/>
@@ -3286,7 +3286,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>7492A6AE-4D54-473F-BE93-4BC700DA17C7</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>2</integer>
+	<integer>3</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -4011,6 +4011,11 @@
 			</dict>
 		</array>
 	</dict>
+	<key>NoSyncSearchHistory</key>
+	<array>
+		<string>1219039402</string>
+		<string>spring</string>
+	</array>
 	<key>NoSyncTimeOfFirstLaunchOfVersionWithTip</key>
 	<real>530799313.70898801</real>
 	<key>OnlyWhenMoreTabs</key>
@@ -4090,13 +4095,13 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2019-08-09T12:12:16Z</date>
+	<date>2019-08-19T08:50:45Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>ShowBookmarkName</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
-	<false/>
+	<true/>
 	<key>SoundForEsc</key>
 	<false/>
 	<key>SplitPaneDimmingAmount</key>
