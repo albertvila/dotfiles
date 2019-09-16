@@ -20,7 +20,7 @@
 
     "java.home": "/Users/albert/.jenv/versions/1.8",
 
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.8/server/lombok.jar\"",
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.9/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -66,5 +66,19 @@
         "editor.defaultFormatter": "Kaktus.perltidy-more"
     },
     "python.jediEnabled": false,
-    "editor.minimap.enabled": true
+    "editor.minimap.enabled": true,
+    "terraform.indexing": {
+        "enabled": true,
+        "liveIndexing": false,
+        "delay": 500,
+        "exclude": [
+            ".terraform/**/*",
+            "**/.terraform/**/*"
+        ]
+    },
+    "terraform.languageServer": {
+        "enabled": false,
+        "args": []
+    },
+    "javascript.updateImportsOnFileMove.enabled": "always"
 }
