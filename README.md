@@ -119,6 +119,10 @@ Once you know that perl version to install, run the following commands
 Note: If you get Segmentation fault installing perl versions, just install the perl-build as a plugin using the following command
 `git clone git://github.com/tokuhirom/Perl-Build.git $(plenv root)/plugins/perl-build/`
 
+### pyenv
+1. Install latest python version using the following command `pyenv install 3.7.3`
+2. Set this version as the default one for the whole system `pyenv global 3.7.3`
+
 ### aws
 - Run `aws configure` and set up your aws credentials
 

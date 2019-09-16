@@ -26,11 +26,13 @@ declare -a BREW_APPS=(
   gradle-completion
   htop
   jenv
+  jq
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   node
   openvpn
   perl-build
   plenv
+  pyenv
   terraform
   terraform_landscape
   vim
