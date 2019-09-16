@@ -19,7 +19,7 @@ precmd () {
   echo -ne "$window_title"
 }
 
-export PATH=.:~/bin:$PATH
+export PATH=.:~/bin:~/.local/bin:$PATH
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
@@ -60,3 +60,6 @@ eval "$(jenv enable-plugin export)"
 [[ -f /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh ]] && . /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
