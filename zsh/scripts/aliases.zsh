@@ -34,9 +34,11 @@ gbranch() {
         exit 1;
     fi
 
+    today=$(gdate +"%Y%m%d")
     shortCommitHash=`git rev-parse --short HEAD`
     randomNumber=${(l:5::0:)${RANDOM}}
-    newBranch="$baseBranch-hotfix-albert_$shortCommitHash"_"$randomNumber-GIS-1883"
+
+    newBranch="$baseBranch-albert_$today"_"$shortCommitHash"_"$randomNumber"
 
     echo "Creating a new branch $newBranch and switching into it"
     git checkout -b $newBranch origin/$currentBranch

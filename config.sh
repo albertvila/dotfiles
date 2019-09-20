@@ -29,6 +29,7 @@ declare -a BREW_APPS=(
   jq
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   node
+  nvm
   openvpn
   perl-build
   plenv

@@ -123,6 +123,13 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 1. Install latest python version using the following command `pyenv install 3.7.3`
 2. Set this version as the default one for the whole system `pyenv global 3.7.3`
 
+### nvm
+1. Setup the node version you want to use, for example to use node 8 type
+```
+nvm install 8
+nvm use 8
+```
+
 ### aws
 - Run `aws configure` and set up your aws credentials
 
