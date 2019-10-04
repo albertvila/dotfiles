@@ -47,15 +47,6 @@
     "java.errors.incompleteClasspath.severity": "ignore",
     "diffEditor.renderSideBySide": false,
     "workbench.activityBar.visible": true,
-    "todo-tree.defaultHighlight": {},
-    "todo-tree.customHighlight": {
-        "TODO": {
-            "foreground": "magenta"
-        },
-        "FIXME": {
-            "foreground": "red"
-        }
-    },
     "workbench.iconTheme": "material-icon-theme",
     "terminal.external.osxExec": "iTerm.app",
     "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
@@ -80,5 +71,15 @@
         "enabled": false,
         "args": []
     },
-    "javascript.updateImportsOnFileMove.enabled": "always"
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "gitlens.hovers.currentLine.over": "line",
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "foreground": "magenta"
+        },
+        "FIXME": {
+            "foreground": "red"
+        }
+    },
+    "todo-tree.highlights.defaultHighlight": {}
 }
