@@ -60,6 +60,8 @@ Error: Cask java8 exists in multiple taps:
 
   Then you should remove one of the taps, you can see all of them using `brew tap` and remove one using `brew untap XXX`
 
+- If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell
+
 ### Chrome extensions
 - AdBlock plus
 - Bear Chrome

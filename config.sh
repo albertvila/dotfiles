@@ -53,6 +53,7 @@ declare -a APT_GET_APPS=(
 declare -a BREW_CASK_APPS=(
   alfred
   calibre
+  dbeaver-community
   docker
   dropbox
   firefox

@@ -146,7 +146,7 @@ function _install_brew() {
       ok "[brew] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if brew outdated --quiet | grep -q "^${pkg}\$"; then
+      if brew outdated --quiet | grep -q "^${pkg}"; then
         warn "[brew] Package '$pkg' is not up to date, updating it ..."
         brew upgrade "$pkg"
       fi

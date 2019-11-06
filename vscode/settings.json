@@ -59,7 +59,7 @@
     "python.jediEnabled": false,
     "editor.minimap.enabled": true,
     "terraform.indexing": {
-        "enabled": true,
+        "enabled": false,
         "liveIndexing": false,
         "delay": 500,
         "exclude": [
@@ -68,7 +68,7 @@
         ]
     },
     "terraform.languageServer": {
-        "enabled": false,
+        "enabled": true,
         "args": []
     },
     "javascript.updateImportsOnFileMove.enabled": "always",
