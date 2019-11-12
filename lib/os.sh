@@ -129,16 +129,7 @@ function _setup_linux {
 function _install_brew() {
   bot "Checking brew packages ..."
 
-  # install homebrew
-  if [[ $(command -v brew) == "" ]]; then
-    if is_osx; then
-      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    elif is_linux; then
-      sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-    fi
-  else
-    brew update
-  fi
+  brew update
 
   # Install brew packages
   for pkg in ${BREW_APPS[@]}; do
@@ -171,6 +162,15 @@ function _install_brew() {
 
 function _install_brew_cask() {
   bot "Checking brew cask packages ..."
+
+  # install homebrew
+  if [[ $(command -v brew) == "" ]]; then
+    if is_osx; then
+      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    elif is_linux; then
+      sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+    fi
+  fi
 
   # Install HomeBrew casks
   brew tap homebrew/cask-versions
