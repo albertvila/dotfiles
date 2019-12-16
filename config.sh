@@ -119,6 +119,7 @@ declare -a VSCODE_PACKAGES=(
   PKief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar
+  secanis.jenkinsfile-support
   sfodje.perlcritic
   softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
   VisualStudioExptTeam.vscodeintellicode
@@ -128,9 +129,10 @@ declare -a VSCODE_PACKAGES=(
 )
 
 declare -a APP_STORE_APPS=(
-  # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store
+  # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
   918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
   904280696 # Things3
+  1475897096 # Jira Cloud
 )
 
 # Check vim/plugins.vim for enabled plugins
