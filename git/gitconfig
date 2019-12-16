@@ -5,7 +5,7 @@
 	excludesfile = ~/.gitignore
 [user]
 	name = Albert Vila
-	email = albert.vila@launchmetrics.com
+	email = albert.vila@gmail.com
 	signingkey = D6A13AF86F2F2B32
 [merge]
 	ff = false
