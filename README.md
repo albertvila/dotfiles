@@ -51,14 +51,13 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
 
 - If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
 
-- If you find the following error while updating homebrew apps
+- If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
+
 ```
 Error: Cask java8 exists in multiple taps:
   homebrew/cask-versions/java8
   caskroom/versions/java8
 ```
-
-  Then you should remove one of the taps, you can see all of them using `brew tap` and remove one using `brew untap XXX`
 
 - If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell
 
