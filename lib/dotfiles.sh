@@ -19,6 +19,7 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
+  export LC_ALL=C
   if is_osx; then
     todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
     lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
@@ -60,9 +61,9 @@ function _setup_git() {
 function _setup_vim() {
   bot "Installing vim plugins and fonts"
 
-  vim +PluginInstall +qall > /dev/null 2>&1
   mkdir -p $HOME/.vim/colors
   ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
+  vim +PluginInstall +qall > /dev/null 2>&1
 
   ok
 }
