@@ -8,7 +8,7 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 
 Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx/linux defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
-The `config.sh` file contains the common packages/modules, it can be extend with custom files per user, for example I also use the `config_albert.sh` file.
+The `config.sh` file contains the default packages/modules, it can be extend with a custom file per user, for example I also use the `config_albert.sh` file.
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
@@ -33,7 +33,7 @@ $ cd ~/dotfiles
 $ sh ./setup.sh
 ```
 
-If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX`, it will install the common and the custom packages/modules.
+If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules.
 
 ## Update
 Just run `./setup.sh` from time to time to automatically update all modules and applications
