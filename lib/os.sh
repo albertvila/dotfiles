@@ -226,8 +226,8 @@ function _install_pip() {
   export PYTHONWARNINGS=ignore
 
   if [[ $(command -v pip) == "" ]]; then
-    bot "Going to install pip, if it does not work, maybe it's because the command needs sudo"
-    easy_install pip
+    bot "Going to install pip, this command requires sudo"
+    sudo easy_install pip
   else
     pip install --upgrade --user pip
   fi
