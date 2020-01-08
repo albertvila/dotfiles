@@ -81,5 +81,9 @@
             "foreground": "red"
         }
     },
-    "todo-tree.highlights.defaultHighlight": {}
+    "todo-tree.highlights.defaultHighlight": {},
+    "hadolint.hadolintPath": "/usr/local/bin/hadolint",
+    "[dockerfile]": {
+        "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+    }
 }
