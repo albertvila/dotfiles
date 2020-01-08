@@ -245,7 +245,13 @@ function _install_pip() {
 
     else
       warn "[pip] Package '$pkg' is not installed"
-      pip install "$pkg" --user
+
+      # It throws a zsh:1: command not found: pygmentize every time you do a cat file if it's not installed this way
+      if [ $pkg == "Pygments" ]; then
+        sudo easy_install Pygments
+      else
+        pip install "$pkg" --user
+      fi
     fi
   done
   unset PIP_APPS

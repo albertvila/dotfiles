@@ -8,6 +8,8 @@ I prefer `zsh` as my shell of choice. As such, the setup script will install `pr
 
 Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx/linux defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
+The `config.sh` file contains the common packages/modules, it can be extend with custom files per user, for example I also use the `config_albert.sh` file.
+
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx/linux dev packages for brew/pip/npm/gem/yarn/vscode/brew cask/apt and osx/linux defaults
@@ -31,6 +33,8 @@ $ cd ~/dotfiles
 $ sh ./setup.sh
 ```
 
+If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX`, it will install the common and the custom packages/modules.
+
 ## Update
 Just run `./setup.sh` from time to time to automatically update all modules and applications
 
@@ -46,10 +50,6 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
   ./setup.sh
   plenv global 5.14.2
 ```
-
-- Permission issues with pip, run the following command `sudo easy_install pip`
-
-- If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
 
 - If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
 
@@ -78,11 +78,10 @@ Error: Cask java8 exists in multiple taps:
 ## Manual steps after first setup
 
 ### general
-1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the `setup_osx` function from `./lib/osx.sh`, pending to check if it works)
-2. Open OSX keyboard settings and remove spotlight shortcut
-3. Open Alfred and set spotlight shortcut, also select to be opened at login
-4. Import this Alfred Dark Theme from https://www.alfredapp.com/extras/theme/24fhXfBld7/
-5. Open spectacle and select to be opened at login
+1. Open OSX keyboard settings and remove spotlight shortcut
+2. Open Alfred and set spotlight shortcut, also select to be opened at login
+3. Import this Alfred Dark Theme from https://www.alfredapp.com/extras/theme/24fhXfBld7/
+4. Open spectacle and select to be opened at login
 
 ### intellij
 1. Clone git repository
@@ -171,6 +170,14 @@ sudo apt update
 
 ## Old manual steps
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
+
+### Old issues
+- Permission issues with pip, run the following command `sudo easy_install pip`
+
+- If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
+
+### general
+1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the `setup_osx` function from `./lib/osx.sh`, pending to check if it works)
 
 ### iterm2
 1. Open iTerm2's preferences (do this change for all needed profiles).
