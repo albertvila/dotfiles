@@ -24,18 +24,18 @@ declare -a BREW_APPS=(
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   gradle-completion
+  hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   htop
   jenv
   jq
-  mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   node
   nvm
+  openssl
   openvpn
   perl-build
   plenv
   pyenv
   terraform
-  terraform_landscape
   vim
   wget
   yarn
@@ -52,24 +52,15 @@ declare -a APT_GET_APPS=(
 
 declare -a BREW_CASK_APPS=(
   alfred
-  calibre
-  dbeaver-community
   docker
   dropbox
   firefox
-  google-chrome
   intellij-idea-ce
   iterm2
   java
-  movist
-  plex-media-server
   postman
-  skype
-  slack
   spectacle
   spotify
-  suunto-moveslink
-  transmission
   visual-studio-code
 )
 
@@ -91,7 +82,6 @@ declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(
-  alfred-goodreads-workflow
   npm-check-updates # Needed to check if the other packages are up to date
   eslint # Needed to check js code on vscode
 )
@@ -102,6 +92,7 @@ declare -a VSCODE_PACKAGES=(
   brpaz.file-templates
   dbaeumer.vscode-eslint
   eamodio.gitlens
+  exiasr.hadolint
   foxundermoon.shell-format
   GabrielBB.vscode-lombok
   GitHub.vscode-pull-request-github
@@ -121,7 +112,6 @@ declare -a VSCODE_PACKAGES=(
   RoscoP.ActiveFileInStatusBar
   secanis.jenkinsfile-support
   sfodje.perlcritic
-  softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
   VisualStudioExptTeam.vscodeintellicode
   vncz.vscode-apielements
   vscjava.vscode-java-debug
@@ -130,9 +120,6 @@ declare -a VSCODE_PACKAGES=(
 
 declare -a APP_STORE_APPS=(
   # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
-  918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
-  904280696 # Things3
-  1475897096 # Jira Cloud
 )
 
 # Check vim/plugins.vim for enabled plugins
