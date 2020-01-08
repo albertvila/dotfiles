@@ -24,7 +24,7 @@ function cyan() {
 }
 
 function bot() {
-  printf "$COL_BLUE[._.]$COL_RESET $1\n"
+  printf "$COL_BLUE[._"$USER"_.]$COL_RESET $1\n"
 }
 
 function ok() {
