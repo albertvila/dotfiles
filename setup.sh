@@ -21,7 +21,7 @@ done
 
 # Get current dir (so run this script from anywhere)
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-USER="default"
+DOTFILES_USER="default"
 
 start
 
@@ -29,11 +29,11 @@ install_os_packages
 install_dotfiles
 install_zsh
 
-unset USER
-USER=$USER_PARAM
+unset DOTFILES_USER
+DOTFILES_USER=$USER_PARAM
 
-if [[ $USER ]]; then
-  source $DOTFILES_DIR/config_$USER.sh
+if [[ $DOTFILES_USER ]]; then
+  source $DOTFILES_DIR/config_$DOTFILES_USER.sh
   install_os_packages
 fi
 
