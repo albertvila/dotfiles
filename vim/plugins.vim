@@ -16,7 +16,8 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 
-Plugin 'altercation/vim-colors-solarized'
+" Going to be installed with a git submodule, because otherwise we cannot run the vim +PluginInstall command as it fails for missing solarized
+" Plugin 'altercation/vim-colors-solarized'
 
 " Customized welcome page
 Plugin 'mhinz/vim-startify'
