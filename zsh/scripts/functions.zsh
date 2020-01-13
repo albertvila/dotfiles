@@ -6,6 +6,18 @@ function infinite {
   done
 }
 
+function looooooooong {
+    START=$(date +%s.%N)
+    $*
+    EXIT_CODE=$?
+    END=$(date +%s.%N)
+    DIFF=$(echo "$END - $START" | bc)
+    RES=$(python -c "diff = $DIFF; min = int(diff / 60); print('%s min' % min)")
+    result="$1 completed in $RES, exit code $EXIT_CODE."
+    echo -e "\n⏰  $result"
+    ( say -r 250 $result 2>&1 > /dev/null & )
+}
+
 function prompt_terraform() {
 
   if [[ -n *.tf(#qN) ]]; then

@@ -46,10 +46,7 @@ export LESSOPEN='|pygmentize %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
 # To enable shims and autocompletion add to your profile:
-if which jenv > /dev/null; then eval "$(jenv init -)"; fi
-
-# To use Homebrew's directories rather than ~/.jenv add to your profile:
-#export JENV_ROOT=/usr/local/opt/jenv
+if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
 # Enabling export plugin to automatically expose JAVA_HOME
 # This command fails on linux, enable-plugin command not found
@@ -61,15 +58,29 @@ eval "$(jenv enable-plugin export)"
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
+  eval "$(pyenv init - --no-rehash)"
 fi
 
 if [[ ! -d ~/.nvm ]]; then
   mkdir ~/.nvm
 fi
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/usr/local/opt/nvm/etc/bash_completion" ] && . "/usr/local/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
+function load-nvm () {
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+  [ -s "/usr/local/opt/nvm/etc/bash_completion" ] && . "/usr/local/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
+}
+
+load-nvmrc() {
+  if [[ -f .nvmrc && -r .nvmrc ]]; then
+    if ! type nvm >/dev/null; then
+      load-nvm
+    fi
+    nvm use
+  fi
+}
+
+# Lazy loading nvm stuff only if needed (the first time you cd into a folder with .nvmrc)
+add-zsh-hook chpwd load-nvmrc
 
 autoload -U +X bashcompinit && bashcompinit

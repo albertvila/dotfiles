@@ -39,10 +39,9 @@ zstyle ':prezto:load' pmodule \
   'history-substring-search' \
   'git' \
   'ssh' \
+  'archive' \
+  'docker' \
   'prompt'
-
-#  'directory' \ -> Removed in favor of fasd + aliases
-#  'archive' \
 
 #
 # Autosuggestions
