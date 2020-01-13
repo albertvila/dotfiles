@@ -90,6 +90,7 @@ declare -a VSCODE_PACKAGES=(
   akamud.vscode-theme-onedark
   alefragnani.project-manager
   brpaz.file-templates
+  byi8220.indented-block-highlighting
   dbaeumer.vscode-eslint
   eamodio.gitlens
   exiasr.hadolint
