@@ -11,17 +11,26 @@ function install_os_packages() {
   fi
 }
 
+function setup_os_packages() {
+  if is_osx; then
+    _setup_osx
+  elif is_linux; then
+    _setup_linux
+  else
+    error "Operating System not supported"
+    exit;
+  fi
+}
+
 function _install_osx_packages() {
   _install_brew_cask
   _install_common_packages
   _install_app_store_apps
-  _setup_osx
 }
 
 function _install_linux_packages() {
   _install_common_packages
   _install_apt
-  _setup_linux
 }
 
 function _install_common_packages() {
@@ -146,9 +155,6 @@ function _install_brew() {
       fi
     else
       warn "[brew] Package '$pkg' is not installed"
-      if [ $pkg == "vim" ]; then
-        brew install "$pkg" --with-lua
-      fi
       brew install "$pkg"
     fi
   done

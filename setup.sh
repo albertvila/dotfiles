@@ -26,6 +26,7 @@ DOTFILES_USER="default"
 start
 
 install_os_packages
+setup_os_packages
 install_dotfiles
 install_zsh
 
