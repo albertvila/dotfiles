@@ -16,7 +16,6 @@ declare -a BINARIES=()
 declare -a BREW_APPS=(
   ack
   awscli
-  aws-sam-cli
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   fasd
@@ -24,7 +23,6 @@ declare -a BREW_APPS=(
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   gradle-completion
-  hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   htop
   jenv
   jq
@@ -34,12 +32,8 @@ declare -a BREW_APPS=(
   openvpn
   perl-build
   plenv
-  pyenv
-  terraform
   vim
-  wget
   yarn
-  zookeeper
 )
 
 declare -a APT_GET_APPS=(
@@ -68,12 +62,7 @@ declare -a GEM_APPS=(
 )
 
 declare -a PIP_APPS=(
-  autopep8 # Needed by python
-  beautysh # Beautifier for sh files (used by atom)
-  flake8 # Python code checker
-  isort # Needed by atom if we want to sort python imports
   Pygments
-  pylint # Needed by python
 )
 
 declare -a YARN_APPS=(
@@ -93,12 +82,10 @@ declare -a VSCODE_PACKAGES=(
   byi8220.indented-block-highlighting
   dbaeumer.vscode-eslint
   eamodio.gitlens
-  exiasr.hadolint
   foxundermoon.shell-format
   GabrielBB.vscode-lombok
   GitHub.vscode-pull-request-github
   Gruntfuggly.todo-tree
-  henriiik.vscode-perl
   JerryHong.autofilename
   Kaktus.perltidy-more
   mathiasfrohlich.Kotlin
