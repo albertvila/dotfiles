@@ -129,6 +129,8 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 nvm install 8
 nvm use 8
 ```
+### vi
+- If you want to enable the solarized theme, open the ~/.vimrc file and uncomment the colorscheme line
 
 ### aws
 - Run `aws configure` and set up your aws credentials

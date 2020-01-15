@@ -1,6 +1,6 @@
 {
     "telemetry.enableTelemetry": false,
-    "workbench.colorTheme": "Atom One Dark",
+    "workbench.colorTheme": "Solarized Dark",
     "editor.scrollBeyondLastLine": false,
     "search.location": "panel",
     "explorer.autoReveal": false,
