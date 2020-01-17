@@ -10,6 +10,7 @@ function install_dotfiles() {
 
 # It does a cleanup every 30 days
 function cleanup() {
+  export LC_ALL=C
   if [ ! -e "$HOME/.dotfiles_cleanup" ]; then
     # First execution, doing nothin
     echo $(date) >> "$HOME/.dotfiles_cleanup"
@@ -19,7 +20,6 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
-  export LC_ALL=C
   if is_osx; then
     todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
     lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
