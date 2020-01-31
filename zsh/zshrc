@@ -1,7 +1,3 @@
-if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
-  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
-fi
-
 for script in $HOME/.scripts/*; do
   source $script
 done
@@ -13,18 +9,20 @@ if [[ -d "$HOME/.scripts.private" ]]; then
   done
 fi
 
-# Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
-precmd () {
-  window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
-  echo -ne "$window_title"
-}
-
 export PATH=.:~/bin:~/.local/bin:$PATH
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
 export GPG_TTY=$(tty)
 
+# Adding colors to more & less commands, cat is also colored with an alias
+export MORE='-R'
+export LESSOPEN='|pygmentize %s'
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
+
+# TODO check if they are really needed because it slows down the start time
+
+# Needed by lm command
 if [[ -d ~/.plenv ]]; then
   export PLENV_ROOT=~/.plenv
   export PLENV_SHELL=zsh
@@ -32,57 +30,82 @@ if [[ -d ~/.plenv ]]; then
   export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
 fi
 
-# tabtab source for serverless package, automatically added by serverless yarn package
-# uninstall by removing these lines or running `tabtab uninstall serverless`
-YARN_TABTAB="$HOME/.config/yarn/global/node_modules/tabtab"
-[[ -f $YARN_TABTAB/.completions/serverless.zsh ]] && . $YARN_TABTAB/.completions/serverless.zsh
-# tabtab source for sls package
-# uninstall by removing these lines or running `tabtab uninstall sls`
-[[ -f $YARN_TABTAB/.completions/sls.zsh ]] && . $YARN_TABTAB/.completions/sls.zsh
+# # To enable shims and autocompletion add to your profile:
+# if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
-# Adding colors to more & less commands, cat is also colored with an alias
-export MORE='-R'
-export LESSOPEN='|pygmentize %s'
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
+# # Enabling export plugin to automatically expose JAVA_HOME
+# # This command fails on linux, enable-plugin command not found
+# eval "$(jenv enable-plugin export)"
 
-# To enable shims and autocompletion add to your profile:
-if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
+# if command -v pyenv 1>/dev/null 2>&1; then
+#   eval "$(pyenv init - --no-rehash)"
+# fi
 
-# Enabling export plugin to automatically expose JAVA_HOME
-# This command fails on linux, enable-plugin command not found
-eval "$(jenv enable-plugin export)"
-
-# tabtab source for slss package
-# uninstall by removing these lines or running `tabtab uninstall slss`
-[[ -f /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh ]] && . /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh
-
+# https://www.iterm2.com/documentation-shell-integration.html
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init - --no-rehash)"
-fi
-
-if [[ ! -d ~/.nvm ]]; then
-  mkdir ~/.nvm
-fi
-
-function load-nvm () {
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/usr/local/opt/nvm/etc/bash_completion" ] && . "/usr/local/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
-}
 
 load-nvmrc() {
   [[ -a .nvmrc ]] || return
 
   if [[ -f .nvmrc && -r .nvmrc ]]; then
-    if ! type nvm >/dev/null; then
-      load-nvm
-    fi
     nvm use
   fi
 }
 
-# Lazy loading nvm stuff only if needed (the first time you cd into a folder with .nvmrc)
+# Automatically cally nvm use if the folder has a .nvmrc file
+autoload -U add-zsh-hook
 add-zsh-hook chpwd load-nvmrc
 
-autoload -U +X bashcompinit && bashcompinit
+### Added by Zinit's installer
+if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
+    print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
+    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
+    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
+        print -P "%F{33}▓▒░ %F{34}Installation successful.%f" || \
+        print -P "%F{160}▓▒░ The clone has failed.%f"
+fi
+source "$HOME/.zinit/bin/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+### End of Zinit installer's chunk
+
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv os_icon context dir vcs)
+POWERLEVEL9K_CONTEXT_TEMPLATE="%n"
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status ssh time)
+POWERLEVEL9K_STATUS_VERBOSE=false
+POWERLEVEL9K_SHORTEN_STRATEGY="truncate_middle"
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
+POWERLEVEL9K_CONTEXT_DEFAULT_FOREGROUND='black'
+POWERLEVEL9K_CONTEXT_DEFAULT_BACKGROUND='green'
+zinit light Powerlevel9k/powerlevel9k
+
+zinit snippet OMZ::plugins/git/git.plugin.zsh
+
+# Autojump to folders with j or z (custom alias)
+zinit snippet PZT::modules/fasd/init.zsh
+
+zinit snippet PZT::modules/history/init.zsh
+zinit light zsh-users/zsh-history-substring-search
+
+# The next 3 it's for general aliases and they provide the terminal colored output
+zinit snippet PZT::modules/gnu-utility/init.zsh
+zstyle ':prezto:*:*' color 'yes'
+zinit snippet PZT::modules/utility/init.zsh
+unalias lm
+
+zinit snippet PZT::modules/completion/init.zsh
+
+# Directory where brew command installs nvm
+export NVM_DIR="/usr/local/opt/nvm"
+zinit ice wait'!0'
+zinit snippet OMZ::plugins/nvm/nvm.plugin.zsh
+
+zinit ice wait'!0' blockf atpull'zinit creinstall -q .'
+zinit light zsh-users/zsh-completions
+
+zinit ice wait'!0' atinit"zpcompinit; zpcdreplay"
+zinit light zdharma/fast-syntax-highlighting
+
+zinit ice wait'!0' atload"_zsh_autosuggest_start"
+zinit light zsh-users/zsh-autosuggestions

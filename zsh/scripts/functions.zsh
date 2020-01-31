@@ -1,3 +1,35 @@
+# Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
+function precmd () {
+  window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
+  echo -ne "$window_title"
+}
+
+# Next function copied from https://github.com/apjanke/oh-my-zsh/blob/master/lib/git.zsh to avoid
+#  error "command not found: git_current_branch"
+
+# Outputs the name of the current branch
+# Usage example: git pull origin $(git_current_branch)
+# Using '--quiet' with 'symbolic-ref' will not cause a fatal error (128) if
+# it's not a symbolic ref, but in a Git repo.
+function git_current_branch() {
+  local ref
+  ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
+  local ret=$?
+  if [[ $ret != 0 ]]; then
+    [[ $ret == 128 ]] && return  # no git repo.
+    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return
+  fi
+  echo ${ref#refs/heads/}
+}
+
+function prompt_terraform() {
+
+  if [[ -n *.tf(#qN) ]]; then
+    WORKSPACE=$("terraform" workspace show 2> /dev/null) || return
+    "$1_prompt_segment" "$0" "$2" "$DEFAULT_COLOR" "red" "tf:$WORKSPACE"
+  fi
+}
+
 function infinite {
   while true
   do
@@ -16,14 +48,6 @@ function looooooooong {
     result="$1 completed in $RES, exit code $EXIT_CODE."
     echo -e "\n⏰  $result"
     ( say -r 250 $result 2>&1 > /dev/null & )
-}
-
-function prompt_terraform() {
-
-  if [[ -n *.tf(#qN) ]]; then
-    WORKSPACE=$("terraform" workspace show 2> /dev/null) || return
-    "$1_prompt_segment" "$0" "$2" "$DEFAULT_COLOR" "red" "tf:$WORKSPACE"
-  fi
 }
 
 # an osx substitution for linux 'free' command
