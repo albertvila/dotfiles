@@ -3,10 +3,11 @@
 function install_zsh() {
   _install_zsh
 
-  _install_prezto
-  _setup_prezto
+  #_install_prezto
+  #_setup_prezto
 
   _setup_zsh
+  _setup_zinit
 }
 
 function _install_zsh() {
@@ -41,6 +42,14 @@ function _setup_zsh() {
   fi
 
   $DOTFILES_DIR/iterm/powerline/fonts/install.sh
+
+  ok
+}
+
+function _setup_zinit() {
+  bot "Updating zinit"
+
+  zsh -ic 'zinit self-update; zinit update'
 
   ok
 }
