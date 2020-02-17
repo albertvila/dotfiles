@@ -31,7 +31,7 @@ if [[ -d ~/.plenv ]]; then
 fi
 
 # # To enable shims and autocompletion add to your profile:
-# if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
+if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
 # # Enabling export plugin to automatically expose JAVA_HOME
 # # This command fails on linux, enable-plugin command not found
@@ -56,6 +56,13 @@ load-nvmrc() {
 autoload -U add-zsh-hook
 add-zsh-hook chpwd load-nvmrc
 
+# TODO If opening a new terminal you find the following error -> /Users/albert/.zcompdump:2: unknown file attribute:, the workaround is as follow:
+# From your home, run
+#  rm -rf .zcompdump*
+#  rm -rf .zinit/plugins/*
+# Remove all the above lines from this zshrc file and then open a new terminal
+# Once all plugins have been initialitzed, restore this file and everything should work as expected
+
 ### Added by Zinit's installer
 if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
     print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
@@ -69,7 +76,7 @@ autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
 ### End of Zinit installer's chunk
 
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv os_icon context dir vcs)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv os_icon context dir vcs terraform)
 POWERLEVEL9K_CONTEXT_TEMPLATE="%n"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status ssh time)
