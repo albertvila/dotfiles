@@ -31,6 +31,7 @@ declare -a BREW_APPS=(
   openssl
   openvpn
   perl-build
+  perltidy
   plenv
   vim
   yarn
