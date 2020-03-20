@@ -10,6 +10,8 @@
 	<true/>
 	<key>AppleAntiAliasingThreshold</key>
 	<integer>1</integer>
+	<key>ApplePressAndHoldEnabled</key>
+	<false/>
 	<key>AppleScrollAnimationEnabled</key>
 	<integer>0</integer>
 	<key>AppleSmoothFixedFontsSizeThreshold</key>
@@ -136,7 +138,7 @@
 	<key>NSNavLastRootDirectory</key>
 	<string>~/Documents</string>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
-	<string>{712, 448}</string>
+	<string>{799, 448}</string>
 	<key>NSQuotedKeystrokeBinding</key>
 	<string></string>
 	<key>NSRepeatCountBinding</key>
@@ -182,8 +184,10 @@
 	<string>38 78 224 280 0 0 1680 1027 </string>
 	<key>NSWindow Frame NSFontPanel</key>
 	<string>1284 33 445 77 0 0 1920 1057 </string>
+	<key>NSWindow Frame NSNavPanelAutosaveName</key>
+	<string>338 321 799 448 0 0 1440 877 </string>
 	<key>NSWindow Frame SUAutomaticUpdateAlert</key>
-	<string>652 662 616 174 0 0 1920 1057 </string>
+	<string>670 662 616 174 0 0 1920 1057 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
 	<string>668 498 620 392 0 0 1920 1057 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
@@ -191,9 +195,9 @@
 	<key>NSWindow Frame SharedPreferences</key>
 	<string>241 143 918 514 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>36 0 1884 1057 0 0 1920 1057 </string>
+	<string>36 0 1404 877 0 0 1920 1057 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
-	<string>36 590 570 467 0 0 1920 1057 </string>
+	<string>36 0 1404 877 0 0 1440 877 </string>
 	<key>NeverWarnAboutShortLivedSessions_58DDB820-8490-4931-A3FA-A481B9DBF488</key>
 	<true/>
 	<key>NeverWarnAboutShortLivedSessions_58DDB820-8490-4931-A3FA-A481B9DBF488_selection</key>
@@ -3264,8 +3268,14 @@
 		<string>3.3.2</string>
 		<string>3.2.9</string>
 		<string>3.3.1</string>
+		<string>3.3.8</string>
+		<string>3.3.7</string>
 		<string>3.3.3</string>
 		<string>3.3.6</string>
+	</array>
+	<key>NoSyncBFPRecents</key>
+	<array>
+		<string>Meslo LG M for Powerline</string>
 	</array>
 	<key>NoSyncCommandHistoryHasEverBeenUsed</key>
 	<true/>
@@ -3274,7 +3284,7 @@
 		<key>screenFrame</key>
 		<string>{{0, 0}, {1920, 1080}}</string>
 		<key>topLeft</key>
-		<string>{269, 877}</string>
+		<string>{268, 877}</string>
 	</dict>
 	<key>NoSyncHaveRequestedFullDiskAccess</key>
 	<true/>
@@ -3291,7 +3301,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>7492A6AE-4D54-473F-BE93-4BC700DA17C7</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>22</integer>
+	<integer>30</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -4048,23 +4058,6 @@
 			</dict>
 		</array>
 	</dict>
-	<key>NoSyncSearchHistory</key>
-	<array>
-		<string>1219039402</string>
-		<string>spring</string>
-	</array>
-	<key>NoSyncSearchHistory2</key>
-	<array>
-		<string>unsafe</string>
-		<string>userconf</string>
-		<string>checkstyle</string>
-		<string>elastic_time</string>
-		<string>elastic_fim</string>
-		<string>html</string>
-		<string>java</string>
-		<string>routeId</string>
-		<string>tags</string>
-	</array>
 	<key>NoSyncTimeOfFirstLaunchOfVersionWithTip</key>
 	<real>530799313.70898801</real>
 	<key>OnlyWhenMoreTabs</key>
@@ -4144,11 +4137,11 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2019-12-13T13:59:51Z</date>
+	<date>2020-03-09T07:59:38Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
-	<true/>
+	<false/>
 	<key>ShowBookmarkName</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
@@ -4174,7 +4167,7 @@
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>iTerm Version</key>
-	<string>3.3.6</string>
+	<string>3.3.8</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>

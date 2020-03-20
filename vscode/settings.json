@@ -2,7 +2,6 @@
     "telemetry.enableTelemetry": false,
     "workbench.colorTheme": "Solarized Dark",
     "editor.scrollBeyondLastLine": false,
-    "search.location": "panel",
     "explorer.autoReveal": false,
     "workbench.colorCustomizations": {
         "editor.selectionBackground": "#7288a8",
@@ -20,7 +19,7 @@
 
     "java.home": "/Users/albert/.jenv/versions/1.8",
 
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-0.9.9/server/lombok.jar\"",
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -85,5 +84,6 @@
     "hadolint.hadolintPath": "/usr/local/bin/hadolint",
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-    }
+    },
+    "todo-tree.tree.showScanModeButton": false
 }
