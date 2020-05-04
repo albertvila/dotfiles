@@ -27,6 +27,7 @@ declare -a GEM_APPS=(
 declare -a PIP_APPS=(
   autopep8 # Needed by python
   beautysh # Beautifier for sh files (used by atom)
+  diagrams # Diagrams as code (https://diagrams.mingrammer.com/)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pylint # Needed by python

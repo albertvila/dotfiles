@@ -61,6 +61,15 @@ Error: Cask java8 exists in multiple taps:
 
 - If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell
 
+- To fix the following issue `nvm is not compatible with the npm config "prefix"` just run the following commands with the node version displayed from the output of the first command
+
+```
+npm config delete prefix
+npm config set prefix $NVM_DIR/versions/node/v6.13.7
+```
+
+- If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
+
 ### Chrome extensions
 - AdBlock plus
 - Bear Chrome
