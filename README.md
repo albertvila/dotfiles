@@ -68,6 +68,8 @@ npm config delete prefix
 npm config set prefix $NVM_DIR/versions/node/v6.13.7
 ```
 
+- If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
+
 ### Chrome extensions
 - AdBlock plus
 - Bear Chrome

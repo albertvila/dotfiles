@@ -31,6 +31,7 @@ declare -a BREW_APPS=(
   openssl
   openvpn
   perl-build
+  perltidy
   plenv
   vim
   yarn
@@ -52,6 +53,7 @@ declare -a BREW_CASK_APPS=(
   intellij-idea-ce
   iterm2
   java
+  java11
   postman
   spectacle
   spotify
@@ -71,8 +73,8 @@ declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(
-  npm-check-updates # Needed to check if the other packages are up to date
   eslint # Needed to check js code on vscode
+  npm-check-updates # Needed to check if the other packages are up to date
 )
 
 declare -a VSCODE_PACKAGES=(
@@ -94,6 +96,7 @@ declare -a VSCODE_PACKAGES=(
   ms-azuretools.vscode-docker
   ms-python.python
   ms-vscode.atom-keybindings
+  ms-vsliveshare.vsliveshare-pack
   nsfilho.tosnippet
   PKief.material-icon-theme
   redhat.java
