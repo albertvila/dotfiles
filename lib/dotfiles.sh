@@ -29,6 +29,7 @@ function cleanup() {
   fi
 
   if [[ "$todayMinus30Days" > "$lastCleanupFormatted" ]]; then
+    freeSpaceBeforeCleaning=$(df -Ph | awk 'NR==2 {print $4}')
     bot "Last cleanup done at $cyan, doing another clean up now ..."
 
     if [ -e "$HOME/.gradle" ]; then
@@ -42,8 +43,20 @@ function cleanup() {
     if [ -x "$(command -v docker)" ]; then
       bot "Starting docker system prune, please be patient..."
       docker system prune -a -f --volumes
-      ok "Docker imge prune"
+      ok "Docker imge pruned"
     fi
+
+    if [ -x "$(command -v yarn)" ]; then
+      bot "Starting yarn cache clean, please be patient..."
+      yarn cache clean
+      ok "Yarn cache cleaned"
+    fi
+
+    sleep 2
+    freeSpaceAfterCleaning=$(df -Ph | awk 'NR==2 {print $4}')
+    blue=$(blue "$freeSpaceBeforeCleaning")
+    cyan=$(cyan "$freeSpaceAfterCleaning")
+    ok "Cleaning done, free space before was $blue and now $cyan"
 
     echo $(date) >> "$HOME/.dotfiles_cleanup"
   fi
