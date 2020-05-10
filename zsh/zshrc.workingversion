@@ -20,9 +20,6 @@ export MORE='-R'
 export LESSOPEN='|pygmentize %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
-# TODO check if they are really needed because it slows down the start time
-
-# Needed by lm command
 if [[ -d ~/.plenv ]]; then
   export PLENV_ROOT=~/.plenv
   export PLENV_SHELL=zsh
@@ -33,9 +30,9 @@ fi
 # To enable shims and autocompletion add to your profile:
 if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
-# # Enabling export plugin to automatically expose JAVA_HOME
-# # This command fails on linux, enable-plugin command not found
-# eval "$(jenv enable-plugin export)"
+# Enabling export plugin to automatically expose JAVA_HOME
+# This command fails on linux, enable-plugin command not found
+eval "$(jenv enable-plugin export)"
 
 if command -v pyenv 1>/dev/null 2>&1; then
   eval "$(pyenv init - --no-rehash)"
@@ -52,9 +49,12 @@ load-nvmrc() {
   fi
 }
 
-# Automatically call nvm use if the folder has a .nvmrc file
+# Automatically cally nvm use if the folder has a .nvmrc file
 autoload -U add-zsh-hook
 add-zsh-hook chpwd load-nvmrc
+
+# don't know if needed
+#autoload -U +X bashcompinit && bashcompinit
 
 ### Added by Zinit's installer
 if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
@@ -79,44 +79,29 @@ POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
 POWERLEVEL9K_CONTEXT_DEFAULT_FOREGROUND='black'
 POWERLEVEL9K_CONTEXT_DEFAULT_BACKGROUND='green'
 zinit light Powerlevel9k/powerlevel9k
-
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-# Autojump to folders with j or z (custom alias)
 zinit snippet PZT::modules/fasd/init.zsh
-
 zinit snippet PZT::modules/history/init.zsh
-zinit light zsh-users/zsh-history-substring-search
-zinit snippet PZT::modules/directory/init.zsh
-
-# Binding the UP and DOWN key for zsh-history-substring-search
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey "$terminfo[kcuu1]" history-substring-search-up
-bindkey "$terminfo[kcud1]" history-substring-search-down
-
-# The next 3 it's for general aliases and they provide the terminal colored output
 zinit snippet PZT::modules/gnu-utility/init.zsh
 zstyle ':prezto:*:*' color 'yes'
 zinit snippet PZT::modules/utility/init.zsh
-unalias lm
-
-# Directory where brew command installs nvm
-export NVM_DIR="/usr/local/opt/nvm"
-zinit ice wait lucid # Using Zinit Turbo mode feature (https://zdharma.org/zinit/wiki/INTRODUCTION/#turbo_mode_zsh_53)
-zinit snippet OMZ::plugins/nvm/nvm.plugin.zsh
 
 # To be reviewed, without the next line the completion does not work properly, and without the completion module
 #  there is some weird things also, terraform prompt does not work, ...
-#rm -rf $HOME/.zcompdump
-#zinit snippet PZT::modules/completion/init.zsh
+rm -rf $HOME/.zcompdump
+zinit snippet PZT::modules/completion/init.zsh # According to the documentation it needs to be loaded after utility module
+zinit light zsh-users/zsh-history-substring-search
 
-zinit ice wait lucid blockf atpull'zinit creinstall -q .'
+export NVM_DIR="/usr/local/opt/nvm"
+zinit ice wait '0'
+zinit snippet OMZ::plugins/nvm/nvm.plugin.zsh
+
+zinit ice wait'!0' blockf atpull'zinit creinstall -q .'
 zinit light zsh-users/zsh-completions
 
-## Trying to load the fast-syntax-highlighting with the turbo mode it throws the compinit:482 errort
-#zinit ice wait'!0' atinit"zpcompinit; zpcdreplay"
+zinit ice wait'!0' atinit"zpcompinit; zpcdreplay"
 zinit light zdharma/fast-syntax-highlighting
 
-zinit ice wait lucid atload"_zsh_autosuggest_start"
+zinit ice wait'!0' atload"_zsh_autosuggest_start"
 zinit light zsh-users/zsh-autosuggestions
