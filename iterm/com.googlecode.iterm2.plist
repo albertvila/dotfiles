@@ -195,7 +195,7 @@
 	<key>NSWindow Frame SharedPreferences</key>
 	<string>241 143 918 514 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>36 0 1404 877 0 0 1920 1057 </string>
+	<string>36 0 1404 877 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>36 0 1404 877 0 0 1440 877 </string>
 	<key>NeverWarnAboutShortLivedSessions_58DDB820-8490-4931-A3FA-A481B9DBF488</key>
@@ -3265,13 +3265,15 @@
 	</array>
 	<key>NoSyncAllAppVersions</key>
 	<array>
-		<string>3.3.2</string>
-		<string>3.2.9</string>
+		<string>3.3.6</string>
+		<string>3.3.8</string>
 		<string>3.3.1</string>
 		<string>3.3.8</string>
 		<string>3.3.7</string>
 		<string>3.3.3</string>
-		<string>3.3.6</string>
+		<string>3.3.7</string>
+		<string>3.2.9</string>
+		<string>3.3.2</string>
 	</array>
 	<key>NoSyncBFPRecents</key>
 	<array>
@@ -3301,7 +3303,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>7492A6AE-4D54-473F-BE93-4BC700DA17C7</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>30</integer>
+	<integer>31</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -4137,7 +4139,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-03-09T07:59:38Z</date>
+	<date>2020-03-27T16:00:40Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
@@ -4145,7 +4147,7 @@
 	<key>ShowBookmarkName</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
-	<true/>
+	<false/>
 	<key>SoundForEsc</key>
 	<false/>
 	<key>SplitPaneDimmingAmount</key>

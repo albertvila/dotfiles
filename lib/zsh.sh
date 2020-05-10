@@ -15,7 +15,8 @@ function _install_zsh() {
 
   # Test to see if zshell is installed
   if [ -f /bin/zsh -o -f /usr/bin/zsh ]; then
-    ok "zsh is already installed"
+    ok "zsh is already installed, checking if we need to upgrade it using brew upgrade command ..."
+    brew upgrade zsh
   else
     ask_for_confirmation "Zsh not found, zsh installation has not been tested, do you wanna proceed?"
     if answer_is_yes; then

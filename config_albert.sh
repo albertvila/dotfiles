@@ -7,9 +7,11 @@ declare -a BREW_APPS=(
   terraform
 )
 
+# Those packages will only be installed on Linux
 declare -a APT_GET_APPS=(
 )
 
+# Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
   calibre
   google-chrome # Moved here because it's already installed on company laptops
