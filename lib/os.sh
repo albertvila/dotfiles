@@ -352,7 +352,7 @@ function _install_vsc_packages() {
   for pkg in ${VSCODE_PACKAGES[@]}; do
     if code --list-extensions | grep "${pkg}"; then
       ok "[vsc] Package '$pkg' is already installed"
-      code --install-extension $pkg
+      code --install-extension $pkg --force
     else
       warn "[vsc] Package '$pkg' is not installed"
       code --install-extension $pkg
