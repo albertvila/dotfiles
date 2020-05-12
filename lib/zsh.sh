@@ -39,6 +39,8 @@ function _setup_zsh() {
 
   # Set the default shell to zsh if it isn't currently set to zsh
   if [[ ! $(echo $SHELL) == $(which zsh) ]]; then
+    # If you receive this error `chsh: /usr/local/bin/zsh: non-standard shell`, then run the following command
+    # sudo sh -c "echo $(which zsh) >> /etc/shells"
     chsh -s $(which zsh)
   fi
 
