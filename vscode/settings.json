@@ -85,5 +85,7 @@
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"
     },
-    "workbench.editor.limit.enabled": true
+    "todo-tree.tree.showScanModeButton": false,
+    "workbench.editor.limit.enabled": true,
+    "java.semanticHighlighting.enabled": true
 }
