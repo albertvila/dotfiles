@@ -63,7 +63,6 @@ autoload -U add-zsh-hook
 add-zsh-hook chpwd load-nvmrc
 add-zsh-hook chpwd check-local-java
 
-export ZSH_COMPDUMP=/tmp/zcompdump-$USER
 ### Added by Zinit's installer
 if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
     print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
