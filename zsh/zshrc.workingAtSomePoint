@@ -94,17 +94,13 @@ zstyle ':prezto:*:*' color 'yes'
 zinit snippet PZT::modules/utility/init.zsh
 unalias lm
 
-# Comment If issues with .zcompdump:2: unknown file attribute: (but It was working as it is)
 zinit ice wait lucid svn blockf \
     atclone'git clone --depth 3 https://github.com/zsh-users/zsh-completions.git external'
 zinit snippet PZT::modules/completion
 
-# Comment If issues with .zcompdump:2: unknown file attribute: (but It was working as it is)
 zinit wait lucid for \
  atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
     zdharma/fast-syntax-highlighting \
-
-zinit wait lucid for \
  blockf \
     zsh-users/zsh-completions \
  atload"!_zsh_autosuggest_start" \
