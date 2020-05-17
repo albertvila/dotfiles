@@ -4,7 +4,6 @@ function install_zsh() {
   _install_zsh
 
   _install_prezto
-  _setup_prezto
 
   _setup_zsh
 }
@@ -64,23 +63,14 @@ function _install_prezto() {
       ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
     done
 
+    # Installing the powerlevel9k theme
+    git clone https://github.com/bhilburn/powerlevel9k.git  ~/.zprezto/modules/prompt/external/powerlevel9k
+
     # If we want to uninstall it, just remove the ~/.zprezto folder
   else
     cd $HOME/.zprezto/
-    git stash push -q
     git pull && git submodule update --init --recursive
-    git stash pop -q
   fi
-
-  ok
-}
-
-function _setup_prezto() {
-  bot "Setting up prezto"
-
-  # Install Powerline theme
-  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k $HOME/.zprezto/modules/prompt/external/powerlevel9k
-  ln -fs $DOTFILES_DIR/zsh/themes/powerlevel9k/powerlevel9k.zsh-theme $HOME/.zprezto/modules/prompt/functions/prompt_powerlevel9k_setup
 
   ok
 }
