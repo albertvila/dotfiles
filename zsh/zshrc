@@ -13,17 +13,25 @@ if [[ -d "$HOME/.scripts.private" ]]; then
   done
 fi
 
-# Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
-precmd () {
-  window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
-  echo -ne "$window_title"
-}
-
 export PATH=.:~/bin:~/.local/bin:$PATH
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
 export GPG_TTY=$(tty)
+
+# Adding colors to more & less commands, cat is also colored with an alias
+export MORE='-R'
+export LESSOPEN='|pygmentize %s'
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
+
+# Directory where brew command installs nvm
+export NVM_DIR="/usr/local/opt/nvm"
+
+# Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
+precmd () {
+  window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
+  echo -ne "$window_title"
+}
 
 if [[ -d ~/.plenv ]]; then
   export PLENV_ROOT=~/.plenv
@@ -32,40 +40,17 @@ if [[ -d ~/.plenv ]]; then
   export PATH="$PLENV_ROOT/shims:$PLENV_ROOT/versions/$PLENV_VERSION/bin:$PATH"
 fi
 
-# tabtab source for serverless package, automatically added by serverless yarn package
-# uninstall by removing these lines or running `tabtab uninstall serverless`
-YARN_TABTAB="$HOME/.config/yarn/global/node_modules/tabtab"
-[[ -f $YARN_TABTAB/.completions/serverless.zsh ]] && . $YARN_TABTAB/.completions/serverless.zsh
-# tabtab source for sls package
-# uninstall by removing these lines or running `tabtab uninstall sls`
-[[ -f $YARN_TABTAB/.completions/sls.zsh ]] && . $YARN_TABTAB/.completions/sls.zsh
-
-# Adding colors to more & less commands, cat is also colored with an alias
-export MORE='-R'
-export LESSOPEN='|pygmentize %s'
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
-
 # To enable shims and autocompletion add to your profile:
-if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
+# if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
-# Enabling export plugin to automatically expose JAVA_HOME
-# This command fails on linux, enable-plugin command not found
-eval "$(jenv enable-plugin export)"
+# if command -v pyenv 1>/dev/null 2>&1; then
+#   eval "$(pyenv init - --no-rehash)"
+# fi
 
-# tabtab source for slss package
-# uninstall by removing these lines or running `tabtab uninstall slss`
-[[ -f /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh ]] && . /Users/albert/.config/yarn/global/node_modules/tabtab/.completions/slss.zsh
-
+# https://www.iterm2.com/documentation-shell-integration.html
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init - --no-rehash)"
-fi
 
-if [[ ! -d ~/.nvm ]]; then
-  mkdir ~/.nvm
-fi
-
-function load-nvm () {
+load-nvm() {
   export NVM_DIR="$HOME/.nvm"
   [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
   [ -s "/usr/local/opt/nvm/etc/bash_completion" ] && . "/usr/local/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
@@ -82,7 +67,18 @@ load-nvmrc() {
   fi
 }
 
-# Lazy loading nvm stuff only if needed (the first time you cd into a folder with .nvmrc)
-add-zsh-hook chpwd load-nvmrc
+check-local-java() {
+  [[ -a .java-version ]] || return
 
-autoload -U +X bashcompinit && bashcompinit
+  if [[ -f .java-version && -r .java-version ]]; then
+    command printf "Now using local version of java: $(cat .java-version)\n"
+  fi
+}
+
+# Automatically call nvm use if the folder has a .nvmrc file
+autoload -U add-zsh-hook
+add-zsh-hook chpwd load-nvmrc
+add-zsh-hook chpwd check-local-java
+
+# load bashcompinit for some old bash completions
+#autoload -U +X bashcompinit && bashcompinit
