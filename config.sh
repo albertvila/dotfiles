@@ -89,6 +89,7 @@ declare -a VSCODE_PACKAGES=(
   GitHub.vscode-pull-request-github
   Gruntfuggly.todo-tree
   JerryHong.autofilename
+  johnpapa.vscode-peacock
   Kaktus.perltidy-more
   mathiasfrohlich.Kotlin
   mauve.terraform

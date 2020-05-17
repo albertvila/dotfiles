@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
+  docker-credential-helper-ecr
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   pyenv
