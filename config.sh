@@ -9,6 +9,7 @@ declare -a FILES_TO_SYMLINK=(
   'zsh/zpreztorc'
   'zsh/scripts'
   'zsh/zshrc'
+  'zsh/p10k.zsh'
 )
 
 declare -a BINARIES=()
