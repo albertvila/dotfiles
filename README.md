@@ -14,15 +14,12 @@ Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx/linux dev packages for brew/pip/npm/gem/yarn/vscode/brew cask/apt and osx/linux defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
-- Shell theme powerlevel9k (https://github.com/bhilburn/powerlevel9k)
+- Shell theme powerlevel10k (https://github.com/romkatv/powerlevel10k)
 - Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
 - Fonts powerline (https://github.com/powerline/fonts)
 
 The customized theme looks like
 ![Theme](zsh/theme.png)
-
-And with terraform default workspace looks link
-![Theme](zsh/theme_terraform.png)
 
 ## Installation
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
@@ -91,6 +88,9 @@ npm config set prefix $NVM_DIR/versions/node/v6.13.7
 2. Open Alfred and set spotlight shortcut, also select to be opened at login
 3. Import this Alfred Dark Theme from https://www.alfredapp.com/extras/theme/24fhXfBld7/
 4. Open spectacle and select to be opened at login
+
+### iterm with powerlevel10k
+1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
 
 ### intellij
 1. Clone git repository

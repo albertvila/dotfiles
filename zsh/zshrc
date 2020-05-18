@@ -2,6 +2,7 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
+unalias lm
 for script in $HOME/.scripts/*; do
   source $script
 done
@@ -41,7 +42,7 @@ if [[ -d ~/.plenv ]]; then
 fi
 
 # To enable shims and autocompletion add to your profile:
-# if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
+if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
 # if command -v pyenv 1>/dev/null 2>&1; then
 #   eval "$(pyenv init - --no-rehash)"
@@ -81,4 +82,7 @@ add-zsh-hook chpwd load-nvmrc
 add-zsh-hook chpwd check-local-java
 
 # load bashcompinit for some old bash completions
-#autoload -U +X bashcompinit && bashcompinit
+autoload -U +X bashcompinit && bashcompinit
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

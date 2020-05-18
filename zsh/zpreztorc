@@ -130,18 +130,7 @@ zstyle ':prezto:module:git:alias' skip 'yes'
 # Set the prompt theme to load.
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
-zstyle ':prezto:module:prompt' theme 'powerlevel9k'
-#zstyle :prezto:module:prompt theme off
-
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv os_icon context dir vcs terraform)
-POWERLEVEL9K_CONTEXT_TEMPLATE="%n"
-POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status ssh time)
-POWERLEVEL9K_STATUS_VERBOSE=false
-POWERLEVEL9K_SHORTEN_STRATEGY="truncate_middle"
-POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
-POWERLEVEL9K_CONTEXT_DEFAULT_FOREGROUND=244
-#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(icons_test)
+zstyle ':prezto:module:prompt' theme 'powerlevel10k'
 
 # Set the working directory prompt display length.
 # By default, it is set to 'short'. Set it to 'long' (without '~' expansion)
