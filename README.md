@@ -21,6 +21,8 @@ Recap
 The customized theme looks like
 ![Theme](zsh/theme.png)
 
+If you would like to change the theme just run `p10k configure`
+
 ## Installation
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
 
