@@ -25,7 +25,7 @@ export PATH=.:~/bin:~/.local/bin:$PATH
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
-export GPG_TTY=$(tty)
+export GPG_TTY=$TTY
 
 # Adding colors to more & less commands, cat is also colored with an alias
 export MORE='-R'
