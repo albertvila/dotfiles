@@ -9,10 +9,12 @@ function start() {
   else
     last_updated=$(sed = $HOME/.dotfiles | sed -n '$p')
     blue=$(blue "$last_updated")
-    bot "Dotfiles alreay installed/updated at $blue"
+    bot "Dotfiles already installed/updated at $blue"
   fi
 
-  _confirm_execution
+  if [ ! $FORCE ]; then
+    _confirm_execution
+  fi
 }
 
 function end() {

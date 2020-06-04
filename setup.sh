@@ -10,11 +10,15 @@ source ./lib/dotfiles.sh
 source ./lib/os.sh
 source ./lib/zsh.sh
 
-while getopts ":u:" opt; do
+# Parameters
+#  -u to define a user
+#  -f to force and do not ask for confirmation at the beginning
+while getopts ":u:f" opt; do
   case $opt in
     u) USER_PARAM="$OPTARG"
     ;;
-    \?) echo "Invalid option -$OPTARG" >&2
+    f) FORCE=1
+    ;;    \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
 done
