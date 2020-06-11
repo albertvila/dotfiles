@@ -81,6 +81,7 @@ declare -a NPM_PACKAGES=(
 declare -a VSCODE_PACKAGES=(
   akamud.vscode-theme-onedark
   alefragnani.project-manager
+  atlassian.atlascode
   brpaz.file-templates
   byi8220.indented-block-highlighting
   dbaeumer.vscode-eslint
