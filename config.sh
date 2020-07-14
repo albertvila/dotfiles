@@ -94,7 +94,7 @@ declare -a VSCODE_PACKAGES=(
   johnpapa.vscode-peacock
   Kaktus.perltidy-more
   mathiasfrohlich.Kotlin
-  mauve.terraform
+  HashiCorp.terraform
   mohsen1.prettify-json
   ms-azuretools.vscode-docker
   ms-python.python
