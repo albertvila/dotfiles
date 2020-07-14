@@ -58,7 +58,8 @@ Error: Cask java8 exists in multiple taps:
   caskroom/versions/java8
 ```
 
-- If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell
+- If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell.
+Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more information [here](https://www.gnupg.org/(it)/documentation/manuals/gnupg/Common-Problems.html)
 
 - To fix the following issue `nvm is not compatible with the npm config "prefix"` just run the following commands with the node version displayed from the output of the first command
 
@@ -159,6 +160,8 @@ nvm use 8
 - In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
 - For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
+## Manual steps specific for Linux
+
 ### Gnome-terminal
 - Open preferences and select Solarized Dark theme, also change the colors theme accordingly (open a file with vi to see if changes are applied properly). Also you need to untoggle the bold checkbox
 
@@ -188,9 +191,6 @@ Those are now configured automatically, however, I prefer to keep the manual ste
 - Permission issues with pip, run the following command `sudo easy_install pip`
 
 - If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
-
-### general
-1. Open OSX mouse settings and select Natural scroll on trackpad (already present on the `setup_osx` function from `./lib/osx.sh`, pending to check if it works)
 
 ### iterm2
 1. Open iTerm2's preferences (do this change for all needed profiles).
