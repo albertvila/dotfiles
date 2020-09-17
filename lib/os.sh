@@ -187,11 +187,11 @@ function _install_brew_cask() {
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
-    if brew cask list -1 | grep -q "^${pkg}"; then
+    if brew list --cask -1 | grep -q "^${pkg}"; then
       ok "[brew cask] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if brew cask outdated --quiet | grep -q "^${pkg}"; then
+      if brew outdated --cask --quiet | grep -q "^${pkg}"; then
         warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
         brew cask reinstall "$pkg"
       fi
@@ -203,7 +203,7 @@ function _install_brew_cask() {
   unset BREW_CASK_APPS
 
   ok "[brew cask] going to upgrade brew cask"
-  brew cask upgrade
+  brew upgrade --cask
 
   ok
 }
