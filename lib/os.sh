@@ -145,7 +145,7 @@ function _install_brew() {
 
   # Install brew packages
   for pkg in ${BREW_APPS[@]}; do
-    if brew list -1 | grep -q "^${pkg}\$"; then
+    if brew list --formula -1 | grep -q "^${pkg}\$"; then
       ok "[brew] Package '$pkg' is already installed"
 
       # Checking if the package needs update
