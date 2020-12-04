@@ -8,16 +8,12 @@
         "editor.wordHighlightBackground": "#3f2c33",
     },
     "workbench.settings.useSplitJSON": true,
-    //"perl.perltidy": "/Users/albert/.plenv/shims/perltidy",
-    //"perl.perltidyArgs": [],
     "gitlens.mode.active": "zen",
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.formatOnPaste": false,
     "window.zoomLevel": 0,
     "extensions.ignoreRecommendations": false,
-
-    "java.home": "/Users/albert/.jenv/versions/1.8",
 
     "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
     "files.exclude": {
@@ -51,24 +47,15 @@
     "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
     "editor.suggestSelection": "first",
     "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-    "showGitMetrics": false,
     "[perl]": {
         "editor.defaultFormatter": "Kaktus.perltidy-more"
     },
-    "python.jediEnabled": false,
-    "editor.minimap.enabled": true,
-    "terraform.indexing": {
-        "enabled": false,
-        "liveIndexing": false,
-        "delay": 500,
-        "exclude": [
-            ".terraform/**/*",
-            "**/.terraform/**/*"
-        ]
-    },
+    "editor.minimap.enabled": false,
     "terraform.languageServer": {
-        "enabled": true,
-        "args": []
+        "external": true,
+        "args": [
+            "serve"
+        ]
     },
     "javascript.updateImportsOnFileMove.enabled": "always",
     "gitlens.hovers.currentLine.over": "line",
@@ -129,5 +116,47 @@
     "peacock.affectActivityBar": false,
     "files.associations": {
         "zshrc": "shellscript"
-    }
+    },
+    "yaml.schemas": {
+        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.8.5/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+    },
+    "atlascode.jira.jqlList": [
+        {
+            "enabled": true,
+            "id": "8bf6a922-3640-4352-974d-e32be52c68ad",
+            "monitor": true,
+            "name": "My launchmetrics Issues",
+            "query": "assignee = currentUser() AND resolution = Unresolved ORDER BY lastViewed DESC",
+            "siteId": "2b665b4d-6ecc-4eb5-b847-ad071bf66683"
+        },
+        {
+            "enabled": true,
+            "id": "90c0eaa5-52ef-425b-87f4-8e7b587f7ec5",
+            "monitor": true,
+            "name": "BIT current sprint",
+            "query": "project = \"BIT\" AND sprint in openSprints()",
+            "siteId": "2b665b4d-6ecc-4eb5-b847-ad071bf66683"
+        }
+    ],
+    "atlascode.bitbucket.enabled": false,
+    "python.languageServer": "Microsoft",
+    "python.showStartPage": false,
+    "java.configuration.runtimes": [
+        {
+          "name": "JavaSE-1.8",
+          "path": "/Users/albert/.jenv/versions/1.8",
+        },
+        {
+          "name": "JavaSE-11",
+          "path": "/Users/albert/.jenv/versions/11.0.2",
+          "default": true
+        },
+        {
+          "name": "JavaSE-14",
+          "path": "/Users/albert/.jenv/versions/14.0.2"
+        },
+    ],
+    "git.autofetch": true,
+    "java.project.importHint": false,
+    "editor.renderControlCharacters": false
 }
