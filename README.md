@@ -160,6 +160,9 @@ nvm use 8
 - In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
 - For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
+### Tampermonkey for Chrome
+- Open the extension settings, configure Dropbox sync and import the last backup
+
 ## Manual steps specific for Linux
 
 ### Gnome-terminal
