@@ -12,7 +12,6 @@
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.formatOnPaste": false,
-    "window.zoomLevel": 0,
     "extensions.ignoreRecommendations": false,
 
     "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
@@ -118,7 +117,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.8.5/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.9.1/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -158,5 +157,28 @@
     ],
     "git.autofetch": true,
     "java.project.importHint": false,
-    "editor.renderControlCharacters": false
+    "editor.renderControlCharacters": false,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter.notebook.ipynb"
+    },
+    "eslint.alwaysShowStatus": true,
+    "eslint.format.enable": true,
+    "[javascript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "terminal.integrated.shell.osx": "/bin/zsh",
+    "todo-tree.general.tags": [
+        "BUG",
+        "HACK",
+        "FIXME",
+        "TODO",
+        "XXX",
+        "[ ]",
+        "[x]"
+    ],
+    "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+    "redhat.telemetry.enabled": false
 }
