@@ -5,7 +5,7 @@ declare -a BREW_APPS=(
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   pyenv
-  terraform
+  tfenv
 )
 
 # Those packages will only be installed on Linux
