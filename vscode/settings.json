@@ -162,7 +162,7 @@
         "source.fixAll.eslint": true
     },
     "workbench.editorAssociations": {
-        "*.ipynb": "jupyter.notebook.ipynb"
+        "*.ipynb": "jupyter-notebook"
     },
     "eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
@@ -181,5 +181,9 @@
     ],
     "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
     "redhat.telemetry.enabled": false,
-    "security.workspace.trust.untrustedFiles": "open"
+    "security.workspace.trust.untrustedFiles": "open",
+    "notebook.cellToolbarLocation": {
+        "default": "right",
+        "jupyter-notebook": "left"
+    }
 }
