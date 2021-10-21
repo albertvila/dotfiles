@@ -197,7 +197,7 @@ function _install_brew_cask() {
       fi
     else
       warn "[brew cask] Package '$pkg' is not installed"
-      brew cask install "$pkg"
+      brew install "$pkg"
     fi
   done
   unset BREW_CASK_APPS
