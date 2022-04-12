@@ -39,6 +39,7 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "java.errors.incompleteClasspath.severity": "ignore",
+    "java.home": "/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk",
     "diffEditor.renderSideBySide": false,
     "workbench.activityBar.visible": true,
     "workbench.iconTheme": "material-icon-theme",
@@ -117,7 +118,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.9.1/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.10.11/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -138,7 +139,7 @@
         }
     ],
     "atlascode.bitbucket.enabled": false,
-    "python.languageServer": "Microsoft",
+    "python.languageServer": "Default",
     "python.showStartPage": false,
     "java.configuration.runtimes": [
         {
@@ -185,5 +186,8 @@
     "notebook.cellToolbarLocation": {
         "default": "right",
         "jupyter-notebook": "left"
-    }
+    },
+    "json.maxItemsComputed": 500000,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "window.zoomLevel": 1
 }

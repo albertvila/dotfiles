@@ -54,7 +54,6 @@ declare -a BREW_CASK_APPS=(
   firefox
   intellij-idea-ce
   iterm2
-  java
   java11
   postman
   spectacle
