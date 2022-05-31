@@ -101,6 +101,7 @@ declare -a VSCODE_PACKAGES=(
   ms-vscode.atom-keybindings
   ms-vsliveshare.vsliveshare-pack
   nsfilho.tosnippet
+  pflannery.vscode-versionlens
   PKief.material-icon-theme
   redhat.java
   RoscoP.ActiveFileInStatusBar

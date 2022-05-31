@@ -3,6 +3,7 @@
 declare -a BREW_APPS=(
   docker-credential-helper-ecr
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
+  leapp # New AWS authentication method
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   pyenv
   tfenv
@@ -51,7 +52,9 @@ declare -a VSCODE_PACKAGES=(
 
 declare -a APP_STORE_APPS=(
   # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
-  918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
+  # 918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
   904280696 # Things3
+  1091189122 # Bear
+  1176895641 # Spark email
   1475897096 # Jira Cloud
 )
