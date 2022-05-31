@@ -26,6 +26,8 @@ declare -a BREW_APPS=(
   gradle
   gradle-completion
   htop
+  java
+  java11
   jenv
   jq
   node
@@ -54,7 +56,6 @@ declare -a BREW_CASK_APPS=(
   firefox
   intellij-idea-ce
   iterm2
-  java11
   postman
   spectacle
   spotify
