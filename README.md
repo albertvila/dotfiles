@@ -35,42 +35,41 @@ $ sh ./setup.sh
 If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules.
 
 ## Update
-Just run `./setup.sh` from time to time to automatically update all modules and applications
+Just run `./setup.sh` from time to time to automatically update all modules and applications. Use the `-f` option to avoid being asked for a confirmation.
 
-### issues
-- Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
-```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
+## Manual steps
 
-- If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
+### general
+1. Open OSX keyboard settings and remove spotlight shortcut
+2. Open Alfred and set spotlight shortcut, also select to be opened at login
+3. Open spectacle and select to be opened at login
 
-- If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
-```
-  plenv global system
-  ./setup.sh
-  plenv global 5.14.2
-```
+### jenv
+1. Execute `/usr/libexec/java_home -V` to know all java versions installed on your computer
+2. `jenv add ...` to add them
+3. `jenv global ...` to set up the version you want to use
 
-- If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
+More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-os-x-dinesh-prajapati/)
 
-```
-Error: Cask java8 exists in multiple taps:
-  homebrew/cask-versions/java8
-  caskroom/versions/java8
-```
+If the first command does not return anything, just run `brew info java` and `brew info java11` and execute the symlink for the sytem Java wrappers
+
+### iterm with powerlevel10k
+1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
+
+## Possible issues
+
+- Issues signing commits with Github. First follow all steps from here https://sabbour.me/setting-up-signed-git-commits-on-macos/
+If the problem still persist, enable the git Trace mode to properly see the error using
+```export GIT_TRACE=1```
 
 - If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell.
 Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more information [here](https://www.gnupg.org/(it)/documentation/manuals/gnupg/Common-Problems.html)
 
-- To fix the following issue `nvm is not compatible with the npm config "prefix"` just run the following commands with the node version displayed from the output of the first command
+- If some Alfred workflows does not work it may be because they need the `php` command.
 
-```
-npm config delete prefix
-npm config set prefix $NVM_DIR/versions/node/v6.13.7
-```
+## Chrome extensions
+> Automatically sync
 
-- If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
-
-### Chrome extensions
 - AdBlock plus
 - Bear Chrome
 - Dark Reader
@@ -85,15 +84,6 @@ npm config set prefix $NVM_DIR/versions/node/v6.13.7
 - Tampermonkey
 
 ## Manual steps after first setup
-
-### general
-1. Open OSX keyboard settings and remove spotlight shortcut
-2. Open Alfred and set spotlight shortcut, also select to be opened at login
-3. Import this Alfred Dark Theme from https://www.alfredapp.com/extras/theme/24fhXfBld7/
-4. Open spectacle and select to be opened at login
-
-### iterm with powerlevel10k
-1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
 
 ### intellij
 1. Clone git repository
@@ -112,13 +102,6 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 10. Install the following Plugins
 - ChecksStyle-IDEA
 - Lombok
-
-### jenv
-1. Execute `/usr/libexec/java_home -V` to know all java versions installed on your computer
-2. `jenv add ...` to add them
-3. `jenv global ...` to set up the version you want to use
-
-More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-os-x-dinesh-prajapati/)
 
 ### plenv
 Once you know that perl version to install, run the following commands
@@ -150,9 +133,6 @@ nvm use 8
 ### alfred workflows
 - SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
-### airmail
-- In order to open mailto: links with Airmail, just open Mail > Preferences and set Airmail as the default Email Reader
-
 ### Google drive
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
 
@@ -161,7 +141,7 @@ nvm use 8
 - For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
 ### Tampermonkey for Chrome
-- Open the extension settings, configure Dropbox sync and import the last backup
+- Open the extension settings, export to a file and then import to the new computer
 
 ## Manual steps specific for Linux
 
@@ -187,13 +167,39 @@ sudo apt update
 ```
 - Then open a Terminal and type `albert`, configure the needed extensions, toggle the enable at login checkbox and set the desired keyword shortcut.
 
+## Old issues
+
+- Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
+```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
+
+- If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
+
+- If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
+```
+  plenv global system
+  ./setup.sh
+  plenv global 5.14.2
+```
+
+- If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
+
+```
+Error: Cask java8 exists in multiple taps:
+  homebrew/cask-versions/java8
+  caskroom/versions/java8
+```
+
+- To fix the following issue `nvm is not compatible with the npm config "prefix"` just run the following commands with the node version displayed from the output of the first command
+
+```
+npm config delete prefix
+npm config set prefix $NVM_DIR/versions/node/v6.13.7
+```
+
+- If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
+
 ## Old manual steps
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
-
-### Old issues
-- Permission issues with pip, run the following command `sudo easy_install pip`
-
-- If you get the following error `zsh:1: command not found: pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments`
 
 ### iterm2
 1. Open iTerm2's preferences (do this change for all needed profiles).

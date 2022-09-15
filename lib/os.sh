@@ -106,6 +106,9 @@ function _setup_osx() {
   # Disable show recent application on Dock
   defaults write com.apple.dock show-recents -bool FALSE
 
+  # Setting default language English
+  defaults write NSGlobalDomain AppleLocale en_ES
+
   # Setting iterm custom folder config
   sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
@@ -193,11 +196,11 @@ function _install_brew_cask() {
       # Checking if the package needs update
       if brew outdated --cask --quiet | grep -q "^${pkg}"; then
         warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
-        brew cask reinstall "$pkg"
+        brew reinstall --cask "$pkg"
       fi
     else
       warn "[brew cask] Package '$pkg' is not installed"
-      brew install "$pkg"
+      brew install --cask "$pkg"
     fi
   done
   unset BREW_CASK_APPS
@@ -233,7 +236,7 @@ function _install_pip() {
 
   if [[ $(command -v pip) == "" ]]; then
     bot "Going to install pip, this command requires sudo"
-    sudo easy_install pip
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py
   else
     pip install --upgrade --user pip
   fi
@@ -251,13 +254,7 @@ function _install_pip() {
 
     else
       warn "[pip] Package '$pkg' is not installed"
-
-      # It throws a zsh:1: command not found: pygmentize every time you do a cat file if it's not installed this way
-      if [ $pkg == "Pygments" ]; then
-        sudo easy_install Pygments
-      else
-        pip install "$pkg" --user
-      fi
+      pip install "$pkg" --user
     fi
   done
   unset PIP_APPS
