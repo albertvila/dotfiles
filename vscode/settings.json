@@ -14,7 +14,7 @@
     "editor.formatOnPaste": false,
     "extensions.ignoreRecommendations": false,
 
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert.vila/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -118,7 +118,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert/.vscode/extensions/atlassian.atlascode-2.10.11/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-2.10.12/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -144,16 +144,16 @@
     "java.configuration.runtimes": [
         {
           "name": "JavaSE-1.8",
-          "path": "/Users/albert/.jenv/versions/1.8",
+          "path": "/Users/albert.vila/.jenv/versions/1.8",
         },
         {
           "name": "JavaSE-11",
-          "path": "/Users/albert/.jenv/versions/11.0.2",
+          "path": "/Users/albert.vila/.jenv/versions/11.0.2",
           "default": true
         },
         {
           "name": "JavaSE-14",
-          "path": "/Users/albert/.jenv/versions/14.0.2"
+          "path": "/Users/albert.vila/.jenv/versions/14.0.2"
         },
     ],
     "git.autofetch": true,
@@ -189,5 +189,6 @@
     },
     "json.maxItemsComputed": 500000,
     "editor.unicodeHighlight.ambiguousCharacters": false,
-    "window.zoomLevel": 1
+    "window.zoomLevel": 1,
+    "editor.unicodeHighlight.invisibleCharacters": false
 }
