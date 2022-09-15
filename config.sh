@@ -19,6 +19,7 @@ declare -a BREW_APPS=(
   awscli
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
+  docker
   fasd
   gh
   git
@@ -26,7 +27,6 @@ declare -a BREW_APPS=(
   gradle
   gradle-completion
   htop
-  java
   java11
   jenv
   jq
@@ -36,6 +36,7 @@ declare -a BREW_APPS=(
   openvpn
   perl-build
   perltidy
+  pinentry-mac
   plenv
   vim
   yarn
@@ -57,7 +58,7 @@ declare -a BREW_CASK_APPS=(
   intellij-idea-ce
   iterm2
   postman
-  spectacle
+  rectangle
   spotify
   visual-studio-code
 )
@@ -71,12 +72,12 @@ declare -a PIP_APPS=(
 
 declare -a YARN_APPS=(
   mocha
-  serverless
 )
 
 declare -a NPM_PACKAGES=(
   eslint # Needed to check js code on vscode
   npm-check-updates # Needed to check if the other packages are up to date
+  serverless@2.64.1
 )
 
 declare -a VSCODE_PACKAGES=(

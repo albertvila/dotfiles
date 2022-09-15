@@ -4,8 +4,9 @@ declare -a BREW_APPS=(
   docker-credential-helper-ecr
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
+  parquet-tools
+  php # Needed by Alfred Github workflow
   pyenv
-  tfenv
 )
 
 # Those packages will only be installed on Linux
@@ -14,6 +15,7 @@ declare -a APT_GET_APPS=(
 
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
+  adoptopenjdk8
   calibre
   leapp # New AWS authentication method
   google-chrome # Moved here because it's already installed on company laptops
@@ -28,6 +30,8 @@ declare -a PIP_APPS=(
   autopep8 # Needed by python
   beautysh # Beautifier for sh files (used by atom)
   databricks
+  databricks-cli
+  dbx # Databricks dbx tool (https://docs.databricks.com/dev-tools/dbx.html)
   diagrams # Diagrams as code (https://diagrams.mingrammer.com/)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
@@ -43,6 +47,7 @@ declare -a NPM_PACKAGES=(
 
 declare -a VSCODE_PACKAGES=(
   exiasr.hadolint
+  parquet-viewer
   softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
 )
 
