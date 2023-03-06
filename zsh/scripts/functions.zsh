@@ -6,6 +6,31 @@ function infinite {
   done
 }
 
+function pr_stats {
+  echo 'Listing the stats from the last 500 PR for the current repository'
+  gh pr list -L 500 --state closed --json number,createdAt,closedAt,author | jq 'group_by(.author) | map({ author: .[0].author, total_prs: length, avg_duration: (map(select(.closedAt)) | map((.closedAt | fromdateiso8601) - (.createdAt | fromdateiso8601)) | add / length / 3600)})'
+}
+
+function pr_stats_full {
+  echo 'Listing the stats from the last 500 PR for the current repository with more detailed information'
+
+  gh pr list -L 500 -s closed --json number,createdAt,closedAt,author,title |
+  jq 'group_by(.author) |
+    map({
+      author: .[0].author,
+      total_prs: length,
+      avg_duration_in_hours: (
+        map(select(.closedAt))
+        | map((.closedAt | fromdateiso8601) - (.createdAt | fromdateiso8601))
+        | add / length / 3600
+      ),
+      prs: (
+        map({ number, title, createdAt, closedAt, duration_in_hours: (((.closedAt | fromdateiso8601) - (.createdAt | fromdateiso8601)) / 3600)})
+        | sort_by(-.duration_in_hours)
+      )
+    })'
+}
+
 function looooooooong {
     START=$(date +%s.%N)
     $*
