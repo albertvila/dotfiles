@@ -12,7 +12,7 @@
     "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.formatOnPaste": false,
-    "extensions.ignoreRecommendations": false,
+    "extensions.ignoreRecommendations": true,
 
     "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert.vila/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
     "files.exclude": {
@@ -39,7 +39,6 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "java.errors.incompleteClasspath.severity": "ignore",
-    "java.home": "/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk",
     "diffEditor.renderSideBySide": false,
     "workbench.activityBar.visible": true,
     "workbench.iconTheme": "material-icon-theme",
@@ -51,12 +50,6 @@
         "editor.defaultFormatter": "Kaktus.perltidy-more"
     },
     "editor.minimap.enabled": false,
-    "terraform.languageServer": {
-        "external": true,
-        "args": [
-            "serve"
-        ]
-    },
     "javascript.updateImportsOnFileMove.enabled": "always",
     "gitlens.hovers.currentLine.over": "line",
     "todo-tree.highlights.customHighlight": {
@@ -72,9 +65,7 @@
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"
     },
-    "todo-tree.tree.showScanModeButton": false,
     "workbench.editor.limit.enabled": true,
-    "java.semanticHighlighting.enabled": true,
     "peacock.favoriteColors": [
         {
             "name": "Angular Red",
@@ -118,7 +109,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-2.10.12/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.2/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -140,27 +131,12 @@
     ],
     "atlascode.bitbucket.enabled": false,
     "python.languageServer": "Default",
-    "python.showStartPage": false,
-    "java.configuration.runtimes": [
-        {
-          "name": "JavaSE-1.8",
-          "path": "/Users/albert.vila/.jenv/versions/1.8",
-        },
-        {
-          "name": "JavaSE-11",
-          "path": "/Users/albert.vila/.jenv/versions/11.0.2",
-          "default": true
-        },
-        {
-          "name": "JavaSE-14",
-          "path": "/Users/albert.vila/.jenv/versions/14.0.2"
-        },
-    ],
     "git.autofetch": true,
     "java.project.importHint": false,
     "editor.renderControlCharacters": false,
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true
+
+        "source.fixAll.eslint": false
     },
     "workbench.editorAssociations": {
         "*.ipynb": "jupyter-notebook"
@@ -168,7 +144,7 @@
     "eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
     "[javascript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        "editor.defaultFormatter": "vscode.typescript-language-features"
     },
     "terminal.integrated.shell.osx": "/bin/zsh",
     "todo-tree.general.tags": [
@@ -189,6 +165,14 @@
     },
     "json.maxItemsComputed": 500000,
     "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "githubPullRequests.pullBranch": "never",
+    "perltidy-more.executable": "/opt/homebrew/bin/perltidy",
+    "perltidy-more.profile": "/Users/albert.vila/.perltidyrc",
     "window.zoomLevel": 1,
-    "editor.unicodeHighlight.invisibleCharacters": false
+    "databricks.connectionManager": "Databricks CLI Profiles",
+    "databricks.lastActiveConnection": "DEFAULT",
+    "jupyter.interactiveWindow.cellMarker.codeRegex": "^(#\\s*COMMAND\\s*[-]*|#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",
+    "chatgpt.promptPrefix.customPrompt1": "Refactor",
+    "chatgpt.promptPrefix.customPrompt1-enabled": true
 }

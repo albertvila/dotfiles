@@ -102,3 +102,7 @@ setopt share_history # share history between different instances of the shell
 # Add JBang to environment
 alias j!=jbang
 export PATH="$HOME/.jbang/bin:$PATH"
+
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
