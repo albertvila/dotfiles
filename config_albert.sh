@@ -20,6 +20,7 @@ declare -a BREW_CASK_APPS=(
   leapp # New AWS authentication method
   google-chrome # Moved here because it's already installed on company laptops
   movist
+  session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   slack # Moved here because it's already installed on company laptops
 )
 
@@ -47,6 +48,8 @@ declare -a NPM_PACKAGES=(
 
 declare -a VSCODE_PACKAGES=(
   exiasr.hadolint
+  gencay.vscode-chatgpt
+  paiqo.databricks-vscode
   parquet-viewer
   softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
 )
