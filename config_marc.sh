@@ -45,7 +45,7 @@ declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(
-    serverless
+    serverless@2.72.2
     yarn
 )
 
