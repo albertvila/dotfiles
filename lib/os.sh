@@ -109,18 +109,7 @@ function _setup_osx() {
   # Setting default language English
   defaults write NSGlobalDomain AppleLocale en_ES
 
-  # Setting iterm custom folder config
-  sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
-  defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
-  defaults write com.googlecode.iterm2 "LoadPrefsFromCustomFolder" -bool true
-  ok "iTerm's custom config folder set"
-
   killall Dock Finder SystemUIServer
-
-  # Install the Solarized Dark theme for iTerm just the first time
-  if is_first_execution; then
-    open "${DOTFILES_DIR}/iterm/themes/Solarized Dark.itermcolors"
-  fi
 
   ok
 }

@@ -3,11 +3,11 @@
 [core]
 	editor = /usr/bin/vim
 	excludesfile = ~/.gitignore
-	hooksPath = /Users/albert.vila/workspace/GIS-lm-build/git-hooks
+	hooksPath = /Users/marc.sanchez/.GIS-lm-build/git-hooks
 [user]
-	name = Albert Vila
-	email = albert.vila@gmail.com
-	signingkey = 352FC7C94F8FAE40
+	name = Marc Sánchez
+	email = marc.sanchez@launchmetrics.com
+	signingkey =
 [merge]
 	ff = false
 [pull]
@@ -18,8 +18,8 @@
 [includeIf "gitdir:~/workspace/"]
 	path = ~/.gitconfig-lm
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential

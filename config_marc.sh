@@ -19,9 +19,10 @@ declare -a BREW_CASK_APPS=(
   calibre
   leapp # New AWS authentication method
   google-chrome # Moved here because it's already installed on company laptops
-  movist
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   slack # Moved here because it's already installed on company laptops
+  1password # password storage
+  mongodb-compass
 )
 
 declare -a GEM_APPS=(
@@ -37,27 +38,29 @@ declare -a PIP_APPS=(
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pylint # Needed by python
+  pyenv
 )
 
 declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(
-  alfred-goodreads-workflow
+    serverless@2.72.2
+    yarn
 )
 
 declare -a VSCODE_PACKAGES=(
   exiasr.hadolint
-  gencay.vscode-chatgpt
+  apollographql.vscode-apollo
+  cssho.vscode-svgviewer
   paiqo.databricks-vscode
   parquet-viewer
-  softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
-)
-
-declare -a APP_STORE_APPS=(
-  # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
-  # 918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
-  904280696 # Things3
-  1091189122 # Bear
-  1176895641 # Spark email
+  Durzn.brackethighlighter
+  esbenp.prettier-vscode
+  iulian-radu-at.find-unused-exports
+  jock.svg
+  ms-vsliveshare.vsliveshare
+  SonarSource.sonarlint-vscode
+  redhat.vscode-yaml
+  RandomFractalsInc.vscode-data-table
 )
