@@ -19,9 +19,10 @@ declare -a BREW_CASK_APPS=(
   calibre
   leapp # New AWS authentication method
   google-chrome # Moved here because it's already installed on company laptops
-  movist
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   slack # Moved here because it's already installed on company laptops
+  1password # password storage
+  mongodb-compass
 )
 
 declare -a GEM_APPS=(

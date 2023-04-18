@@ -51,7 +51,6 @@ declare -a APT_GET_APPS=(
 )
 
 declare -a BREW_CASK_APPS=(
-  alfred
   docker
   dropbox
   firefox
@@ -60,6 +59,7 @@ declare -a BREW_CASK_APPS=(
   rectangle
   spotify
   visual-studio-code
+  lastpass
 )
 
 declare -a GEM_APPS=(
@@ -70,13 +70,11 @@ declare -a PIP_APPS=(
 )
 
 declare -a YARN_APPS=(
-  mocha
 )
 
 declare -a NPM_PACKAGES=(
   eslint # Needed to check js code on vscode
   npm-check-updates # Needed to check if the other packages are up to date
-  serverless@2.64.1
 )
 
 declare -a VSCODE_PACKAGES=(
