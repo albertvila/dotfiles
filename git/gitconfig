@@ -7,7 +7,7 @@
 [user]
 	name = Marc Sánchez
 	email = marc.sanchez@launchmetrics.com
-	signingkey =
+	signingkey = 93C7813FD2BF80D9002E369BFDD02508FD081F8E
 [merge]
 	ff = false
 [pull]

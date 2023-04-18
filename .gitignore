@@ -4,3 +4,4 @@ vim/colors/solarized.vim
 iterm/*.bak
 .env
 git/gitconfig
+get-pip.py

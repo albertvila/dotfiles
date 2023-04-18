@@ -60,6 +60,7 @@ declare -a BREW_CASK_APPS=(
   spotify
   visual-studio-code
   lastpass
+  google-chrome
 )
 
 declare -a GEM_APPS=(

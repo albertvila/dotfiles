@@ -109,7 +109,7 @@
     "zshrc": "shellscript"
   },
   "yaml.schemas": {
-    "file:///Users/marc.sanchez/.vscode/extensions/atlassian.atlascode-3.0.2/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+    "file:///Users/marc.sanchez/.vscode/extensions/atlassian.atlascode-3.0.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
   },
   "atlascode.jira.jqlList": [
     {
