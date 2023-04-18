@@ -55,7 +55,6 @@ declare -a BREW_CASK_APPS=(
   docker
   dropbox
   firefox
-  intellij-idea-ce
   iterm2
   postman
   rectangle

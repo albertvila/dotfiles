@@ -110,7 +110,7 @@ function _setup_osx() {
   defaults write NSGlobalDomain AppleLocale en_ES
 
   # Setting iterm custom folder config
-  sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
+  sed -i.bak "s;/Users/marc.sanchez/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
   defaults write com.googlecode.iterm2 "LoadPrefsFromCustomFolder" -bool true
   ok "iTerm's custom config folder set"

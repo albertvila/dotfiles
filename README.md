@@ -1,4 +1,4 @@
-# Albert Vila's Dotfiles
+# Marc Sánchez's Dotfiles
 
 This is a collection of dotfiles and scripts I use for customizing OS X/Linux to my liking and setting up the software development tools I use on a day-to-day basis. It can be cloned anywhere. It includes a setup script that creates the symlinks from your home directory to the cloned repository.
 
@@ -11,6 +11,7 @@ Check `config.sh` file if you want to know all packages/modules to install and t
 The `config.sh` file contains the default packages/modules, it can be extend with a custom file per user, for example I also use the `config_albert.sh` file.
 
 Recap
+
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx/linux dev packages for brew/pip/npm/gem/yarn/vscode/brew cask/apt and osx/linux defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
@@ -24,10 +25,11 @@ The customized theme looks like
 If you would like to change the theme just run `p10k configure`
 
 ## Installation
+
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
 
 ```sh
-$ git clone https://github.com/albertvila/dotfiles.git ~/dotfiles
+$ git clone https://github.com/raikkon88/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
 $ sh ./setup.sh
 ```
@@ -35,16 +37,19 @@ $ sh ./setup.sh
 If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules.
 
 ## Update
+
 Just run `./setup.sh` from time to time to automatically update all modules and applications. Use the `-f` option to avoid being asked for a confirmation.
 
 ## Manual steps
 
 ### general
+
 1. Open OSX keyboard settings and remove spotlight shortcut
 2. Open Alfred and set spotlight shortcut, also select to be opened at login
 3. Open spectacle and select to be opened at login
 
 ### jenv
+
 1. Execute `/usr/libexec/java_home -V` to know all java versions installed on your computer
 2. `jenv add ...` to add them
 3. `jenv global ...` to set up the version you want to use
@@ -54,20 +59,22 @@ More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-
 If the first command does not return anything, just run `brew info java` and `brew info java11` and execute the symlink for the sytem Java wrappers
 
 ### iterm with powerlevel10k
+
 1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
 
 ## Possible issues
 
 - Issues signing commits with Github. First follow all steps from here https://sabbour.me/setting-up-signed-git-commits-on-macos/
-If the problem still persist, enable the git Trace mode to properly see the error using
-```export GIT_TRACE=1```
+  If the problem still persist, enable the git Trace mode to properly see the error using
+  `export GIT_TRACE=1`
 
 - If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell.
-Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more information [here](https://www.gnupg.org/(it)/documentation/manuals/gnupg/Common-Problems.html)
+  Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more information [here](<https://www.gnupg.org/(it)/documentation/manuals/gnupg/Common-Problems.html>)
 
 - If some Alfred workflows does not work it may be because they need the `php` command.
 
 ## Chrome extensions
+
 > Automatically sync
 
 - AdBlock plus
@@ -86,12 +93,15 @@ Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more informat
 ## Manual steps after first setup
 
 ### intellij
+
 1. Clone git repository
+
 ```sh
 $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 ```
+
 2. Go to `File | Import Settings...` and specify the `intellij-colors-solarized` directory
- Click `OK` in the dialog that appears.
+   Click `OK` in the dialog that appears.
 3. Restart IntelliJ IDEA
 4. Go to `Preferences | Editor | Colors & Fonts` and select one of the new color themes.
 5. Check `Preferences > Editor > General > Ensure line feed at file end on save`
@@ -100,11 +110,14 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 8. Check `Preferences > Editor > Code Style > Wrap on typing` on Right margin option
 9. Update `Editor > Code Style > Java > Imports tab set Class count to use import with '*'` and `Names count to use static import with '*'` to 999
 10. Install the following Plugins
+
 - ChecksStyle-IDEA
 - Lombok
 
 ### plenv
+
 Once you know that perl version to install, run the following commands
+
 1. plenv install $version
 2. plenv rehash
 3. plenv global $version
@@ -115,41 +128,54 @@ Note: If you get Segmentation fault installing perl versions, just install the p
 `git clone git://github.com/tokuhirom/Perl-Build.git $(plenv root)/plugins/perl-build/`
 
 ### pyenv
+
 1. Install latest python version using the following command `pyenv install 3.7.3`
 2. Set this version as the default one for the whole system `pyenv global 3.7.3`
 
 ### nvm
+
 1. Setup the node version you want to use, for example to use node 8 type
+
 ```
 nvm install 8
 nvm use 8
 ```
+
 ### vi
+
 - If you want to enable the solarized theme, open the ~/.vimrc file and uncomment the colorscheme line
 
 ### aws
+
 - Run `aws configure` and set up your aws credentials
 
 ### alfred workflows
+
 - SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
 ### Google drive
+
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
 
 ### Chrome DarkReader extension
+
 - In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
 - For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
 ### Tampermonkey for Chrome
+
 - Open the extension settings, export to a file and then import to the new computer
 
 ## Manual steps specific for Linux
 
 ### Gnome-terminal
+
 - Open preferences and select Solarized Dark theme, also change the colors theme accordingly (open a file with vi to see if changes are applied properly). Also you need to untoggle the bold checkbox
 
 ### Albert for linux (Alfred alternative)
+
 - Use the following commands to install Albert
+
 ```
 wget -nv https://download.opensuse.org/repositories/home:manuelschneid3r/xUbuntu_18.04/Release.key -O Release.key
 sudo apt-key add - < Release.key
@@ -159,22 +185,25 @@ sudo apt install albert
 ```
 
 - Additionally, to delete the repository and the trusted key, run the following commands:
+
 ```
 sudo rm /etc/apt/sources.list.d/home:manuelschneid3r.list
 sudo apt-key del E192A257
 sudo apt clean
 sudo apt update
 ```
+
 - Then open a Terminal and type `albert`, configure the needed extensions, toggle the enable at login checkbox and set the desired keyword shortcut.
 
 ## Old issues
 
 - Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
-```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
+  `sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local`
 
 - If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
 
 - If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
+
 ```
   plenv global system
   ./setup.sh
@@ -199,20 +228,24 @@ npm config set prefix $NVM_DIR/versions/node/v6.13.7
 - If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
 
 ## Old manual steps
+
 Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
 
 ### iterm2
+
 1. Open iTerm2's preferences (do this change for all needed profiles).
 2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
 3. Click on text, make sure that "Draw bold text in bright colours" is disabled
 4. Change the font to Meslo LG M Regular for Powerline, 12p
 5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
 6. Add two more mappings to jump at the beginning/end of line
+
 ```
     FOR  ACTION         SEND
     ⌘←  "HEX CODE"      0x01
     ⌘→  "HEX CODE"      0x05
 ```
+
 7. Install the Shell integration for the [automatic profile switching](https://iterm2.com/documentation-automatic-profile-switching.html) using (`curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash`), more info [here](https://iterm2.com/documentation-shell-integration.html) (re run the setup script after this command, because it overrides the .zshrc symbolic link)
 
 ^(\w+)@([\w.-]+):.+\$
@@ -221,5 +254,6 @@ Those are now configured automatically, however, I prefer to keep the manual ste
 ## External links
 
 iTerm and zsh tips
+
 - <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
 - <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
