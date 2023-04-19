@@ -19,4 +19,4 @@
 	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [include]
-    path = ./custom
+    path = ~/dotfiles/git/custom
