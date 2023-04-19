@@ -50,7 +50,7 @@ declare -a VSCODE_PACKAGES=(
   exiasr.hadolint
   gencay.vscode-chatgpt
   paiqo.databricks-vscode
-  parquet-viewer
+  parquet-viewer # TODO : This seems to be deprecated and is skipped
   softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
 )
 
