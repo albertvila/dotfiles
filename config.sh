@@ -39,7 +39,7 @@ declare -a BREW_APPS=(
   pinentry-mac
   plenv
   vim
-  yarn
+  pygments
 )
 
 declare -a APT_GET_APPS=(
@@ -61,13 +61,17 @@ declare -a BREW_CASK_APPS=(
   visual-studio-code
   lastpass
   google-chrome
+  leapp # New AWS authentication method
+  session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
+  slack # Moved here because it's already installed on company laptops
+  zoom
 )
 
 declare -a GEM_APPS=(
 )
 
 declare -a PIP_APPS=(
-  Pygments
+
 )
 
 declare -a YARN_APPS=(

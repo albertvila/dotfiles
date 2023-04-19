@@ -34,6 +34,25 @@ $ cd ~/dotfiles
 $ sh ./setup.sh
 ```
 
+You need to configure your custom gitconfig, to do so just create a file named `custom` under the git folder of this repository and set the following properties:
+
+```
+[user]
+	name = Github User
+	email = github@email.com
+	signingkey = XXX
+[core]
+	hooksPath = /Users/macbook.user/.GIS-lm-build/git-hooks
+```
+
+Replace:
+- `Github User` with your name and surname
+- `github@email.com` with the email used to login into github
+- `XXX` with the signing key id
+- `macbook.user` with the name of the folder created in your home directory where lm is installed
+
+
+
 If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules.
 
 ## Update

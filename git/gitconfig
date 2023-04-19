@@ -3,11 +3,6 @@
 [core]
 	editor = /usr/bin/vim
 	excludesfile = ~/.gitignore
-	hooksPath = /Users/marc.sanchez/.GIS-lm-build/git-hooks
-[user]
-	name = Marc Sánchez
-	email = marc.sanchez@launchmetrics.com
-	signingkey = 93C7813FD2BF80D9002E369BFDD02508FD081F8E
 [merge]
 	ff = false
 [pull]
@@ -23,3 +18,5 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
+[include]
+    path = ./custom
