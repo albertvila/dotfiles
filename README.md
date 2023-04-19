@@ -29,7 +29,7 @@ If you would like to change the theme just run `p10k configure`
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
 
 ```sh
-$ git clone https://github.com/raikkon88/dotfiles.git ~/dotfiles
+$ git clone https://github.com/<githubuser>/dotfiles.git ~/dotfiles
 $ cd ~/dotfiles
 $ sh ./setup.sh
 ```
