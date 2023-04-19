@@ -14,7 +14,7 @@
   "editor.formatOnPaste": false,
   "extensions.ignoreRecommendations": true,
 
-  "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/marc.sanchez/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
+  "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert.vila/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -109,7 +109,7 @@
     "zshrc": "shellscript"
   },
   "yaml.schemas": {
-    "file:///Users/marc.sanchez/.vscode/extensions/atlassian.atlascode-3.0.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+    "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
   },
   "atlascode.jira.jqlList": [
     {
@@ -167,7 +167,7 @@
   "editor.unicodeHighlight.invisibleCharacters": false,
   "githubPullRequests.pullBranch": "never",
   "perltidy-more.executable": "/opt/homebrew/bin/perltidy",
-  "perltidy-more.profile": "/Users/marc.sanchez/.perltidyrc",
+  "perltidy-more.profile": "/Users/albert.vila/.perltidyrc",
   "window.zoomLevel": 1,
   "databricks.connectionManager": "Databricks CLI Profiles",
   "databricks.lastActiveConnection": "DEFAULT",
