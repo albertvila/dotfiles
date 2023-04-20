@@ -4,7 +4,7 @@ declare -a BREW_APPS=(
   docker-credential-helper-ecr
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
-  parquet-tools
+  # parquet-tools # TODO : This is deprecated
   php # Needed by Alfred Github workflow
   pyenv
 )
@@ -17,11 +17,8 @@ declare -a APT_GET_APPS=(
 declare -a BREW_CASK_APPS=(
   adoptopenjdk8
   calibre
-  leapp # New AWS authentication method
-  google-chrome # Moved here because it's already installed on company laptops
   movist
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
-  slack # Moved here because it's already installed on company laptops
 )
 
 declare -a GEM_APPS=(

@@ -2,3 +2,5 @@ vim/bundle/*
 vim/.netrwhist
 vim/colors/solarized.vim
 iterm/*.bak
+get-pip.py
+git/custom

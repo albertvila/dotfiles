@@ -39,6 +39,7 @@ declare -a BREW_APPS=(
   pinentry-mac
   plenv
   vim
+  pygments
   yarn
 )
 
@@ -61,13 +62,17 @@ declare -a BREW_CASK_APPS=(
   rectangle
   spotify
   visual-studio-code
+  google-chrome
+  lastpass
+  leapp
+  slack
+  zoom
 )
 
 declare -a GEM_APPS=(
 )
 
 declare -a PIP_APPS=(
-  Pygments
 )
 
 declare -a YARN_APPS=(
