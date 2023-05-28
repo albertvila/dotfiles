@@ -13,10 +13,8 @@
 [includeIf "gitdir:~/workspace/"]
 	path = ~/.gitconfig-lm
 [credential "https://github.com"]
-	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [include]
-    path = ~/dotfiles/git/custom
+    path = ~/.gitconfig-user

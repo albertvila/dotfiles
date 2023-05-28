@@ -16,9 +16,11 @@ declare -a APT_GET_APPS=(
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
   adoptopenjdk8
+  arc
   calibre
   movist
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
+  synology-drive
 )
 
 declare -a GEM_APPS=(
@@ -44,8 +46,10 @@ declare -a NPM_PACKAGES=(
 )
 
 declare -a VSCODE_PACKAGES=(
+  AmazonWebServices.aws-toolkit-vscode
   exiasr.hadolint
   gencay.vscode-chatgpt
+  GitHub.copilot
   paiqo.databricks-vscode
   parquet-viewer
   softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)

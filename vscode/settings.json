@@ -109,7 +109,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.2/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -139,7 +139,8 @@
         "source.fixAll.eslint": false
     },
     "workbench.editorAssociations": {
-        "*.ipynb": "jupyter-notebook"
+        "*.ipynb": "jupyter-notebook",
+        "*.parquet": "default"
     },
     "eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
@@ -169,10 +170,54 @@
     "githubPullRequests.pullBranch": "never",
     "perltidy-more.executable": "/opt/homebrew/bin/perltidy",
     "perltidy-more.profile": "/Users/albert.vila/.perltidyrc",
-    "window.zoomLevel": 1,
     "databricks.connectionManager": "Databricks CLI Profiles",
     "databricks.lastActiveConnection": "DEFAULT",
     "jupyter.interactiveWindow.cellMarker.codeRegex": "^(#\\s*COMMAND\\s*[-]*|#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",
     "chatgpt.promptPrefix.customPrompt1": "Refactor",
-    "chatgpt.promptPrefix.customPrompt1-enabled": true
+    "chatgpt.promptPrefix.customPrompt1-enabled": true,
+    "eslint.workingDirectories": [],
+    "extensions.autoUpdate": false,
+    "window.zoomLevel": 1,
+    "yaml.customTags": [
+        "!And",
+        "!And sequence",
+        "!If",
+        "!If sequence",
+        "!Not",
+        "!Not sequence",
+        "!Equals",
+        "!Equals sequence",
+        "!Or",
+        "!Or sequence",
+        "!FindInMap",
+        "!FindInMap sequence",
+        "!Base64",
+        "!Join",
+        "!Join sequence",
+        "!Cidr",
+        "!Ref",
+        "!Sub",
+        "!Sub sequence",
+        "!GetAtt",
+        "!GetAZs",
+        "!ImportValue",
+        "!ImportValue sequence",
+        "!Select",
+        "!Select sequence",
+        "!Split",
+        "!Split sequence"
+    ],
+    "aws.telemetry": false,
+    "genieai.enableConversationHistory": true,
+    "aws.codeWhisperer.shareCodeWhispererContentWithAWS": false,
+    "editor.inlineSuggest.enabled": true,
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": true,
+        "markdown": false,
+        "scminput": false
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    }
 }

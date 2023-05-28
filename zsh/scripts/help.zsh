@@ -106,7 +106,7 @@ function help-docker {
   echo "Showing docker help"
   echo "-------------------\n"
 
-  echo "You must start Docker.app first"
+  echo "You must run `colima start` first"
   echo "If the command requires login, just run $(aws ecr get-login --no-include-email --region eu-west-1)"
   help-print "docker images -a" "In order to list all docker images"
   help-print "docker rmi IMAGE_NAME" "To delete an image, use --force to force it"

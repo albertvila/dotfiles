@@ -17,9 +17,9 @@ declare -a BINARIES=()
 declare -a BREW_APPS=(
   ack
   awscli
+  colima # Container runtime, lightweight version of Docker (https://github.com/abiosoft/colima)
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
-  docker
   fasd
   gh
   git
@@ -53,7 +53,6 @@ declare -a APT_GET_APPS=(
 
 declare -a BREW_CASK_APPS=(
   alfred
-  docker
   dropbox
   firefox
   intellij-idea-ce

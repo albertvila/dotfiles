@@ -106,3 +106,11 @@ export PATH="$HOME/.jbang/bin:$PATH"
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+#load-nvm
+
+# bash users - add the following line to your ~/.bashrc
+eval "$(direnv hook bash)"
+
+# zsh users - add the following line to your ~/.zshrc
+eval "$(direnv hook zsh)"
