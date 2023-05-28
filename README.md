@@ -181,6 +181,33 @@ sudo apt update
   plenv global 5.14.2
 ```
 
+
+You need to configure your custom gitconfig, to do so just create a file named `custom` under the git folder of this repository and set the following properties:
+
+```
+[user]
+	name = Github User
+	email = github@email.com
+	signingkey = XXX
+[core]
+	hooksPath = /Users/macbook.user/.GIS-lm-build/git-hooks
+```
+
+Replace:
+- `Github User` with your name and surname
+- `github@email.com` with the email used to login into github
+- `XXX` with the signing key id
+- `macbook.user` with the name of the folder created in your home directory where lm is installed
+
+Then in the gitconfig file make sure you the include has the right path, by default the path shown in the following code block is ignored by git.
+
+```
+[include]
+    path = ~/dotfiles/git/custom
+```
+
+
+
 - If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
 
 ```
