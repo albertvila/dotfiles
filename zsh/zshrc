@@ -114,3 +114,10 @@ eval "$(direnv hook bash)"
 
 # zsh users - add the following line to your ~/.zshrc
 eval "$(direnv hook zsh)"
+
+# bun completions
+[ -s "/Users/albert.vila/.bun/_bun" ] && source "/Users/albert.vila/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

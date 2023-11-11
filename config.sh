@@ -17,7 +17,6 @@ declare -a BINARIES=()
 declare -a BREW_APPS=(
   ack
   awscli
-  colima # Container runtime, lightweight version of Docker (https://github.com/abiosoft/colima)
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   fasd
@@ -34,6 +33,7 @@ declare -a BREW_APPS=(
   nvm
   openssl
   openvpn
+  orbstack # Docker https://orbstack.dev/
   perl-build
   perltidy
   pinentry-mac
@@ -93,7 +93,6 @@ declare -a VSCODE_PACKAGES=(
   dbaeumer.vscode-eslint
   eamodio.gitlens
   foxundermoon.shell-format
-  GabrielBB.vscode-lombok
   GitHub.vscode-pull-request-github
   Gruntfuggly.todo-tree
   JerryHong.autofilename
@@ -115,6 +114,7 @@ declare -a VSCODE_PACKAGES=(
   sfodje.perlcritic
   VisualStudioExptTeam.vscodeintellicode
   vncz.vscode-apielements
+  vscjava.vscode-lombok
   vscjava.vscode-java-debug
   vscjava.vscode-java-test
 )

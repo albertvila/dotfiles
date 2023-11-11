@@ -43,6 +43,7 @@ declare -a YARN_APPS=(
 
 declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
+  @withgraphite/graphite-cli
 )
 
 declare -a VSCODE_PACKAGES=(
@@ -52,7 +53,6 @@ declare -a VSCODE_PACKAGES=(
   GitHub.copilot
   paiqo.databricks-vscode
   parquet-viewer
-  softwaredotcom.swdc-vscode # Code Time (https://www.software.com/)
 )
 
 declare -a APP_STORE_APPS=(

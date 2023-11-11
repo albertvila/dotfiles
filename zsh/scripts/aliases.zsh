@@ -22,20 +22,32 @@ gbranch() {
 
     currentBranch=`git branch | grep \* | cut -d ' ' -f2`
 
-    if test "$currentBranch" = 'develop'; then
-        baseBranch='d'
-    elif test "$currentBranch" = 'master'; then
+    if test "$currentBranch" = 'main'; then
         baseBranch='m'
     else
-        echo "Wrong branch, you should be in master or develop branch"
-        exit 1;
+        if test "$currentBranch" = 'master'; then
+            baseBranch='m'
+        else
+            if test "$currentBranch" = 'develop'; then
+                baseBranch='d'
+            else
+                echo "Wrong branch, you should be in main or develop branch"
+                exit 1;
+            fi
+        fi
+    fi
+
+    if test "$1"; then
+        name='albert'_$1
+        name="${name// /_}"
+    else
+        name='albert'
     fi
 
     today=$(gdate +"%Y%m%d")
     shortCommitHash=`git rev-parse --short HEAD`
     randomNumber=${(l:5::0:)${RANDOM}}
-
-    newBranch="$baseBranch-albert_$today"_"$shortCommitHash"_"$randomNumber"
+    newBranch="$baseBranch"-"${name:l}"_"$today"_"$shortCommitHash"_"$randomNumber"
 
     echo "Creating a new branch $newBranch and switching into it"
     git checkout -b $newBranch origin/$currentBranch

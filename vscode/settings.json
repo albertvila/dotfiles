@@ -40,7 +40,6 @@
     "files.trimFinalNewlines": true,
     "java.errors.incompleteClasspath.severity": "ignore",
     "diffEditor.renderSideBySide": false,
-    "workbench.activityBar.visible": true,
     "workbench.iconTheme": "material-icon-theme",
     "terminal.external.osxExec": "iTerm.app",
     "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
@@ -58,6 +57,9 @@
         },
         "FIXME": {
             "foreground": "red"
+        },
+        "NOTE": {
+            "foreground": "green"
         }
     },
     "todo-tree.highlights.defaultHighlight": {},
@@ -109,7 +111,7 @@
         "zshrc": "shellscript"
     },
     "yaml.schemas": {
-        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.7/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.jqlList": [
         {
@@ -218,6 +220,11 @@
         "scminput": false
     },
     "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[json]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    }
+    },
+    "java.import.gradle.java.home": "/opt/homebrew/Cellar/openjdk@11/11.0.20/libexec/openjdk.jdk/Contents/Home",
+    "typescript.updateImportsOnFileMove.enabled": "always"
 }
