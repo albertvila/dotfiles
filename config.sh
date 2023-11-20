@@ -85,9 +85,7 @@ declare -a NPM_PACKAGES=(
 )
 
 declare -a VSCODE_PACKAGES=(
-  akamud.vscode-theme-onedark
   alefragnani.project-manager
-  atlassian.atlascode
   brpaz.file-templates
   byi8220.indented-block-highlighting
   dbaeumer.vscode-eslint
@@ -98,25 +96,17 @@ declare -a VSCODE_PACKAGES=(
   JerryHong.autofilename
   johnpapa.vscode-peacock
   Kaktus.perltidy-more
-  mathiasfrohlich.Kotlin
   hashicorp.terraform
   mohsen1.prettify-json
   ms-azuretools.vscode-docker
   ms-python.python
-  ms-vscode.atom-keybindings
-  ms-vsliveshare.vsliveshare-pack
   nsfilho.tosnippet
   pflannery.vscode-versionlens
   PKief.material-icon-theme
-  redhat.java
   RoscoP.ActiveFileInStatusBar
-  secanis.jenkinsfile-support
   sfodje.perlcritic
   VisualStudioExptTeam.vscodeintellicode
   vncz.vscode-apielements
-  vscjava.vscode-lombok
-  vscjava.vscode-java-debug
-  vscjava.vscode-java-test
 )
 
 declare -a APP_STORE_APPS=(

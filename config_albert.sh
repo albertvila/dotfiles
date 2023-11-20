@@ -49,10 +49,9 @@ declare -a NPM_PACKAGES=(
 declare -a VSCODE_PACKAGES=(
   AmazonWebServices.aws-toolkit-vscode
   exiasr.hadolint
-  gencay.vscode-chatgpt
   GitHub.copilot
+  GitHub.copilot-chat
   paiqo.databricks-vscode
-  parquet-viewer
 )
 
 declare -a APP_STORE_APPS=(

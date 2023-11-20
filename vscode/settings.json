@@ -1,6 +1,5 @@
 {
     "telemetry.enableTelemetry": false,
-    "workbench.colorTheme": "Solarized Dark",
     "editor.scrollBeyondLastLine": false,
     "explorer.autoReveal": false,
     "workbench.colorCustomizations": {
@@ -179,7 +178,6 @@
     "chatgpt.promptPrefix.customPrompt1-enabled": true,
     "eslint.workingDirectories": [],
     "extensions.autoUpdate": false,
-    "window.zoomLevel": 1,
     "yaml.customTags": [
         "!And",
         "!And sequence",
@@ -226,5 +224,7 @@
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "java.import.gradle.java.home": "/opt/homebrew/Cellar/openjdk@11/11.0.20/libexec/openjdk.jdk/Contents/Home",
-    "typescript.updateImportsOnFileMove.enabled": "always"
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "workbench.colorTheme": "Solarized Dark",
+    "window.zoomLevel": 1
 }
