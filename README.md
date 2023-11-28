@@ -1,4 +1,4 @@
-# Albert Vila's Dotfiles
+ # Albert Vila's Dotfiles
 
 This is a collection of dotfiles and scripts I use for customizing OS X/Linux to my liking and setting up the software development tools I use on a day-to-day basis. It can be cloned anywhere. It includes a setup script that creates the symlinks from your home directory to the cloned repository.
 
@@ -78,7 +78,6 @@ Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more informat
 - I don't care about cookies
 - JSON Formatter
 - Keepa - Amazon Price Tracker
-- LastPass: Free Password Manager
 - Pushbullet
 - Refined GitHub
 - Tampermonkey

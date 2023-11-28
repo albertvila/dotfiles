@@ -15,7 +15,6 @@ declare -a APT_GET_APPS=(
 
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
-  adoptopenjdk8
   arc
   calibre
   movist

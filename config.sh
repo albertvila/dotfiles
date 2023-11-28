@@ -19,6 +19,7 @@ declare -a BREW_APPS=(
   awscli
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
+  direnv
   fasd
   gh
   git
