@@ -38,15 +38,6 @@ function is_osx() {
   false
 }
 
-function is_linux() {
-  declare -r OS_NAME="$(uname -s)"
-  if [ $OS_NAME == "Linux" ]; then
-    return
-  fi
-
-  false
-}
-
 function execute() {
   $1 &> /dev/null
   result $? "${2:-$1}"

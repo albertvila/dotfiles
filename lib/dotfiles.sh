@@ -20,13 +20,8 @@ function cleanup() {
     cyan=$(cyan "$lastCleanup")
   fi
 
-  if is_osx; then
-    todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
-    lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
-  elif is_linux; then
-    todayMinus30Days=$(date -d "30 days ago" +"%Y%m%d")
-    lastCleanupFormatted=$(date -d "${lastCleanup}" +%Y%m%d)
-  fi
+  todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
+  lastCleanupFormatted=$(gdate -d "${lastCleanup}" +%Y%m%d)
 
   if [[ "$todayMinus30Days" > "$lastCleanupFormatted" ]]; then
     freeSpaceBeforeCleaning=$(df -Ph | awk 'NR==2 {print $4}')

@@ -9,10 +9,6 @@ declare -a BREW_APPS=(
   pyenv
 )
 
-# Those packages will only be installed on Linux
-declare -a APT_GET_APPS=(
-)
-
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
   arc

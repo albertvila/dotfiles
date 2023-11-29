@@ -29,6 +29,11 @@ DOTFILES_USER="default"
 
 start
 
+if ! is_osx; then
+  error "Operating System not supported"
+  exit;
+fi
+
 install_os_packages
 setup_os_packages
 install_dotfiles

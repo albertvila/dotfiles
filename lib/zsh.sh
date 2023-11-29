@@ -19,11 +19,7 @@ function _install_zsh() {
     ask_for_confirmation "Zsh not found, zsh installation has not been tested, do you wanna proceed?"
     if answer_is_yes; then
       echo "We'll try to install zsh, then re-run this script!"
-      if is_osx; then
-        brew install zsh
-      elif is_linux; then
-        sudo apt-get install zsh
-      fi
+      brew install zsh
     fi
     echo "Aborting..."
     exit

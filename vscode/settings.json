@@ -213,7 +213,7 @@
     "editor.inlineSuggest.enabled": true,
     "github.copilot.enable": {
         "*": true,
-        "plaintext": true,
+        "plaintext": false,
         "markdown": false,
         "scminput": false
     },

@@ -1,18 +1,18 @@
  # Albert Vila's Dotfiles
 
-This is a collection of dotfiles and scripts I use for customizing OS X/Linux to my liking and setting up the software development tools I use on a day-to-day basis. It can be cloned anywhere. It includes a setup script that creates the symlinks from your home directory to the cloned repository.
+This is a collection of dotfiles and scripts I use for customizing OS X to my liking and setting up the software development tools I use on a day-to-day basis. It can be cloned anywhere. It includes a setup script that creates the symlinks from your home directory to the cloned repository.
 
 The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles.
 
 I prefer `zsh` as my shell of choice. As such, the setup script will install `prezto` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
 
-Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx/linux defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
+Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
 The `config.sh` file contains the default packages/modules, it can be extend with a custom file per user, for example I also use the `config_albert.sh` file.
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
-- Install osx/linux dev packages for brew/pip/npm/gem/yarn/vscode/brew cask/apt and osx/linux defaults
+- Install osx dev packages for brew/pip/npm/gem/yarn/vscode/brew cask and osx defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell theme powerlevel10k (https://github.com/romkatv/powerlevel10k)
 - Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
@@ -164,30 +164,6 @@ Replace:
 [core]
 	hooksPath = __PATH_TO_YOUR_HOOKS__/git-hooks
 ```
-
-## Manual steps specific for Linux
-
-### Gnome-terminal
-- Open preferences and select Solarized Dark theme, also change the colors theme accordingly (open a file with vi to see if changes are applied properly). Also you need to untoggle the bold checkbox
-
-### Albert for linux (Alfred alternative)
-- Use the following commands to install Albert
-```
-wget -nv https://download.opensuse.org/repositories/home:manuelschneid3r/xUbuntu_18.04/Release.key -O Release.key
-sudo apt-key add - < Release.key
-sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/manuelschneid3r/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/home:manuelschneid3r.list"
-sudo apt update
-sudo apt install albert
-```
-
-- Additionally, to delete the repository and the trusted key, run the following commands:
-```
-sudo rm /etc/apt/sources.list.d/home:manuelschneid3r.list
-sudo apt-key del E192A257
-sudo apt clean
-sudo apt update
-```
-- Then open a Terminal and type `albert`, configure the needed extensions, toggle the enable at login checkbox and set the desired keyword shortcut.
 
 ## Old issues
 
