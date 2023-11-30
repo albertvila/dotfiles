@@ -13,7 +13,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   arc
   calibre
-  movist
+  logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   synology-drive
 )
@@ -51,8 +51,6 @@ declare -a VSCODE_PACKAGES=(
 
 declare -a APP_STORE_APPS=(
   # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
-  # 918858936 # Airmail (it will only work if it has been paid with your mac account, also you need to set up your app store account first)
   904280696 # Things3
-  1091189122 # Bear
   1176895641 # Spark email
 )

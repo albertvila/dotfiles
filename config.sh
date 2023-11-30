@@ -55,8 +55,8 @@ declare -a BREW_CASK_APPS=(
   spotify
   visual-studio-code
   google-chrome
-  lastpass
   leapp
+  openvpn-connect
   slack
   zoom
 )

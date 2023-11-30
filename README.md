@@ -42,7 +42,12 @@ Just run `./setup.sh` from time to time to automatically update all modules and 
 ### general
 1. Open OSX keyboard settings and remove spotlight shortcut
 2. Open Alfred and set spotlight shortcut, also select to be opened at login
-3. Open spectacle and select to be opened at login
+3. Open rectangle and select to be opened at login
+
+### github
+1. Generate a new GPG key & add it to Github.com
+2. Generate a new SSH key & add it to Github.com
+3. Register the new SSH key using `ssh-add ~/.ssh/github`
 
 ### jenv
 1. Execute `/usr/libexec/java_home -V` to know all java versions installed on your computer
@@ -102,21 +107,6 @@ $ git clone git@github.com:jkaving/intellij-colors-solarized.git
 - ChecksStyle-IDEA
 - Lombok
 
-### plenv
-Once you know that perl version to install, run the following commands
-1. plenv install $version
-2. plenv rehash
-3. plenv global $version
-4. plenv install-cpanm
-5. You may need to restart your terminal, just type perl --version to be sure you are running the desired version
-
-Note: If you get Segmentation fault installing perl versions, just install the perl-build as a plugin using the following command
-`git clone git://github.com/tokuhirom/Perl-Build.git $(plenv root)/plugins/perl-build/`
-
-### pyenv
-1. Install latest python version using the following command `pyenv install 3.7.3`
-2. Set this version as the default one for the whole system `pyenv global 3.7.3`
-
 ### nvm
 1. Setup the node version you want to use, for example to use node 8 type
 ```
@@ -134,10 +124,6 @@ nvm use 8
 
 ### Google drive
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
-
-### Chrome DarkReader extension
-- In order to fix an issue with Google Sheets when typing on Dark Mode, just change the settings to Filter+ under DarkReader --> More --> Filter+, then select Only for docs.google.com site.
-- For the rest of the sites try using the Dynamic filter if the highlighted text on Chrome is not visible
 
 ### Tampermonkey for Chrome
 - Open the extension settings, export to a file and then import to the new computer
@@ -195,26 +181,6 @@ npm config set prefix $NVM_DIR/versions/node/v6.13.7
 ```
 
 - If you get any error related to `pygmentize` doing a cat or more, just run the following command `sudo easy_install Pygments` to see if it solves the issue
-
-## Old manual steps
-Those are now configured automatically, however, I prefer to keep the manual steps here just in case.
-
-### iterm2
-1. Open iTerm2's preferences (do this change for all needed profiles).
-2. Go to colors, load presets and select Solarized Dark. Make sure that the minimum contrast slider is set to low
-3. Click on text, make sure that "Draw bold text in bright colours" is disabled
-4. Change the font to Meslo LG M Regular for Powerline, 12p
-5. Go to Global Keys tab and change mapping for Ctrl+Tab / Ctrl+Shift+Tab to Next and Previous tab
-6. Add two more mappings to jump at the beginning/end of line
-```
-    FOR  ACTION         SEND
-    ⌘←  "HEX CODE"      0x01
-    ⌘→  "HEX CODE"      0x05
-```
-7. Install the Shell integration for the [automatic profile switching](https://iterm2.com/documentation-automatic-profile-switching.html) using (`curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash`), more info [here](https://iterm2.com/documentation-shell-integration.html) (re run the setup script after this command, because it overrides the .zshrc symbolic link)
-
-^(\w+)@([\w.-]+):.+\$
-^\w+@[\w.-]+:([^$]+)\$
 
 ## External links
 
