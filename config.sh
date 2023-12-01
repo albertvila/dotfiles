@@ -20,21 +20,20 @@ declare -a BREW_APPS=(
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   direnv
-  fasd
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   gradle-completion
   htop
-  java11
+  openjdk
+  openjdk@11
   jenv
   jq
   node
   nvm
-  openssl
+  openssl@3
   openvpn
-  orbstack # Docker https://orbstack.dev/
   perl-build
   perltidy
   pinentry-mac
@@ -48,16 +47,17 @@ declare -a BREW_CASK_APPS=(
   alfred
   dropbox
   firefox
+  google-chrome
   intellij-idea-ce
   iterm2
-  postman
-  rectangle
-  spotify
-  visual-studio-code
-  google-chrome
   leapp
   openvpn-connect
+  orbstack # Docker https://orbstack.dev/
+  postman
+  rectangle
   slack
+  spotify
+  visual-studio-code
   zoom
 )
 

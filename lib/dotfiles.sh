@@ -61,8 +61,7 @@ function cleanup() {
 function _setup_git() {
   bot "Setting up git config"
 
-  git submodule update --init
-  git submodule update --recursive --remote
+  git submodule update --init --recursive --remote
 
   ok
 }
