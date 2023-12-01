@@ -22,7 +22,6 @@ set laststatus=2
 " ** Colors solarized **
 syntax enable
 set background=dark
-" colorscheme solarized
 
 " ** vim-gitgutter
 let g:gitgutter_map_keys = 0 "Remove all mappings, not used

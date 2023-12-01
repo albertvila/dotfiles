@@ -4,6 +4,3 @@
 [submodule "iterm/powerline/fonts"]
 	path = iterm/powerline/fonts
 	url = https://github.com/powerline/fonts.git
-[submodule "vim/bundle/vim-colors-solarized"]
-	path = vim/bundle/vim-colors-solarized
-	url = https://github.com/altercation/vim-colors-solarized.git
