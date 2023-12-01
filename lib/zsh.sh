@@ -32,7 +32,7 @@ function _setup_zsh() {
   bot "Setting up zsh & terminal"
 
   # Set the default shell to zsh if it isn't currently set to zsh
-  if [[ ! $(echo $SHELL) == $(which zsh) ]]; then
+  if [[ ! ($(echo $SHELL) == $(which zsh) || "/opt/homebrew/bin/zsh" == $(which zsh)) ]]; then
     # If you receive this error `chsh: /usr/local/bin/zsh: non-standard shell`, then run the following command
     # sudo sh -c "echo $(which zsh) >> /etc/shells"
     chsh -s $(which zsh)
@@ -65,7 +65,7 @@ function _install_prezto() {
     # If we want to uninstall it, just remove the ~/.zprezto folder
   else
     cd $HOME/.zprezto/
-    git pull && git submodule update --init --recursive
+    git pull && git submodule update --init --recursive --remote
   fi
 
   ok

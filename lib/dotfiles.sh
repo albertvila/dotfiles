@@ -62,6 +62,7 @@ function _setup_git() {
   bot "Setting up git config"
 
   git submodule update --init
+  git submodule update --recursive --remote
 
   ok
 }
@@ -69,8 +70,6 @@ function _setup_git() {
 function _setup_vim() {
   bot "Installing vim plugins and fonts"
 
-  mkdir -p $HOME/.vim/colors
-  ln -fs $HOME/.vim/bundle/vim-colors-solarized/colors/solarized.vim $HOME/.vim/colors/solarized.vim
   vim +PluginInstall +qall > /dev/null 2>&1
 
   ok
