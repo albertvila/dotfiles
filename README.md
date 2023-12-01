@@ -89,38 +89,8 @@ Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more informat
 
 ## Manual steps after first setup
 
-### intellij
-1. Clone git repository
-```sh
-$ git clone git@github.com:jkaving/intellij-colors-solarized.git
-```
-2. Go to `File | Import Settings...` and specify the `intellij-colors-solarized` directory
- Click `OK` in the dialog that appears.
-3. Restart IntelliJ IDEA
-4. Go to `Preferences | Editor | Colors & Fonts` and select one of the new color themes.
-5. Check `Preferences > Editor > General > Ensure line feed at file end on save`
-6. UnCheck `Preferences > Editor > Code Style > Java > Code Generation > Line comment at first column`
-7. Check `Preferences > Editor > Code Style > Java > Code Generation > Add a space at comment start`
-8. Check `Preferences > Editor > Code Style > Wrap on typing` on Right margin option
-9. Update `Editor > Code Style > Java > Imports tab set Class count to use import with '*'` and `Names count to use static import with '*'` to 999
-10. Install the following Plugins
-- ChecksStyle-IDEA
-- Lombok
-
-### nvm
-1. Setup the node version you want to use, for example to use node 8 type
-```
-nvm install 8
-nvm use 8
-```
-### vi
-- If you want to enable the solarized theme, open the ~/.vimrc file and uncomment the colorscheme line
-
 ### aws
 - Run `aws configure` and set up your aws credentials
-
-### alfred workflows
-- SSH: Follow steps to use iterm2 instead of Terminal (https://github.com/deanishe/alfred-ssh)
 
 ### Google drive
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`
@@ -129,7 +99,6 @@ nvm use 8
 - Open the extension settings, export to a file and then import to the new computer
 
 ### Github
-
 - You need to configure your gitconfig user section, to do so just create a file named `~/.gitconfig-user` in your home folder with the following properties:
 
 ```
@@ -152,18 +121,10 @@ Replace:
 ```
 
 ## Old issues
-
 - Permission issues with homebrew under OS X El Capitan. Check /usr/local folder if it has de right permissions. Maybe you need to run
 ```sudo chown $(whoami):admin /usr/local && sudo chown -R $(whoami):admin /usr/local```
 
 - If you get the error `xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun` on OS X High Sierra then you need to reinstall the xcode tools. Run `xcode-select --install` and the errors will disappear
-
-- If you get the error `Undefined subroutine &ExtUtils::ParseXS::errors` when updating vim, you should change the plenv global version to use the system one, update vim, and then get back to the needed perl version
-```
-  plenv global system
-  ./setup.sh
-  plenv global 5.14.2
-```
 
 - If you find the following error while updating homebrew apps, then you should remove one of the taps. You can see all of them using `brew tap` and remove one using `brew untap XXX`
 
