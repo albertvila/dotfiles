@@ -42,7 +42,7 @@ declare -a NPM_PACKAGES=(
 )
 
 declare -a VSCODE_PACKAGES=(
-  AmazonWebServices.aws-toolkit-vscode
+  amazonwebservices.aws-toolkit-vscode
   exiasr.hadolint
   GitHub.copilot
   GitHub.copilot-chat
