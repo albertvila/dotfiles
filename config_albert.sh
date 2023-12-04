@@ -13,6 +13,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   arc
   calibre
+  ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   synology-drive
