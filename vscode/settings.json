@@ -8,12 +8,9 @@
     },
     "workbench.settings.useSplitJSON": true,
     "gitlens.mode.active": "zen",
-    "atomKeymap.promptV3Features": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.formatOnPaste": false,
     "extensions.ignoreRecommendations": true,
-
-    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/albert.vila/.vscode/extensions/gabrielbb.vscode-lombok-1.0.1/server/lombok.jar\"",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -33,15 +30,13 @@
     "files.hotExit": "onExitAndWindowClose",
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
-
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
-    "java.errors.incompleteClasspath.severity": "ignore",
     "diffEditor.renderSideBySide": false,
     "workbench.iconTheme": "material-icon-theme",
     "terminal.external.osxExec": "iTerm.app",
-    "terminal.integrated.fontFamily": "Meslo LG M for Powerline",
+    "terminal.integrated.fontFamily": "MesloLGS NF",
     "editor.suggestSelection": "first",
     "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
     "[perl]": {
@@ -112,43 +107,20 @@
     "yaml.schemas": {
         "file:///Users/albert.vila/.vscode/extensions/atlassian.atlascode-3.0.7/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
-    "atlascode.jira.jqlList": [
-        {
-            "enabled": true,
-            "id": "8bf6a922-3640-4352-974d-e32be52c68ad",
-            "monitor": true,
-            "name": "My launchmetrics Issues",
-            "query": "assignee = currentUser() AND resolution = Unresolved ORDER BY lastViewed DESC",
-            "siteId": "2b665b4d-6ecc-4eb5-b847-ad071bf66683"
-        },
-        {
-            "enabled": true,
-            "id": "90c0eaa5-52ef-425b-87f4-8e7b587f7ec5",
-            "monitor": true,
-            "name": "BIT current sprint",
-            "query": "project = \"BIT\" AND sprint in openSprints()",
-            "siteId": "2b665b4d-6ecc-4eb5-b847-ad071bf66683"
-        }
-    ],
-    "atlascode.bitbucket.enabled": false,
     "python.languageServer": "Default",
     "git.autofetch": true,
-    "java.project.importHint": false,
     "editor.renderControlCharacters": false,
     "editor.codeActionsOnSave": {
-
-        "source.fixAll.eslint": false
+        "source.fixAll.eslint": "never"
     },
     "workbench.editorAssociations": {
         "*.ipynb": "jupyter-notebook",
         "*.parquet": "default"
     },
-    "eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
     "[javascript]": {
         "editor.defaultFormatter": "vscode.typescript-language-features"
     },
-    "terminal.integrated.shell.osx": "/bin/zsh",
     "todo-tree.general.tags": [
         "BUG",
         "HACK",
@@ -174,8 +146,6 @@
     "databricks.connectionManager": "Databricks CLI Profiles",
     "databricks.lastActiveConnection": "DEFAULT",
     "jupyter.interactiveWindow.cellMarker.codeRegex": "^(#\\s*COMMAND\\s*[-]*|#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",
-    "chatgpt.promptPrefix.customPrompt1": "Refactor",
-    "chatgpt.promptPrefix.customPrompt1-enabled": true,
     "eslint.workingDirectories": [],
     "extensions.autoUpdate": false,
     "yaml.customTags": [
@@ -207,9 +177,6 @@
         "!Split",
         "!Split sequence"
     ],
-    "aws.telemetry": false,
-    "genieai.enableConversationHistory": true,
-    "aws.codeWhisperer.shareCodeWhispererContentWithAWS": false,
     "editor.inlineSuggest.enabled": true,
     "github.copilot.enable": {
         "*": true,
@@ -223,7 +190,6 @@
     "[json]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
-    "java.import.gradle.java.home": "/opt/homebrew/Cellar/openjdk@11/11.0.20/libexec/openjdk.jdk/Contents/Home",
     "typescript.updateImportsOnFileMove.enabled": "always",
     "workbench.colorTheme": "Solarized Dark",
     "window.zoomLevel": 1
