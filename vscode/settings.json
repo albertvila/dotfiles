@@ -192,5 +192,8 @@
     },
     "typescript.updateImportsOnFileMove.enabled": "always",
     "workbench.colorTheme": "Solarized Dark",
-    "window.zoomLevel": 1
+    "window.zoomLevel": 1,
+    "terminal.integrated.env.osx": {
+        "CW_NEW_SESSION": "1"
+    }
 }
