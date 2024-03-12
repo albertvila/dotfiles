@@ -14,7 +14,7 @@ Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx dev packages for brew/pip/npm/gem/yarn/vscode/brew cask and osx defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
-- Shell theme powerlevel10k (https://github.com/romkatv/powerlevel10k)
+- Shell Starship (https://starship.rs/)
 - Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
 - Fonts powerline (https://github.com/powerline/fonts)
 
@@ -58,7 +58,7 @@ More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-
 
 If the first command does not return anything, just run `brew info java` and `brew info java11` and execute the symlink for the sytem Java wrappers
 
-### iterm with powerlevel10k
+### iterm
 1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
 
 ## Possible issues

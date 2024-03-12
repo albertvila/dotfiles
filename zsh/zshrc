@@ -1,27 +1,8 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-unalias lm
-for script in $HOME/.scripts/*; do
-  source $script
-done
-
-# Used to import private scripts stored in my bitbucket repository
-if [[ -d "$HOME/.scripts.private" ]]; then
-  for script in $HOME/.scripts.private/*; do
-    source $script
-  done
-fi
-
-export PATH=.:~/bin:~/.local/bin:$PATH
+export PATH=.:~/bin:~/.local/bin:~/Library/Python/3.11/bin:$PATH
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
@@ -50,13 +31,6 @@ fi
 
 # To enable shims and autocompletion add to your profile:
 if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
-
-# if command -v pyenv 1>/dev/null 2>&1; then
-#   eval "$(pyenv init - --no-rehash)"
-# fi
-
-# https://www.iterm2.com/documentation-shell-integration.html
-# test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 load-nvm() {
   export NVM_DIR="$HOME/.nvm"
@@ -89,35 +63,33 @@ add-zsh-hook chpwd load-nvmrc
 add-zsh-hook chpwd check-local-java
 
 # load bashcompinit for some old bash completions
+autoload -Uz compinit && compinit
 autoload -U +X bashcompinit && bashcompinit
+
+for script in $HOME/.scripts/*; do
+  source $script
+done
+
+# Used to import private scripts stored in my bitbucket repository
+if [[ -d "$HOME/.scripts.private" ]]; then
+  for script in $HOME/.scripts.private/*; do
+    source $script
+  done
+fi
 
 setopt hist_ignore_all_dups # remove older duplicate entries from history
 setopt hist_reduce_blanks # remove superfluous blanks from history items
 setopt inc_append_history # save history entries as soon as they are entered
 setopt share_history # share history between different instances of the shell
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-# Add JBang to environment
-alias j!=jbang
-export PATH="$HOME/.jbang/bin:$PATH"
-
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
-#load-nvm
-
-# bash users - add the following line to your ~/.bashrc
-eval "$(direnv hook bash)"
-
 # zsh users - add the following line to your ~/.zshrc
 eval "$(direnv hook zsh)"
 
-# bun completions
-[ -s "/Users/albert.vila/.bun/_bun" ] && source "/Users/albert.vila/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+# add prompt_starship_setup function to Prezto
+setopt prompt_subst interactive_comments
+ZPREZTODIR=${ZPREZTODIR:-${ZDOTDIR:-~}/.zprezto}
+echo 'eval "$(starship init zsh)"' >! $ZPREZTODIR/modules/prompt/functions/prompt_starship_setup

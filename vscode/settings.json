@@ -195,5 +195,7 @@
     "window.zoomLevel": 1,
     "terminal.integrated.env.osx": {
         "CW_NEW_SESSION": "1"
-    }
+    },
+    "editor.accessibilitySupport": "off",
+    "editor.multiCursorLimit": 20000
 }

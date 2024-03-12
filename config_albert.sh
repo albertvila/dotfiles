@@ -17,6 +17,7 @@ declare -a BREW_CASK_APPS=(
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   synology-drive
+  warp
 )
 
 declare -a GEM_APPS=(
@@ -45,8 +46,8 @@ declare -a NPM_PACKAGES=(
 declare -a VSCODE_PACKAGES=(
   amazonwebservices.aws-toolkit-vscode
   exiasr.hadolint
-  GitHub.copilot
-  GitHub.copilot-chat
+  gitHub.copilot
+  gitHub.copilot-chat
   paiqo.databricks-vscode
 )
 

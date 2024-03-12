@@ -8,6 +8,9 @@ alias gds="gd --staged"
 alias -- -="cd -"
 alias cat='pygmentize -g'
 
+# In order to use our lm-build tool
+unalias lm
+
 # From Fasd https://github.com/clvv/fasd
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 
