@@ -84,21 +84,21 @@ declare -a VSCODE_PACKAGES=(
   dbaeumer.vscode-eslint
   eamodio.gitlens
   foxundermoon.shell-format
-  GitHub.vscode-pull-request-github
-  Gruntfuggly.todo-tree
-  JerryHong.autofilename
+  github.vscode-pull-request-github
+  gruntfuggly.todo-tree
+  jerryhong.autofilename
   johnpapa.vscode-peacock
-  Kaktus.perltidy-more
+  kaktus.perltidy-more
   hashicorp.terraform
   mohsen1.prettify-json
   ms-azuretools.vscode-docker
   ms-python.python
   nsfilho.tosnippet
   pflannery.vscode-versionlens
-  PKief.material-icon-theme
-  RoscoP.ActiveFileInStatusBar
+  pkief.material-icon-theme
+  roscop.activefileinstatusbar
   sfodje.perlcritic
-  VisualStudioExptTeam.vscodeintellicode
+  visualstudioexptteam.vscodeintellicode
   vncz.vscode-apielements
 )
 
