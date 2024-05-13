@@ -46,8 +46,9 @@ declare -a NPM_PACKAGES=(
 declare -a VSCODE_PACKAGES=(
   amazonwebservices.aws-toolkit-vscode
   exiasr.hadolint
-  gitHub.copilot
-  gitHub.copilot-chat
+  github.copilot
+  github.copilot-chat
+  ms-python.autopep8
   paiqo.databricks-vscode
 )
 
