@@ -152,7 +152,6 @@ function _install_brew_cask() {
   fi
 
   # Install HomeBrew casks
-  brew tap homebrew/cask-versions
   brew tap aws/tap
 
   # Install brew cask packages
