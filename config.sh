@@ -83,6 +83,7 @@ declare -a VSCODE_PACKAGES=(
   byi8220.indented-block-highlighting
   dbaeumer.vscode-eslint
   eamodio.gitlens
+  esbenp.prettier-vscode
   foxundermoon.shell-format
   github.vscode-pull-request-github
   gruntfuggly.todo-tree
@@ -91,6 +92,7 @@ declare -a VSCODE_PACKAGES=(
   kaktus.perltidy-more
   hashicorp.terraform
   mohsen1.prettify-json
+  mkhl.direnv
   ms-azuretools.vscode-docker
   ms-python.python
   nsfilho.tosnippet

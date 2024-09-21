@@ -81,6 +81,7 @@ function help-gradle {
   help-print "gradle clean build -x test" "Excludes test phase"
   help-print "gradle build --refresh-dependencie" "Forces to refresh all project dependencies"
   help-print "gradle wrapper --gradle-version 5.2.1" "Updates the project gradle wraper to that version"
+  help-print "If you have issues like \"Failed to run Gradle Worker Daemon\"" "Stop gradle daemon with gradle --stop and then remove the ~/.gradle/cache folder"
 }
 
 function help-terraform {

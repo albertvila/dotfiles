@@ -13,6 +13,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   arc
   calibre
+  cursor
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
@@ -49,7 +50,9 @@ declare -a VSCODE_PACKAGES=(
   github.copilot
   github.copilot-chat
   ms-python.autopep8
+  ms-python.vscode-pylance
   paiqo.databricks-vscode
+  prisma.prisma
 )
 
 declare -a APP_STORE_APPS=(
