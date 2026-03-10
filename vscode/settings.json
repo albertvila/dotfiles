@@ -128,7 +128,6 @@
   "editor.unicodeHighlight.invisibleCharacters": false,
   "githubPullRequests.pullBranch": "never",
   "perltidy-more.executable": "/opt/homebrew/bin/perltidy",
-  "perltidy-more.profile": "/Users/albert.vila/.perltidyrc",
   "databricks.connectionManager": "Databricks CLI Profiles",
   "databricks.lastActiveConnection": "DEFAULT",
   "jupyter.interactiveWindow.cellMarker.codeRegex": "^(#\\s*COMMAND\\s*[-]*|#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",

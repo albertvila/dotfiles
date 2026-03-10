@@ -1,0 +1,6 @@
+# Copy this file to ~/.gitconfig-user and fill in your details.
+# It is included by git/gitconfig via [include] path = ~/.gitconfig-user
+[user]
+	name = Your Name
+	email = your.email@example.com
+	signingkey = YOUR_GPG_KEY_ID

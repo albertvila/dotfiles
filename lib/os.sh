@@ -148,7 +148,7 @@ function _install_brew_cask() {
   # install homebrew
   if [[ $(command -v brew) == "" ]]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(homebrew/bin/brew shellenv)"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
   fi
 
   # Install HomeBrew casks
@@ -258,16 +258,16 @@ function _install_app_store_apps() {
       ok "[app store] App $app already installed"
 
       # Checking if the app needs update
-      if mas outdated | grep "^${pkg}"; then
-        warn "[app store] App '$pkg' is not up to date, updating it ..."
-        mas install $app
+      if mas outdated | grep "^${app}"; then
+        warn "[app store] App '$app' is not up to date, updating it ..."
+        mas upgrade $app
       fi
     else
       warn "[app store] App '$app' is not installed"
-      mas install $pkg
+      mas install $app
     fi
   done
-  unset ATOM_PACKAGES
+  unset APP_STORE_APPS
 
   ok
 }

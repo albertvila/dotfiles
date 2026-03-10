@@ -30,6 +30,7 @@ declare -a BREW_APPS=(
   jenv
   jq
   node
+  nodenv
   nvm
   openssl@3
   perl-build
@@ -99,7 +100,6 @@ declare -a VSCODE_PACKAGES=(
   pkief.material-icon-theme
   roscop.activefileinstatusbar
   sfodje.perlcritic
-  visualstudioexptteam.vscodeintellicode
   vncz.vscode-apielements
 )
 

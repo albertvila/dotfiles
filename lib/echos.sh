@@ -20,7 +20,7 @@ function magenta() {
 }
 
 function cyan() {
-  printf "$COL_MAGENTA$1$COL_RESET"
+  printf "$COL_CYAN$1$COL_RESET"
 }
 
 function bot() {
@@ -36,7 +36,7 @@ function ok() {
 }
 
 function warn() {
-  printf "$COL_YELLOW [✔]$COL_RESET $1\n"
+  printf "$COL_YELLOW [⚠]$COL_RESET $1\n"
 }
 
 function error() {

@@ -1,4 +1,5 @@
 vim/bundle/*
 vim/.netrwhist
+vim/pending_vimrc
 iterm/*.bak
 get-pip.py

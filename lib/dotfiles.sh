@@ -4,8 +4,16 @@ function install_dotfiles() {
   _backup_existing_dotfiles
 
   _install_dotfiles
+  _install_starship_config
   _setup_git
   _setup_vim
+}
+
+function _install_starship_config() {
+  bot "Creating symbolic link for starship config"
+  mkdir -p "$HOME/.config"
+  _symbolic_link "$DOTFILES_DIR/zsh/starship.toml" "$HOME/.config/starship.toml"
+  ok
 }
 
 # It does a cleanup every 30 days
@@ -107,7 +115,7 @@ function _backup_existing_dotfiles() {
     # Only move the file if it's not a symbolic link
     if [ -f $file ] && [ ! -L $file ]; then
       mv $file $DOTFILES_BACKUP_DIR
-      if [ ! $? ]; then
+      if [ $? -eq 0 ]; then
         ok "$file moved to $DOTFILES_BACKUP_DIR"
       else
         error "Error moving $file to $DOTFILES_BACKUP_DIR"

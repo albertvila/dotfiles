@@ -13,9 +13,6 @@ export MORE='-R'
 export LESSOPEN='|pygmentize %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
-# Directory where brew command installs nvm
-export NVM_DIR="/usr/local/opt/nvm"
-
 # Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
 precmd () {
   window_title="\e]0;${${PWD/#"$HOME"/~}/workspace/w}\a"
