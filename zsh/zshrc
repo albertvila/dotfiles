@@ -81,7 +81,7 @@ setopt share_history # share history between different instances of the shell
 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
 # zsh users - add the following line to your ~/.zshrc
 eval "$(direnv hook zsh)"
@@ -90,4 +90,4 @@ eval "$(direnv hook zsh)"
 setopt prompt_subst interactive_comments
 ZPREZTODIR=${ZPREZTODIR:-${ZDOTDIR:-~}/.zprezto}
 echo 'eval "$(starship init zsh)"' >! $ZPREZTODIR/modules/prompt/functions/prompt_starship_setup
-eval "$(nodenv init -)"
+command -v nodenv >/dev/null && eval "$(nodenv init -)"
