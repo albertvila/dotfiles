@@ -92,6 +92,7 @@ function _setup_osx() {
 
   # Setting iterm custom folder config
   sed -i.bak "s;/Users/albert/workspace/dotfiles;${DOTFILES_DIR};g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
+  sed -i.bak "s;<string>/Users/albert</string>;<string>${HOME}</string>;g" "${DOTFILES_DIR}"/iterm/com.googlecode.iterm2.plist
   defaults write com.googlecode.iterm2 "PrefsCustomFolder" -string "${DOTFILES_DIR}/iterm"
   defaults write com.googlecode.iterm2 "LoadPrefsFromCustomFolder" -bool true
   ok "iTerm's custom config folder set"

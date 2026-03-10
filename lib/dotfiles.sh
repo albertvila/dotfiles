@@ -13,6 +13,16 @@ function _install_starship_config() {
   bot "Creating symbolic link for starship config"
   mkdir -p "$HOME/.config"
   _symbolic_link "$DOTFILES_DIR/zsh/starship.toml" "$HOME/.config/starship.toml"
+
+  # Write the Prezto prompt shim so starship is used as the prompt theme.
+  # This is done once here rather than on every shell startup.
+  local preztodir="${ZPREZTODIR:-${ZDOTDIR:-$HOME}/.zprezto}"
+  local promptdir="$preztodir/modules/prompt/functions"
+  if [[ -d "$promptdir" ]]; then
+    echo 'eval "$(starship init zsh)"' > "$promptdir/prompt_starship_setup"
+    ok "Starship Prezto shim written"
+  fi
+
   ok
 }
 

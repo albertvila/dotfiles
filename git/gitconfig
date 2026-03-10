@@ -1,7 +1,7 @@
 [push]
 	default = simple
 [core]
-	editor = /usr/bin/vim
+	editor = vim
 	excludesfile = ~/.gitignore
 [merge]
 	ff = false
@@ -13,8 +13,8 @@
 [includeIf "gitdir:~/workspace/"]
 	path = ~/.gitconfig-lm
 [credential "https://github.com"]
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !/usr/bin/env gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !/usr/bin/env gh auth git-credential
 [include]
     path = ~/.gitconfig-user

@@ -2,7 +2,9 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-export PATH=~/bin:~/.local/bin:~/Library/Python/3.11/bin:$PATH
+export PATH=~/bin:~/.local/bin:$PATH
+# Add pip user scripts to PATH dynamically (avoids hardcoding a Python version)
+export PATH="$(python3 -m site --user-base 2>/dev/null)/bin:$PATH"
 export EDITOR="vim"
 
 # If no GPG Suite https://help.github.com/articles/telling-git-about-your-gpg-key/
@@ -29,23 +31,6 @@ fi
 # To enable shims and autocompletion add to your profile:
 if which jenv > /dev/null; then eval "$(jenv init - --no-rehash)"; fi
 
-load-nvm() {
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
-}
-
-load-nvmrc() {
-  [[ -a .nvmrc ]] || return
-
-  if [[ -f .nvmrc && -r .nvmrc ]]; then
-    if ! type nvm >/dev/null; then
-      load-nvm
-    fi
-    nvm use
-  fi
-}
-
 check-local-java() {
   [[ -a .java-version ]] || return
 
@@ -54,13 +39,11 @@ check-local-java() {
   fi
 }
 
-# Automatically call nvm use if the folder has a .nvmrc file
+# Automatically switch java version when entering a directory with a .java-version file
 autoload -U add-zsh-hook
-add-zsh-hook chpwd load-nvmrc
 add-zsh-hook chpwd check-local-java
 
-# load bashcompinit for some old bash completions
-autoload -Uz compinit && compinit
+# load bashcompinit for some old bash completions (compinit is already called by Prezto's completion module)
 autoload -U +X bashcompinit && bashcompinit
 
 for script in $HOME/.scripts/*; do
@@ -86,8 +69,6 @@ command -v pyenv >/dev/null && eval "$(pyenv init -)"
 # zsh users - add the following line to your ~/.zshrc
 eval "$(direnv hook zsh)"
 
-# add prompt_starship_setup function to Prezto
+# add prompt_starship_setup function to Prezto (written once during install, see lib/dotfiles.sh)
 setopt prompt_subst interactive_comments
-ZPREZTODIR=${ZPREZTODIR:-${ZDOTDIR:-~}/.zprezto}
-echo 'eval "$(starship init zsh)"' >! $ZPREZTODIR/modules/prompt/functions/prompt_starship_setup
 command -v nodenv >/dev/null && eval "$(nodenv init -)"

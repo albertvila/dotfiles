@@ -19,6 +19,7 @@ declare -a BREW_APPS=(
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   direnv
+  fasd
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
@@ -29,9 +30,7 @@ declare -a BREW_APPS=(
   openjdk@11
   jenv
   jq
-  node
-  nodenv
-  nvm
+  nodenv # Node version manager — use `nodenv install <version>` to install Node
   openssl@3
   perl-build
   perltidy
