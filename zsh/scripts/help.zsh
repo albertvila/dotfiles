@@ -109,8 +109,8 @@ function help-docker {
   echo "Showing docker help"
   echo "-------------------\n"
 
-  echo "You must run `colima start` first"
-  echo "If the command requires login, just run $(aws ecr get-login --no-include-email --region eu-west-1)"
+  echo 'You must start OrbStack first (OrbStack replaced Colima as the Docker runtime)'
+  echo 'If the command requires ECR login, run: aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin <account>.dkr.ecr.eu-west-1.amazonaws.com'
   help-print "docker images -a" "In order to list all docker images"
   help-print "docker rmi IMAGE_NAME" "To delete an image, use --force to force it"
   help-print "docker build -t IMAGE_NAME -f ./config/docker/Dockerfile ." "To build a new docker image"

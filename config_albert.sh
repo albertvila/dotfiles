@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
-  anomalyco/tap/opencode
   docker-credential-helper-ecr
   gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   # parquet-tools # TODO : This is deprecated
   ollama # https://ollama.com/
+  opencode # anomalyco/tap/opencode — tap is registered in _install_brew_cask
   php # Needed by Alfred Github workflow
   pyenv
 )

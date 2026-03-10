@@ -154,6 +154,7 @@ function _install_brew_cask() {
   # Install HomeBrew casks
   brew tap aws/tap
   brew tap databricks/tap
+  brew tap anomalyco/tap
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
@@ -234,10 +235,10 @@ function _install_yarn() {
 
   # Install yarn apps
   for pkg in ${YARN_APPS[@]}; do
-    if yarn global list | grep "^info \"${pkg}" | awk -F\" '{ print $2 }'; then
+    if yarn global list | grep -q "^info \"${pkg}"; then
       ok "[yarn] Package '$pkg' is already installed"
 
-      # TODO Coudn't find a way to know if the package was outdated
+      # TODO Couldn't find a way to know if the package was outdated
       warn "[yarn] Going to check if '$pkg' needs an update"
       yarn global upgrade $pkg
     else
@@ -310,9 +311,8 @@ function _install_vsc() {
 
 function _install_vsc_packages() {
   for pkg in ${VSCODE_PACKAGES[@]}; do
-    if code --list-extensions | grep "${pkg}"; then
+    if code --list-extensions | grep -qi "^${pkg}$"; then
       ok "[vsc] Package '$pkg' is already installed"
-      code --install-extension $pkg --force
     else
       warn "[vsc] Package '$pkg' is not installed"
       code --install-extension $pkg

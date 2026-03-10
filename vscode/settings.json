@@ -55,7 +55,7 @@
     },
   },
   "todo-tree.highlights.defaultHighlight": {},
-  "hadolint.hadolintPath": "/usr/local/bin/hadolint",
+  "hadolint.hadolintPath": "/opt/homebrew/bin/hadolint",
   "[dockerfile]": {
     "editor.defaultFormatter": "docker.docker",
   },

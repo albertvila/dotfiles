@@ -35,7 +35,7 @@ gbranch() {
                 baseBranch='d'
             else
                 echo "Wrong branch, you should be in main or develop branch"
-                exit 1;
+                return 1;
             fi
         fi
     fi
