@@ -32,7 +32,6 @@ declare -a BREW_APPS=(
   node
   nvm
   openssl@3
-  openvpn
   perl-build
   perltidy
   pinentry-mac

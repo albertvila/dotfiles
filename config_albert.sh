@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
+  anomalyco/tap/opencode
   docker-credential-helper-ecr
+  gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   # parquet-tools # TODO : This is deprecated
+  ollama # https://ollama.com/
   php # Needed by Alfred Github workflow
   pyenv
 )
@@ -13,12 +16,14 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   arc
   calibre
+  chatgpt
   cursor
   databricks
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   synology-drive
+  twingate # VPN client
   warp
 )
 

@@ -93,3 +93,4 @@ eval "$(direnv hook zsh)"
 setopt prompt_subst interactive_comments
 ZPREZTODIR=${ZPREZTODIR:-${ZDOTDIR:-~}/.zprezto}
 echo 'eval "$(starship init zsh)"' >! $ZPREZTODIR/modules/prompt/functions/prompt_starship_setup
+eval "$(nodenv init -)"
