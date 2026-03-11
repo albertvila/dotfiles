@@ -117,6 +117,10 @@ function _install_brew() {
 
   brew update
 
+  # Pin Java versions so brew outdated never flags them as stale —
+  # major JDK upgrades should be intentional, not automatic.
+  brew pin openjdk openjdk@11 2>/dev/null || true
+
   # Install brew packages
   for pkg in ${BREW_APPS[@]}; do
     if brew list --formula -1 | grep -q "^${pkg}\$"; then
@@ -202,11 +206,11 @@ function _install_pip() {
 
   # Install pip apps
   for pkg in ${PIP_APPS[@]}; do
-    if pip list | grep "^${pkg}"; then
+    if pip list | grep -E "^${pkg}\s"; then
       ok "[pip] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if pip list --outdated | grep "^${pkg}"; then
+      if pip list --outdated | grep -E "^${pkg}\s"; then
         warn "[pip] Package '$pkg' is not up to date, updating it ..."
         pip install "$pkg" --upgrade --user
       fi
@@ -246,17 +250,23 @@ function _install_app_store_apps() {
   bot "Checking app store apps ..."
 
   for app in ${APP_STORE_APPS[@]}; do
-    if mas list | grep "^${app}"; then
-      ok "[app store] App $app already installed"
+    # mas list can miss apps installed under a different Apple ID, so we
+    # use mas install as source of truth: it prints "Already installed"
+    # when the app is present regardless of which account installed it.
+    local install_output
+    install_output=$(mas install "$app" 2>&1)
 
-      # Checking if the app needs update
-      if mas outdated | grep "^${app}"; then
+    if echo "$install_output" | grep -qi "already installed"; then
+      ok "[app store] App '$app' already installed"
+
+      if mas outdated | grep -q "^${app}"; then
         warn "[app store] App '$app' is not up to date, updating it ..."
         mas upgrade "$app"
       fi
+    elif echo "$install_output" | grep -qi "Installed\|Downloading"; then
+      ok "[app store] App '$app' installed successfully"
     else
-      warn "[app store] App '$app' is not installed"
-      mas install "$app"
+      error "[app store] Failed to install app '$app': $install_output"
     fi
   done
   unset APP_STORE_APPS
