@@ -32,12 +32,12 @@ function pr_stats_full {
 }
 
 function looooooooong {
-    START=$(date +%s.%N)
+    START=$(gdate +%s.%N)
     $*
     EXIT_CODE=$?
-    END=$(date +%s.%N)
+    END=$(gdate +%s.%N)
     DIFF=$(echo "$END - $START" | bc)
-    RES=$(python -c "diff = $DIFF; min = int(diff / 60); print('%s min' % min)")
+    RES=$(python3 -c "diff = $DIFF; min = int(diff / 60); print('%s min' % min)")
     result="$1 completed in $RES, exit code $EXIT_CODE."
     echo -e "\n⏰  $result"
     ( say -r 250 $result 2>&1 > /dev/null & )

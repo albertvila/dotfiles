@@ -24,7 +24,7 @@ function help-git {
   echo "Creating a branch from another branch"
   echo "\tgcb new_branch_name origin/from_branch\n\tggp"
   echo "Changing last commit message already pushed to a branch"
-  echo "\tgit commit --amend -m "..."\n\tgit push --force-with-lease\n"
+  echo '\tgit commit --amend -m "..."\n\tgit push --force-with-lease\n'
   help-print "git rebase -i" "Squash commits"
   help-print "git reset --soft HEAD~1" "Rollback last local commit to stagged phase"
   help-print "git branch -d XXX" "Deletes a branch locally"

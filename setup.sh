@@ -43,7 +43,11 @@ unset DOTFILES_USER
 DOTFILES_USER=$USER_PARAM
 
 if [[ $DOTFILES_USER ]]; then
-  source $DOTFILES_DIR/config_$DOTFILES_USER.sh
+  if [[ ! -f "$DOTFILES_DIR/config_$DOTFILES_USER.sh" ]]; then
+    error "Config file not found: config_${DOTFILES_USER}.sh"
+    exit 1
+  fi
+  source "$DOTFILES_DIR/config_$DOTFILES_USER.sh"
   install_os_packages
 fi
 

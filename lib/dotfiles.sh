@@ -79,7 +79,7 @@ function cleanup() {
 function _setup_git() {
   bot "Setting up git config"
 
-  git submodule update --init --recursive --remote
+  git submodule update --init --recursive
 
   ok
 }
@@ -96,7 +96,7 @@ function _symbolic_link() {
   sourceFile=$1
   targetFile=$2
 
-  if [ ! -e "$targetFile" ]; then
+  if [ ! -e "$targetFile" ] && [ ! -L "$targetFile" ]; then
     execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
   elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
     ok "Link already exists for $targetFile"
@@ -123,8 +123,8 @@ function _backup_existing_dotfiles() {
     file="$HOME/.${i##*/}"
 
     # Only move the file if it's not a symbolic link
-    if [ -f $file ] && [ ! -L $file ]; then
-      mv $file $DOTFILES_BACKUP_DIR
+    if [ -f "$file" ] && [ ! -L "$file" ]; then
+      mv "$file" "$DOTFILES_BACKUP_DIR"
       if [ $? -eq 0 ]; then
         ok "$file moved to $DOTFILES_BACKUP_DIR"
       else
@@ -146,24 +146,24 @@ function _install_dotfiles() {
     sourceFile="$DOTFILES_DIR/$i"
     targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
 
-    _symbolic_link $sourceFile $targetFile
+    _symbolic_link "$sourceFile" "$targetFile"
   done
   ok
 
   unset FILES_TO_SYMLINK
 
   # Copy binaries
-  mkdir -p $HOME/bin
+  mkdir -p "$HOME/bin"
 
   bot "Creating symbolic links for binaries in ~/bin if needed"
   for i in ${BINARIES[@]}; do
     sourceFile="$DOTFILES_DIR/bin/$i"
     targetFile="$HOME/bin/$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
 
-    _symbolic_link $sourceFile $targetFile
+    _symbolic_link "$sourceFile" "$targetFile"
 
     bot "Changing access permissions for binary script :: ~/bin/${i##*/}"
-    chmod +rwx $HOME/bin/${i##*/}
+    chmod +rwx "$HOME/bin/${i##*/}"
   done
 
   ok

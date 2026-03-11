@@ -134,12 +134,6 @@ function _install_brew() {
   done
   unset BREW_APPS
 
-  if vim --version | egrep -q '\-lua'; then
-    error "[brew] Vim package installed without lua support. Lua support is needed for some plugins. Run:"
-    error "brew unlink vim"
-    error "brew install vim --with-lua"
-  fi
-
   ok
 }
 
@@ -159,7 +153,7 @@ function _install_brew_cask() {
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
-    if brew list --cask -1 | grep -q "^${pkg}"; then
+    if brew list --cask -1 | grep -q "^${pkg}$"; then
       ok "[brew cask] Package '$pkg' is already installed"
 
       # Checking if the package needs update
@@ -174,9 +168,6 @@ function _install_brew_cask() {
   done
   unset BREW_CASK_APPS
 
-  ok "[brew cask] going to upgrade brew cask"
-  brew upgrade --cask
-
   ok
 }
 
@@ -185,7 +176,7 @@ function _install_gem() {
 
   # Install gem apps
   for pkg in ${GEM_APPS[@]}; do
-    if gem list | grep "^${pkg}"; then
+    if gem list | grep -q "^${pkg}"; then
       ok "[gem] Package '$pkg' is already installed"
     else
       warn "[gem] Package '$pkg' is not installed"
@@ -298,7 +289,7 @@ function _install_npm() {
 function _install_vsc() {
   bot "Checking visual studio code packages ..."
 
-  ln -fs $DOTFILES_DIR/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
+  ln -fs "$DOTFILES_DIR/vscode/settings.json" ~/Library/Application\ Support/Code/User/settings.json
 
   if ! test $(which code)
   then

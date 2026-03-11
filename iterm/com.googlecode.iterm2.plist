@@ -1256,7 +1256,7 @@
 			<key>Window Type</key>
 			<integer>0</integer>
 			<key>Working Directory</key>
-			<string>/Users/albert</string>
+			<string>/Users/albert.vila</string>
 		</dict>
 		<dict>
 			<key>ASCII Anti Aliased</key>
@@ -1694,7 +1694,7 @@
 			<key>Window Type</key>
 			<integer>0</integer>
 			<key>Working Directory</key>
-			<string>/Users/albert</string>
+			<string>/Users/albert.vila</string>
 		</dict>
 		<dict>
 			<key>ASCII Anti Aliased</key>
@@ -2132,7 +2132,7 @@
 			<key>Window Type</key>
 			<integer>0</integer>
 			<key>Working Directory</key>
-			<string>/Users/albert</string>
+			<string>/Users/albert.vila</string>
 		</dict>
 		<dict>
 			<key>ASCII Anti Aliased</key>
@@ -2772,7 +2772,7 @@
 			<key>Window Type</key>
 			<integer>0</integer>
 			<key>Working Directory</key>
-			<string>/Users/albert</string>
+			<string>/Users/albert.vila</string>
 		</dict>
 	</array>
 	<key>OnlyWhenMoreTabs</key>

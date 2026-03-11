@@ -26,9 +26,6 @@ set background=dark
 " ** vim-gitgutter
 let g:gitgutter_map_keys = 0 "Remove all mappings, not used
 
-" ** neocomplete
-let g:neocomplete#enable_at_startup = 1
-
 " ** autocompletion
 filetype plugin indent on
 filetype on

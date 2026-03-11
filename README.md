@@ -21,7 +21,7 @@ Recap
 The customized theme looks like
 ![Theme](zsh/theme.png)
 
-If you would like to change the theme just run `p10k configure`
+If you would like to change the prompt theme, edit `zsh/starship.toml` (symlinked to `~/.config/starship.toml`).
 
 ## Installation
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
@@ -59,7 +59,7 @@ More information [here](https://www.linkedin.com/pulse/manage-multiple-java-mac-
 If the first command does not return anything, just run `brew info java` and `brew info java11` and execute the symlink for the sytem Java wrappers
 
 ### iterm
-1. Install the Nerd fonts (https://github.com/romkatv/powerlevel10k#fonts)
+1. Install the Nerd fonts — run `iterm/powerline/fonts/install.sh` or download from https://www.nerdfonts.com/
 
 ## Possible issues
 
