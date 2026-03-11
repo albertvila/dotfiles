@@ -14,12 +14,12 @@ declare -a FILES_TO_SYMLINK=(
 declare -a BINARIES=()
 
 declare -a BREW_APPS=(
-  ack
   awscli
+  bat
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   direnv
-  fasd
+  fzf
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
@@ -36,7 +36,7 @@ declare -a BREW_APPS=(
   perltidy
   pinentry-mac
   plenv
-  pygments
+  ripgrep
   starship
   vim
   yarn

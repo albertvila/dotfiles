@@ -12,7 +12,7 @@ export GPG_TTY=$TTY
 
 # Adding colors to more & less commands, cat is also colored with an alias
 export MORE='-R'
-export LESSOPEN='|pygmentize %s'
+export LESSOPEN='|bat --color=always --style=plain %s'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=3"
 
 # Configure iTerm2 tab titles based on current directory, example /Users/Albert/workspace/dotfiles -> ~/p/dotfiles
@@ -72,3 +72,6 @@ eval "$(direnv hook zsh)"
 # add prompt_starship_setup function to Prezto (written once during install, see lib/dotfiles.sh)
 setopt prompt_subst interactive_comments
 command -v nodenv >/dev/null && eval "$(nodenv init -)"
+
+# zoxide — smart directory jumper (replaces fasd)
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"

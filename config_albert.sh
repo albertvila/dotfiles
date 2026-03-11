@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
-  copilot-cli
   docker-credential-helper-ecr
   gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
@@ -17,6 +16,7 @@ declare -a BREW_CASK_APPS=(
   arc
   calibre
   chatgpt
+  copilot-cli
   cursor
   databricks
   ledger-live

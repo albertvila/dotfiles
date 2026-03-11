@@ -28,8 +28,8 @@ Plugin 'scrooloose/nerdtree.git'
 " Search files inside vim using Ctrl+p
 Plugin 'ctrlpvim/ctrlp.vim'
 
-" https://github.com/terryma/vim-multiple-cursors
-Plugin 'terryma/vim-multiple-cursors'
+" https://github.com/mg979/vim-visual-multi (replaces deprecated vim-multiple-cursors)
+Plugin 'mg979/vim-visual-multi'
 
 " Show a git diff on the left (https://github.com/airblade/vim-gitgutter)
 Plugin 'airblade/vim-gitgutter'
