@@ -3,9 +3,27 @@
 function install_zsh() {
   _install_zsh
 
+  _install_fasd
+
   _install_prezto
 
   _setup_zsh
+}
+
+# fasd is no longer on Homebrew — install directly from GitHub
+function _install_fasd() {
+  bot "Checking fasd ..."
+
+  if command -v fasd &>/dev/null; then
+    ok "fasd is already installed"
+    return
+  fi
+
+  warn "fasd not found, installing from GitHub ..."
+  curl -sL https://raw.github.com/clvv/fasd/master/fasd -o /opt/homebrew/bin/fasd \
+    && chmod 755 /opt/homebrew/bin/fasd \
+    && ok "fasd installed" \
+    || error "Failed to install fasd"
 }
 
 function _install_zsh() {

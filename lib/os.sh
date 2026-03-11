@@ -301,8 +301,10 @@ function _install_vsc() {
 }
 
 function _install_vsc_packages() {
+  local installed_extensions
+  installed_extensions=$(code --list-extensions 2>/dev/null)
   for pkg in ${VSCODE_PACKAGES[@]}; do
-    if code --list-extensions | grep -qi "^${pkg}$"; then
+    if echo "$installed_extensions" | grep -qi "^${pkg}$"; then
       ok "[vsc] Package '$pkg' is already installed"
     else
       warn "[vsc] Package '$pkg' is not installed"

@@ -18,7 +18,6 @@ declare -a BREW_CASK_APPS=(
   chatgpt
   copilot-cli
   cursor
-  databricks
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
@@ -53,7 +52,6 @@ declare -a NPM_PACKAGES=(
 declare -a VSCODE_PACKAGES=(
   amazonwebservices.aws-toolkit-vscode
   exiasr.hadolint
-  github.copilot
   github.copilot-chat
   ms-python.autopep8
   ms-python.vscode-pylance
