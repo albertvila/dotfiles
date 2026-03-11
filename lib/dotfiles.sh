@@ -34,8 +34,13 @@ function cleanup() {
     echo $(date) >> "$HOME/.dotfiles_cleanup"
     return
   else
-    lastCleanup=$(sed = $HOME/.dotfiles_cleanup | sed -n '$p')
+    lastCleanup=$(sed = "$HOME/.dotfiles_cleanup" | sed -n '$p')
     cyan=$(cyan "$lastCleanup")
+  fi
+
+  if ! command -v gdate &>/dev/null; then
+    warn "gdate (coreutils) not found, skipping cleanup"
+    return
   fi
 
   todayMinus30Days=$(gdate -d "30 days ago" +"%Y%m%d")
@@ -116,7 +121,7 @@ function _backup_existing_dotfiles() {
 
   # Create dotfiles_old for backup in homedir
   DOTFILES_BACKUP_DIR=~/.dotfiles_old
-  mkdir -p $DOTFILES_BACKUP_DIR
+  mkdir -p "$DOTFILES_BACKUP_DIR"
 
   # Move any existing dotfiles in homedir to dotfiles_old directory
   for i in ${FILES_TO_SYMLINK[@]}; do
@@ -163,7 +168,7 @@ function _install_dotfiles() {
     _symbolic_link "$sourceFile" "$targetFile"
 
     bot "Changing access permissions for binary script :: ~/bin/${i##*/}"
-    chmod +rwx "$HOME/bin/${i##*/}"
+    chmod 755 "$HOME/bin/${i##*/}"
   done
 
   ok

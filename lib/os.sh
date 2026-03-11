@@ -149,7 +149,6 @@ function _install_brew_cask() {
   # Install HomeBrew casks
   brew tap aws/tap
   brew tap databricks/tap
-  brew tap anomalyco/tap
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
@@ -232,7 +231,7 @@ function _install_yarn() {
 
       # TODO Couldn't find a way to know if the package was outdated
       warn "[yarn] Going to check if '$pkg' needs an update"
-      yarn global upgrade $pkg
+      yarn global upgrade "$pkg"
     else
       warn "[yarn] Package '$pkg' is not installed"
       yarn global add "$pkg"
@@ -253,11 +252,11 @@ function _install_app_store_apps() {
       # Checking if the app needs update
       if mas outdated | grep "^${app}"; then
         warn "[app store] App '$app' is not up to date, updating it ..."
-        mas upgrade $app
+        mas upgrade "$app"
       fi
     else
       warn "[app store] App '$app' is not installed"
-      mas install $app
+      mas install "$app"
     fi
   done
   unset APP_STORE_APPS
@@ -269,10 +268,10 @@ function _install_npm() {
   bot "Checking npm packages ..."
 
   for pkg in ${NPM_PACKAGES[@]}; do
-    if npm ls -g ${pkg} | grep "${pkg}"; then
+    if npm ls -g "${pkg}" | grep "${pkg}"; then
       ok "[npm] Package '$pkg' is already installed"
 
-      if which ncu &>/dev/null && ncu -g -f ${pkg} | grep "${pkg}"; then
+      if which ncu &>/dev/null && ncu -g -f "${pkg}" | grep "${pkg}"; then
         warn "[npm] Package '$pkg' is not up to date, updating it ..."
         npm install -g "$pkg"
       fi
@@ -289,9 +288,9 @@ function _install_npm() {
 function _install_vsc() {
   bot "Checking visual studio code packages ..."
 
-  ln -fs "$DOTFILES_DIR/vscode/settings.json" ~/Library/Application\ Support/Code/User/settings.json
+  ln -fs "$DOTFILES_DIR/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
 
-  if ! test $(which code)
+  if ! command -v code &>/dev/null
   then
     error "visual studio code not installed"
   else
@@ -307,7 +306,7 @@ function _install_vsc_packages() {
       ok "[vsc] Package '$pkg' is already installed"
     else
       warn "[vsc] Package '$pkg' is not installed"
-      code --install-extension $pkg
+      code --install-extension "$pkg"
     fi
   done
   unset VSCODE_PACKAGES

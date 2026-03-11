@@ -49,7 +49,7 @@ function _install_prezto() {
   bot "Intalling/Updating prezto if needed"
 
   # Install Prezo if it isn't already present
-  if [[ ! -d $HOME/.zprezto/ ]]; then
+  if [[ ! -d "$HOME/.zprezto/" ]]; then
     git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
 
     # Symlink all runcom files except README.md into the home directory
@@ -60,7 +60,7 @@ function _install_prezto() {
 
     # If we want to uninstall it, just remove the ~/.zprezto folder
   else
-    git -C $HOME/.zprezto pull && git -C $HOME/.zprezto submodule update --init --recursive --remote
+    git -C "$HOME/.zprezto" pull && git -C "$HOME/.zprezto" submodule update --init --recursive --remote
   fi
 
   ok

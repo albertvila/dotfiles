@@ -7,7 +7,7 @@ function start() {
     bot "Installing dotfiles for the first time"
     INSTALLATION_MODE='install'
   else
-    last_updated=$(sed = $HOME/.dotfiles | sed -n '$p')
+    last_updated=$(sed = "$HOME/.dotfiles" | sed -n '$p')
     blue=$(blue "$last_updated")
     bot "Dotfiles already installed/updated at $blue"
   fi
