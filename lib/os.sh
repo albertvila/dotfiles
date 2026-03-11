@@ -117,17 +117,13 @@ function _install_brew() {
 
   brew update
 
-  # Pin Java versions so brew outdated never flags them as stale —
-  # major JDK upgrades should be intentional, not automatic.
-  brew pin openjdk openjdk@11 2>/dev/null || true
-
   # Install brew packages
   for pkg in ${BREW_APPS[@]}; do
     if brew list --formula -1 | grep -q "^${pkg}\$"; then
       ok "[brew] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if brew outdated --quiet | grep -q "^${pkg}\$"; then
+      if brew outdated --quiet | grep -q "^${pkg}"; then
         warn "[brew] Package '$pkg' is not up to date, updating it ..."
         brew upgrade "$pkg"
       fi
