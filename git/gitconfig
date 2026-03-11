@@ -8,6 +8,7 @@
 [pull]
 	rebase = merges
 [commit]
+	template = ~/.gitmessage
 	gpgsign = true
 	verbose = true
 [includeIf "gitdir:~/workspace/"]

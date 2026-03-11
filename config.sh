@@ -3,6 +3,7 @@
 declare -a FILES_TO_SYMLINK=(
   'git/gitignore'
   'git/gitconfig'
+  'git/gitmessage'
   'misc/isort.cfg'
   'vim'
   'vim/vimrc'
@@ -36,6 +37,7 @@ declare -a BREW_APPS=(
   perltidy
   pinentry-mac
   plenv
+  pre-commit
   ripgrep
   starship
   vim

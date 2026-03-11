@@ -70,6 +70,10 @@ function cleanup() {
       ok "Yarn cache cleaned"
     fi
 
+    bot "Running brew cleanup ..."
+    brew cleanup --prune=30
+    ok "Brew cleanup done"
+
     sleep 2
     freeSpaceAfterCleaning=$(df -Ph | awk 'NR==2 {print $4}')
     blue=$(blue "$freeSpaceBeforeCleaning")

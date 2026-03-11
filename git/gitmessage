@@ -1,0 +1,10 @@
+# <type>: <short summary> (max 72 chars)
+# │       │
+# │       └─ imperative mood: "add", "fix", "update", not "added", "fixed"
+# └─ type: feat | fix | chore | refactor | docs | test | perf | ci
+#
+# [optional body: explain WHY, not WHAT — wrap at 72 chars]
+#
+# [optional footer: breaking changes, issue refs]
+# Breaking change: BREAKING CHANGE: <description>
+# Issue ref:       Closes #123

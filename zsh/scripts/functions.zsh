@@ -82,3 +82,49 @@ function free {
   sysctl -n -o vm.swapusage | awk '{   if( $3+0 != 0 )  printf( "Swap(%2.0f%s):    %6.0fMb %6.0fMb %6.0fMb\n", ($6+0)*100/($3+0), "%", ($3+0), ($6+0), $9+0); }'
   sysctl -n -o vm.loadavg | awk '{printf( "Load Avg:        %3.2f %3.2f %3.2f\n", $2, $3, $4);}'
 }
+
+function dotfiles-health-check {
+  local dotfiles_dir="${DOTFILES_DIR:-$HOME/workspace/dotfiles}"
+  local ok=0 warn=0
+
+  _hc_ok()   { echo "  ✅  $1"; (( ok++ )) }
+  _hc_warn() { echo "  ⚠️   $1"; (( warn++ )) }
+
+  echo "\n🔍  Dotfiles health check\n"
+
+  # --- Symlinks ---
+  echo "── Symlinks ──"
+  local symlinks=(
+    "$HOME/.gitconfig:$dotfiles_dir/git/gitconfig"
+    "$HOME/.gitignore:$dotfiles_dir/git/gitignore"
+    "$HOME/.gitmessage:$dotfiles_dir/git/gitmessage"
+    "$HOME/.zshrc:$dotfiles_dir/zsh/zshrc"
+    "$HOME/.zpreztorc:$dotfiles_dir/zsh/zpreztorc"
+    "$HOME/.scripts:$dotfiles_dir/zsh/scripts"
+    "$HOME/.vim:$dotfiles_dir/vim"
+    "$HOME/.vimrc:$dotfiles_dir/vim/vimrc"
+    "$HOME/.config/starship.toml:$dotfiles_dir/zsh/starship.toml"
+  )
+  for entry in "${symlinks[@]}"; do
+    local link="${entry%%:*}" target="${entry##*:}"
+    if [[ "$(readlink "$link")" == "$target" ]]; then
+      _hc_ok "$link → $target"
+    else
+      _hc_warn "$link is not linked to $target"
+    fi
+  done
+
+  # --- Key tools ---
+  echo "\n── Tools ──"
+  local tools=(git gh vim starship fasd direnv jq brew node npm python3 pyenv jenv nodenv)
+  for tool in "${tools[@]}"; do
+    if command -v "$tool" &>/dev/null; then
+      _hc_ok "$tool $(${tool} --version 2>/dev/null | head -1)"
+    else
+      _hc_warn "$tool not found"
+    fi
+  done
+
+  echo "\n── Result ──"
+  echo "  ✅  $ok passed   ⚠️   $warn warnings\n"
+}

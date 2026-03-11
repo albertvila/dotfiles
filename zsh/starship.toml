@@ -7,6 +7,8 @@ format = """
 $directory\
 $git_branch\
 $git_status\
+$python\
+$docker_context\
  $character\
 """
 
@@ -57,3 +59,14 @@ format = '[$symbol($version )]($style)'
 [package]
 format = '[$symbol($version )](208)'
 symbol = ' '
+
+[python]
+format = '[${symbol}(${virtualenv} )](bold yellow)'
+symbol = ' '
+detect_files = ['.python-version', 'requirements.txt', 'pyproject.toml', 'setup.py']
+
+[docker_context]
+format = '[$symbol$context ](blue)'
+symbol = ' '
+only_with_files = true
+detect_files = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
