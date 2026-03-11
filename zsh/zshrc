@@ -74,4 +74,25 @@ setopt prompt_subst interactive_comments
 command -v nodenv >/dev/null && eval "$(nodenv init -)"
 
 # zoxide — smart directory jumper (replaces fasd)
-command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+# Custom completion: z foo<TAB> completes from zoxide database
+if command -v zoxide >/dev/null; then
+  eval "$(zoxide init zsh --no-cmd)"
+
+  function z() {
+    __zoxide_z "$@"
+  }
+
+  function zi() {
+    __zoxide_zi "$@"
+  }
+
+  function _z_complete() {
+    [[ "${#words[@]}" -eq "${CURRENT}" ]] || return 0
+    local query="${words[2,-1]}"
+    local -a matches
+    matches=(${(f)"$(zoxide query --list -- ${query} 2>/dev/null)"})
+    _describe 'zoxide directories' matches
+    return 0
+  }
+  compdef _z_complete z
+fi
