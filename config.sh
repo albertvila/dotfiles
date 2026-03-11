@@ -19,7 +19,7 @@ declare -a BREW_APPS=(
   coreutils
   ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   direnv
-  fzf
+  fasd
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)

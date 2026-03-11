@@ -11,7 +11,8 @@ alias cat='bat --paging=never'
 # In order to use our lm-build tool
 [[ $(alias lm 2>/dev/null) ]] && unalias lm
 
-# zoxide (modern replacement for fasd) — `z <query>` to jump, `zi` for interactive fuzzy picker
+# From Fasd https://github.com/clvv/fasd
+alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 
 # Sometimes the sound stops working
 alias fixSound="sudo killall coreaudiod"
