@@ -1,0 +1,25 @@
+# Ghostty terminal configuration
+# https://ghostty.org/docs/config
+
+# Theme
+macos-titlebar-style = tabs
+window-save-state = always
+window-padding-balance = true
+window-padding-x = 4
+window-padding-y = 4
+
+# Font
+font-thicken = true
+
+# Terminal behavior
+mouse-hide-while-typing = true
+cursor-click-to-move = true
+clipboard-trim-trailing-spaces = true
+confirm-close-surface = true
+
+# Shell integration
+shell-integration-features = cursor,sudo,title
+
+# Quick terminal (drop-down)
+quick-terminal-position = top
+keybind = global:ctrl+escape=toggle_quick_terminal

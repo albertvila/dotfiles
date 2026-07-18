@@ -75,18 +75,10 @@ setopt inc_append_history # save history entries as soon as they are entered
 setopt share_history # share history between different instances of the shell
 
 export PYENV_ROOT="$HOME/.pyenv"
-# Lazy-load pyenv: only init when python/pip/pyenv is first called
+# Initialize pyenv for direnv compatibility (direnv needs python available)
 if [[ -d "$PYENV_ROOT" ]]; then
   export PATH="$PYENV_ROOT/bin:$PATH"
-  pyenv() {
-    unfunction pyenv python python3 pip pip3
-    eval "$(command pyenv init -)"
-    pyenv "$@"
-  }
-  python()  { unfunction pyenv python python3 pip pip3; eval "$(command pyenv init -)"; python  "$@" }
-  python3() { unfunction pyenv python python3 pip pip3; eval "$(command pyenv init -)"; python3 "$@" }
-  pip()     { unfunction pyenv python python3 pip pip3; eval "$(command pyenv init -)"; pip     "$@" }
-  pip3()    { unfunction pyenv python python3 pip pip3; eval "$(command pyenv init -)"; pip3    "$@" }
+  eval "$(command pyenv init -)"
 fi
 
 # zsh users - add the following line to your ~/.zshrc
@@ -107,3 +99,11 @@ if [[ -d "$HOME/.nodenv" ]]; then
   npm()  { unfunction nodenv node npm npx; eval "$(command nodenv init -)"; npm  "$@" }
   npx()  { unfunction nodenv node npm npx; eval "$(command nodenv init -)"; npx  "$@" }
 fi
+
+# bun completions
+[ -s "/Users/albert.vila/.bun/_bun" ] && source "/Users/albert.vila/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+

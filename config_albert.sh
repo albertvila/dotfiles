@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
+  claude-code
   docker-credential-helper-ecr
   gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
-  # parquet-tools # TODO : This is deprecated
   ollama # https://ollama.com/
+  # parquet-tools # TODO : This is deprecated
   php # Needed by Alfred Github workflow
   pyenv
+  skills
+  slack-mcp-server
+  zen
 )
 
 # Those packages will only be installed on OSX
@@ -17,10 +21,11 @@ declare -a BREW_CASK_APPS=(
   calibre
   chatgpt
   copilot-cli
-  cursor
+  ghostty
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
+  steipete/tap/codexbar # https://codexbar.app/
   synology-drive
   twingate # VPN client
   warp
@@ -47,13 +52,17 @@ declare -a YARN_APPS=(
 declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
   @withgraphite/graphite-cli
+  mcp-remote
 )
 
 declare -a VSCODE_PACKAGES=(
   amazonwebservices.aws-toolkit-vscode
+  anthropic.claude-code
   exiasr.hadolint
   github.copilot-chat
   ms-python.autopep8
+  ms-python.flake8
+  ms-python.black-formatter
   ms-python.vscode-pylance
   paiqo.databricks-vscode
   prisma.prisma

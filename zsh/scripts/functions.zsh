@@ -1,3 +1,23 @@
+# Set terminal background color for SSH sessions based on environment
+# With macos-titlebar-style=tabs, the titlebar inherits the background color
+# Uses subtle dark tints: barely visible in terminal, but tab picks up the color
+function ssh() {
+  local host="$*"
+  case "$host" in
+    *prod*|*production*)
+      # Subtle dark red background for production
+      printf "\e]11;#401515\a"
+      ;;
+    *stag*|*staging*)
+      # Subtle dark orange background for staging
+      printf "\e]11;#0A2D2D\a"
+      ;;
+  esac
+  command ssh "$@"
+  # Reset background color after disconnect
+  printf "\e]111\a"
+}
+
 function infinite {
   while true
   do

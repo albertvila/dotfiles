@@ -3,6 +3,9 @@
 # This is safe to run multiple times and will prompt you about anything unclear
 # Check config.sh file to configure dotfiles, plugins and packages
 
+# Skip brew's interactive install/upgrade confirmation prompts (non-interactive script run)
+export HOMEBREW_NO_ASK=1
+
 source ./config.sh
 source ./lib/echos.sh
 source ./lib/utils.sh

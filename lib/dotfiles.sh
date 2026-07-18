@@ -5,6 +5,7 @@ function install_dotfiles() {
 
   _install_dotfiles
   _install_starship_config
+  _install_ghostty_config
   _setup_git
   _setup_vim
 }
@@ -23,6 +24,13 @@ function _install_starship_config() {
     ok "Starship Prezto shim written"
   fi
 
+  ok
+}
+
+function _install_ghostty_config() {
+  bot "Creating symbolic link for Ghostty config"
+  mkdir -p "$HOME/.config/ghostty"
+  _symbolic_link "$DOTFILES_DIR/ghostty/config" "$HOME/.config/ghostty/config"
   ok
 }
 

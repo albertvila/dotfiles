@@ -48,7 +48,6 @@ declare -a BREW_CASK_APPS=(
   dropbox
   firefox
   google-chrome
-  intellij-idea-ce
   iterm2
   leapp
   openvpn-connect
