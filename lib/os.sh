@@ -149,6 +149,10 @@ function _install_brew_cask() {
   # Install HomeBrew casks
   brew tap aws/tap
   brew tap databricks/tap
+  brew tap mobile-dev-inc/tap
+  brew trust --formula mobile-dev-inc/tap/maestro
+  brew tap anomalyco/tap
+  brew trust --formula anomalyco/tap/opencode
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do

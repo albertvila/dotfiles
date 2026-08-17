@@ -5,8 +5,10 @@ declare -a BREW_APPS=(
   docker-credential-helper-ecr
   gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
+  maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   ollama # https://ollama.com/
+  opencode # AI coding agent (https://opencode.ai/)
   # parquet-tools # TODO : This is deprecated
   php # Needed by Alfred Github workflow
   pyenv
@@ -17,6 +19,7 @@ declare -a BREW_APPS=(
 
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
+  android-studio
   arc
   calibre
   chatgpt

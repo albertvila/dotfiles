@@ -56,7 +56,7 @@ declare -a BREW_CASK_APPS=(
   rectangle
   slack
   spotify
-  visual-studio-code
+  # visual-studio-code
   zoom
 )
 
