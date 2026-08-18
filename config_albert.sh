@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
 declare -a BREW_APPS=(
-  claude-code
   docker-credential-helper-ecr
   gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
-  maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
+  mobile-dev-inc/tap/maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   ollama # https://ollama.com/
   opencode # AI coding agent (https://opencode.ai/)
@@ -14,7 +13,6 @@ declare -a BREW_APPS=(
   pyenv
   skills
   slack-mcp-server
-  zen
 )
 
 # Those packages will only be installed on OSX
@@ -23,6 +21,7 @@ declare -a BREW_CASK_APPS=(
   arc
   calibre
   chatgpt
+  claude-code
   copilot-cli
   ghostty
   ledger-live
@@ -32,6 +31,7 @@ declare -a BREW_CASK_APPS=(
   synology-drive
   twingate # VPN client
   warp
+  zen
 )
 
 declare -a GEM_APPS=(
