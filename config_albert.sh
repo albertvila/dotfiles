@@ -13,6 +13,7 @@ declare -a BREW_APPS=(
   pyenv
   skills
   slack-mcp-server
+  tailscale # https://tailscale.com/ used to control opencode from my iphone
 )
 
 # Those packages will only be installed on OSX
