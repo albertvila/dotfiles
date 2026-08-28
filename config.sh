@@ -18,24 +18,20 @@ declare -a BREW_APPS=(
   awscli
   bat
   coreutils
-  ctags # Needed by https://marketplace.visualstudio.com/items?itemName=henriiik.vscode-perl
   direnv
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
   gradle-completion
-  htop
   openjdk
   openjdk@11
   jenv
   jq
   nodenv # Node version manager — use `nodenv install <version>` to install Node
   openssl@3
-  perl-build
   perltidy
   pinentry-mac
-  plenv
   pre-commit
   ripgrep
   starship
@@ -67,7 +63,6 @@ declare -a PIP_APPS=(
 )
 
 declare -a YARN_APPS=(
-  mocha
 )
 
 declare -a NPM_PACKAGES=(

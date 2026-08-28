@@ -6,7 +6,6 @@ declare -a BREW_APPS=(
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mobile-dev-inc/tap/maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
-  ollama # https://ollama.com/
   opencode # AI coding agent (https://opencode.ai/)
   # parquet-tools # TODO : This is deprecated
   php # Needed by Alfred Github workflow
@@ -22,7 +21,6 @@ declare -a BREW_CASK_APPS=(
   android-studio
   arc
   calibre
-  chatgpt
   claude-code
   copilot-cli
   ghostty
@@ -33,7 +31,6 @@ declare -a BREW_CASK_APPS=(
   synology-drive
   tailscale-app # To control this mac through my iphone
   twingate # VPN client
-  warp
   zen
 )
 
