@@ -13,6 +13,7 @@ declare -a BREW_APPS=(
   pyenv
   skills
   slack-mcp-server
+  supabase # Supabase CLI (https://supabase.com/docs/reference/cli/about)
   tailscale # https://tailscale.com/ used to control opencode from my iphone
 )
 
@@ -30,6 +31,7 @@ declare -a BREW_CASK_APPS=(
   session-manager-plugin # https://enter-lmwiki.launchmetrics.com/en/guides/aws-system-manager
   steipete/tap/codexbar # https://codexbar.app/
   synology-drive
+  tailscale-app # To control this mac through my iphone
   twingate # VPN client
   warp
   zen
