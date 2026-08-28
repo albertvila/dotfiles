@@ -46,13 +46,11 @@ declare -a BREW_CASK_APPS=(
   google-chrome
   iterm2
   leapp
-  openvpn-connect
   orbstack # Docker https://orbstack.dev/
   postman
   rectangle
   slack
   spotify
-  # visual-studio-code
   zoom
 )
 
@@ -66,35 +64,9 @@ declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(
-  eslint # Needed to check js code on vscode
+  eslint # Needed to check js code
   npm-check-updates # Needed to check if the other packages are up to date
   serverless@2.64.1
-)
-
-declare -a VSCODE_PACKAGES=(
-  alefragnani.project-manager
-  brpaz.file-templates
-  byi8220.indented-block-highlighting
-  dbaeumer.vscode-eslint
-  eamodio.gitlens
-  esbenp.prettier-vscode
-  foxundermoon.shell-format
-  github.vscode-pull-request-github
-  gruntfuggly.todo-tree
-  jerryhong.autofilename
-  johnpapa.vscode-peacock
-  kaktus.perltidy-more
-  hashicorp.terraform
-  mohsen1.prettify-json
-  mkhl.direnv
-  ms-azuretools.vscode-docker
-  ms-python.python
-  nsfilho.tosnippet
-  pflannery.vscode-versionlens
-  pkief.material-icon-theme
-  roscop.activefileinstatusbar
-  sfodje.perlcritic
-  vncz.vscode-apielements
 )
 
 declare -a APP_STORE_APPS=(

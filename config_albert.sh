@@ -2,7 +2,6 @@
 
 declare -a BREW_APPS=(
   docker-credential-helper-ecr
-  gemini-cli
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   mobile-dev-inc/tap/maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
@@ -22,7 +21,6 @@ declare -a BREW_CASK_APPS=(
   arc
   calibre
   claude-code
-  copilot-cli
   ghostty
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
@@ -56,19 +54,6 @@ declare -a NPM_PACKAGES=(
   alfred-goodreads-workflow
   @withgraphite/graphite-cli
   mcp-remote
-)
-
-declare -a VSCODE_PACKAGES=(
-  amazonwebservices.aws-toolkit-vscode
-  anthropic.claude-code
-  exiasr.hadolint
-  github.copilot-chat
-  ms-python.autopep8
-  ms-python.flake8
-  ms-python.black-formatter
-  ms-python.vscode-pylance
-  paiqo.databricks-vscode
-  prisma.prisma
 )
 
 declare -a APP_STORE_APPS=(

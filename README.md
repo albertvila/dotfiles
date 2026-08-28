@@ -12,7 +12,7 @@ The `config.sh` file contains the default packages/modules, it can be extend wit
 
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
-- Install osx dev packages for brew/pip/npm/gem/yarn/vscode/brew cask and osx defaults
+- Install osx dev packages for brew/pip/npm/gem/yarn/brew cask and osx defaults
 - Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
 - Shell Starship (https://starship.rs/)
 - Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
