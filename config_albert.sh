@@ -6,6 +6,7 @@ declare -a BREW_APPS=(
   mobile-dev-inc/tap/maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   opencode # AI coding agent (https://opencode.ai/)
+  pi-coding-agent # AI agent toolkit (https://pi.dev/)
   # parquet-tools # TODO : This is deprecated
   php # Needed by Alfred Github workflow
   pyenv
@@ -19,6 +20,7 @@ declare -a BREW_APPS=(
 declare -a BREW_CASK_APPS=(
   android-studio
   arc
+  bb # IDE for orchestrating coding agents (https://getbb.app/)
   calibre
   claude-code
   ghostty
