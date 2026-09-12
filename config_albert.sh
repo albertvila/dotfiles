@@ -19,7 +19,6 @@ declare -a BREW_APPS=(
 # Those packages will only be installed on OSX
 declare -a BREW_CASK_APPS=(
   android-studio
-  arc
   bb # IDE for orchestrating coding agents (https://getbb.app/)
   calibre
   claude-code
@@ -30,8 +29,8 @@ declare -a BREW_CASK_APPS=(
   steipete/tap/codexbar # https://codexbar.app/
   synology-drive
   tailscale-app # To control this mac through my iphone
+  thebrowsercompany-dia # Dia AI browser (https://www.diabrowser.com/)
   twingate # VPN client
-  zen
 )
 
 declare -a GEM_APPS=(
