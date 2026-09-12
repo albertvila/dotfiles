@@ -49,7 +49,7 @@ If `git push` fails with `AWS credentials: Missing suitable credentials`, stop a
 
 ### Issue tracker
 
-Issues live as GitHub issues in this repo, operated via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live as local markdown files under `.scratch/<feature-slug>/` in this repo. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
