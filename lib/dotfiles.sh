@@ -4,34 +4,8 @@ function install_dotfiles() {
   _backup_existing_dotfiles
 
   _install_dotfiles
-  _install_starship_config
-  _install_ghostty_config
   _setup_git
   _setup_vim
-}
-
-function _install_starship_config() {
-  bot "Creating symbolic link for starship config"
-  mkdir -p "$HOME/.config"
-  _symbolic_link "$DOTFILES_DIR/zsh/starship.toml" "$HOME/.config/starship.toml"
-
-  # Write the Prezto prompt shim so starship is used as the prompt theme.
-  # This is done once here rather than on every shell startup.
-  local preztodir="${ZPREZTODIR:-${ZDOTDIR:-$HOME}/.zprezto}"
-  local promptdir="$preztodir/modules/prompt/functions"
-  if [[ -d "$promptdir" ]]; then
-    echo 'eval "$(starship init zsh)"' > "$promptdir/prompt_starship_setup"
-    ok "Starship Prezto shim written"
-  fi
-
-  ok
-}
-
-function _install_ghostty_config() {
-  bot "Creating symbolic link for Ghostty config"
-  mkdir -p "$HOME/.config/ghostty"
-  _symbolic_link "$DOTFILES_DIR/ghostty/config" "$HOME/.config/ghostty/config"
-  ok
 }
 
 # It does a cleanup every 30 days
@@ -135,12 +109,18 @@ function _backup_existing_dotfiles() {
   DOTFILES_BACKUP_DIR=~/.dotfiles_old
   mkdir -p "$DOTFILES_BACKUP_DIR"
 
-  # Move any existing dotfiles in homedir to dotfiles_old directory
-  for i in ${FILES_TO_SYMLINK[@]}; do
-    file="$HOME/.${i##*/}"
+  # Move any existing dotfiles in homedir to dotfiles_old directory.
+  # Merge dirs are skipped: they host manager-written content and are linked
+  # per-file; backing them up wholesale would relocate real skills/config.
+  while IFS= read -r -d '' sourceFile; do
+    relative="${sourceFile#$DOTFILES_DIR/home/}"
+    if _is_merge_dir "$relative"; then
+      continue
+    fi
+    file="$HOME/$relative"
 
-    # Only move the file if it's not a symbolic link
-    if [ -f "$file" ] && [ ! -L "$file" ]; then
+    # Only move the file if it exists (as a file or dir) and is not a symlink
+    if [ -e "$file" ] && [ ! -L "$file" ]; then
       mv "$file" "$DOTFILES_BACKUP_DIR"
       if [ $? -eq 0 ]; then
         ok "$file moved to $DOTFILES_BACKUP_DIR"
@@ -148,42 +128,46 @@ function _backup_existing_dotfiles() {
         error "Error moving $file to $DOTFILES_BACKUP_DIR"
       fi
     fi
-  done
+  done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -not -name '.DS_Store' -print0)
 
   ok
 }
 
+# Depth-1 dirs that host manager-written content beyond what we version:
+# only their files are symlinked, never the dir as a whole.
+function _is_merge_dir() {
+  case "$1" in
+    .config|.claude|.pi|.agents) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 function _install_dotfiles() {
-  local i=''
-  local sourceFile=''
-  local targetFile=''
-
   bot "Creating symbolic links for config files if needed"
-  for i in ${FILES_TO_SYMLINK[@]}; do
-    sourceFile="$DOTFILES_DIR/$i"
-    targetFile="$HOME/.$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
 
+  local entry
+  local relative
+  local targetFile
+
+  # Merge dirs: symlink each file inside (mkdir parents), never the dir itself.
+  while IFS= read -r -d '' sourceFile; do
+    relative="${sourceFile#$DOTFILES_DIR/home/}"
+    targetFile="$HOME/$relative"
+    mkdir -p "$(dirname "$targetFile")"
     _symbolic_link "$sourceFile" "$targetFile"
-  done
-  ok
+  done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
+    _is_merge_dir "$(basename "$d")" && find "$d" \( -type f -o -type l \) -print0
+  done)
 
-  unset FILES_TO_SYMLINK
-
-  # Copy binaries
-  mkdir -p "$HOME/bin"
-
-  bot "Creating symbolic links for binaries in ~/bin if needed"
-  for i in ${BINARIES[@]}; do
-    sourceFile="$DOTFILES_DIR/bin/$i"
-    targetFile="$HOME/bin/$(printf "%s" "$i" | sed "s/.*\/\(.*\)/\1/g")"
-
-    _symbolic_link "$sourceFile" "$targetFile"
-
-    bot "Changing access permissions for binary script :: ~/bin/${i##*/}"
-    chmod 755 "$HOME/bin/${i##*/}"
-  done
+  # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.
+  while IFS= read -r -d '' entry; do
+    relative="${entry#$DOTFILES_DIR/home/}"
+    if _is_merge_dir "$relative"; then
+      continue
+    fi
+    targetFile="$HOME/$relative"
+    _symbolic_link "$entry" "$targetFile"
+  done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -not -name '.DS_Store' -print0)
 
   ok
-
-  unset BINARIES
 }

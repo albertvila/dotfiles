@@ -57,8 +57,6 @@ function _setup_zsh() {
     chsh -s $(which zsh)
   fi
 
-  $DOTFILES_DIR/iterm/powerline/fonts/install.sh
-
   ok
 }
 
@@ -79,6 +77,14 @@ function _install_prezto() {
     # If we want to uninstall it, just remove the ~/.zprezto folder
   else
     git -C "$HOME/.zprezto" pull && git -C "$HOME/.zprezto" submodule update --init --recursive --remote
+  fi
+
+  # Write the Prezto prompt shim so starship is used as the prompt theme.
+  # This is done once here rather than on every shell startup.
+  local promptdir="$HOME/.zprezto/modules/prompt/functions"
+  if [[ -d "$promptdir" ]]; then
+    echo 'eval "$(starship init zsh)"' > "$promptdir/prompt_starship_setup"
+    ok "Starship Prezto shim written"
   fi
 
   ok

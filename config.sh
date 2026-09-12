@@ -1,19 +1,5 @@
 #!/usr/bin/env bash
 
-declare -a FILES_TO_SYMLINK=(
-  'git/gitignore'
-  'git/gitconfig'
-  'git/gitmessage'
-  'misc/isort.cfg'
-  'vim'
-  'vim/vimrc'
-  'zsh/zpreztorc'
-  'zsh/scripts'
-  'zsh/zshrc'
-)
-
-declare -a BINARIES=()
-
 declare -a BREW_APPS=(
   awscli
   bat
@@ -44,7 +30,6 @@ declare -a BREW_CASK_APPS=(
   dropbox
   firefox
   google-chrome
-  iterm2
   leapp
   orbstack # Docker https://orbstack.dev/
   postman
@@ -73,5 +58,5 @@ declare -a APP_STORE_APPS=(
   # Please note that it won't allow you to install (or even purchase) an app for the first time: it must already be in the Purchased tab of the App Store, so download it manually first
 )
 
-# Check vim/plugins.vim for enabled plugins
+# Check home/.vim/plugins.vim for enabled plugins
 # Check setup_osx function from lib/osx.sh for osx defaults
