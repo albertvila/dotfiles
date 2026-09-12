@@ -1,0 +1,225 @@
+{
+  "version": 3,
+  "skills": {
+    "lm-fireline": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-fireline/SKILL.md",
+      "skillFolderHash": "e9797dfcf220ea1624bae76fa816986f4d30f1177c32fbb32883997848264a19",
+      "installedAt": "2026-06-15T10:02:43.677Z",
+      "updatedAt": "2026-07-03T14:15:37.996Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
+      "installedAt": "2026-06-15T10:02:47.619Z",
+      "updatedAt": "2026-09-09T15:47:44.092Z"
+    },
+    "lm-share-md": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-share-md/SKILL.md",
+      "skillFolderHash": "7301563c4750a667c66adc392a9874ea060ac9bd4f9c03ed3d442478dc91863e",
+      "installedAt": "2026-06-17T10:26:51.624Z",
+      "updatedAt": "2026-07-03T14:15:37.999Z"
+    },
+    "lm-cli": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-cli/SKILL.md",
+      "skillFolderHash": "6e9d33ee77ceb248c1f736e287c574d954c947c1be49d5a93e1f357bcc7b1df5",
+      "installedAt": "2026-07-03T13:33:39.414Z",
+      "updatedAt": "2026-07-03T14:15:37.984Z"
+    },
+    "lm-debug": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-debug/SKILL.md",
+      "skillFolderHash": "d98564599c60bf92f3b96176db40e2499f4d860e3683630ea999282b594a578f",
+      "installedAt": "2026-07-03T13:33:39.426Z",
+      "updatedAt": "2026-07-03T14:15:37.995Z"
+    },
+    "lm-pretty-plan": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-pretty-plan/SKILL.md",
+      "skillFolderHash": "e8dca9d2311b62e6314e766238c8cca94144e85eb599048a0f50661519316264",
+      "installedAt": "2026-07-03T13:33:39.427Z",
+      "updatedAt": "2026-07-03T14:15:37.997Z"
+    },
+    "lm-pyconv": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-pyconv/SKILL.md",
+      "skillFolderHash": "2208ce09526f59c8c4d36f86752318cb5ba81b98a955bcad15beb3d9c62c4b5c",
+      "installedAt": "2026-07-03T13:33:39.428Z",
+      "updatedAt": "2026-07-03T14:15:37.998Z"
+    },
+    "lm-summarize-jira-ticket": {
+      "source": "git@github.com:Launchmetrics/LM-AI.git",
+      "sourceType": "git",
+      "sourceUrl": "git@github.com:Launchmetrics/LM-AI.git",
+      "skillPath": "skills/lm-summarize-jira-ticket/SKILL.md",
+      "skillFolderHash": "d19419bc409e36292393a98a5d06245f26b87809ebf1055b5cfdf4cb2c5aceb6",
+      "installedAt": "2026-07-03T13:33:39.430Z",
+      "updatedAt": "2026-07-03T14:15:38.000Z"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/handoff/SKILL.md",
+      "skillFolderHash": "2242e8f05424b8c2ae94194a90d97b88d16108ec",
+      "installedAt": "2026-07-22T06:49:26.768Z",
+      "updatedAt": "2026-09-09T15:47:45.842Z"
+    },
+    "agent-evaluation": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "agent-evaluation/SKILL.md",
+      "skillFolderHash": "101ced7904b6d15eb8e338eceb98b3c92e1bdab6",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.484Z",
+      "updatedAt": "2026-09-12T10:52:59.484Z"
+    },
+    "analyzing-mlflow-session": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "analyze-mlflow-chat-session/SKILL.md",
+      "skillFolderHash": "545031104d09c0c6965e0cb807ce002a0063efd0",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.491Z",
+      "updatedAt": "2026-09-12T10:52:59.491Z"
+    },
+    "analyzing-mlflow-trace": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "analyze-mlflow-trace/SKILL.md",
+      "skillFolderHash": "168469e2bb33249b92af45f7b1b4887983fad256",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.491Z",
+      "updatedAt": "2026-09-12T10:52:59.491Z"
+    },
+    "build-a-scorer": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "build-a-scorer/SKILL.md",
+      "skillFolderHash": "e8eee2c23badb68ec747b27ff0ca5a90c37e8cc2",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.491Z",
+      "updatedAt": "2026-09-12T10:52:59.491Z"
+    },
+    "fix-agent-issue": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "fix-agent-issue/SKILL.md",
+      "skillFolderHash": "631f9b58f33f92baa70ea6857231ba61cf1dd8c7",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.492Z",
+      "updatedAt": "2026-09-12T10:52:59.492Z"
+    },
+    "instrumenting-with-mlflow-tracing": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "instrumenting-with-mlflow-tracing/SKILL.md",
+      "skillFolderHash": "fe7990c7371789d646ba16bc98ecdf7b5470dacc",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.492Z",
+      "updatedAt": "2026-09-12T10:52:59.492Z"
+    },
+    "mlflow-agent": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "mlflow-agent/SKILL.md",
+      "skillFolderHash": "501536c110ee013112cf84edc0b33484d6aa7f88",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.492Z",
+      "updatedAt": "2026-09-12T10:52:59.492Z"
+    },
+    "mlflow-onboarding": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "mlflow-onboarding/SKILL.md",
+      "skillFolderHash": "c9d42f75b05609ecb096d3c39bbbfb136b6317b0",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.492Z",
+      "updatedAt": "2026-09-12T10:52:59.492Z"
+    },
+    "querying-mlflow-metrics": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "querying-mlflow-metrics/SKILL.md",
+      "skillFolderHash": "b31c80081eefb0a5057c2e44e7991d0c5f9620aa",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.492Z",
+      "updatedAt": "2026-09-12T10:52:59.492Z"
+    },
+    "retrieving-mlflow-traces": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "retrieving-mlflow-traces/SKILL.md",
+      "skillFolderHash": "0b389302327753bde47c4bca2b389c5f0e34d894",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.493Z",
+      "updatedAt": "2026-09-12T10:52:59.493Z"
+    },
+    "sagemaker-mlflow": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "sagemaker-mlflow/SKILL.md",
+      "skillFolderHash": "2eda0076aed376883ae6292c2c9b6b47ead11928",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.493Z",
+      "updatedAt": "2026-09-12T10:52:59.493Z"
+    },
+    "searching-mlflow-docs": {
+      "source": "mlflow/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mlflow/skills.git",
+      "skillPath": "searching-mlflow-docs/SKILL.md",
+      "skillFolderHash": "66c4d3f7ca79f08f45878bfb4f27f3db7bfdfa86",
+      "pluginName": "mlflow",
+      "installedAt": "2026-09-12T10:52:59.493Z",
+      "updatedAt": "2026-09-12T10:52:59.493Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "antigravity-cli",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-code-cli",
+    "opencode",
+    "warp",
+    "zed",
+    "claude-code"
+  ]
+}

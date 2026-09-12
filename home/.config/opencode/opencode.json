@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@dietrichgebert/ponytail"],
+  "permission": {
+    "read": { "*": "allow", "**/.env": "deny", "**/.ssh/**": "deny", "**/AWS*": "deny" },
+    "edit": { "*": "allow" },
+    "bash": {
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "ls*": "allow",
+      "pwd": "allow",
+      "rw*": "deny",
+      "sudo*": "deny",
+      "su*": "deny",
+      "git push*": "ask",
+      "git commit*": "ask",
+      "git checkout*": "ask",
+      "git reset*": "ask",
+      "git clean*": "ask",
+      "npm install*": "ask",
+      "npm i*": "ask",
+      "pip install*": "ask",
+      "*": "ask"
+    },
+    "webfetch": "ask",
+    "websearch": "ask",
+    "external_directory": { "*": "allow" }
+  }
+}

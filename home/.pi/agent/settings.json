@@ -1,0 +1,38 @@
+{
+  "lastChangelogVersion": "0.85.1",
+  "theme": "dark",
+  "defaultProvider": "openrouter",
+  "defaultModel": "moonshotai/kimi-k3",
+  "defaultProjectTrust": "always",
+  "defaultThinkingLevel": "max",
+  "hideThinkingBlock": true,
+  "packages": [
+    "npm:@dietrichgebert/ponytail",
+    "npm:@plannotator/pi-extension",
+    "npm:@ff-labs/pi-fff",
+    "npm:@juicesharp/rpiv-todo",
+    "npm:@nicknisi/pi-cloak",
+    "npm:@tintinweb/pi-subagents",
+    "npm:pi-clarify",
+    "npm:pi-powerline-footer",
+    "npm:pi-rewind",
+    "npm:pi-web-access"
+  ],
+  "powerline": {
+    "welcome": false,
+    "fixedEditor": false,
+    "layout": {
+      "left": [
+        "model",
+        "thinking",
+        "shell_mode",
+        "path",
+        "context_pct",
+        "cost"
+      ],
+      "secondary": [
+        "git"
+      ]
+    }
+  }
+}
