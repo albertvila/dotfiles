@@ -6,6 +6,10 @@
   "defaultProjectTrust": "always",
   "defaultThinkingLevel": "max",
   "hideThinkingBlock": true,
+  "quietStartup": true,
+  "customHeader": {
+    "skillsMode": true
+  },
   "packages": [
     "npm:@dietrichgebert/ponytail",
     "npm:@plannotator/pi-extension",

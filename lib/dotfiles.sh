@@ -137,7 +137,7 @@ function _backup_existing_dotfiles() {
 # only their files are symlinked, never the dir as a whole.
 function _is_merge_dir() {
   case "$1" in
-    .config|.claude|.pi|.agents) return 0 ;;
+    .config|.claude|.pi|.agents|.bb) return 0 ;;
     *) return 1 ;;
   esac
 }

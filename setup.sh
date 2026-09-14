@@ -31,6 +31,19 @@ done
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOTFILES_USER="default"
 
+# Derived content (CONTEXT.md): bb CLI skills for external agents live in
+# ~/.agents/skills and ~/.claude/skills, installed not versioned. Idempotent:
+# replaces a previously installed copy, leaves other skills alone.
+function install_bb_cli_skills() {
+  if ! command -v bb &>/dev/null; then
+    warn "bb not found, skipping bb CLI skills install"
+    return
+  fi
+  bot "Installing bb CLI skills for external agents ..."
+  bb skill install-cli-skills || warn "bb skill install-cli-skills failed, run it manually once bb is running"
+  ok
+}
+
 start
 
 if ! is_osx; then
@@ -42,6 +55,7 @@ install_os_packages
 setup_os_packages
 install_dotfiles
 install_zsh
+install_bb_cli_skills
 install_fish
 
 unset DOTFILES_USER
