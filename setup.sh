@@ -12,6 +12,7 @@ source ./lib/utils.sh
 source ./lib/dotfiles.sh
 source ./lib/os.sh
 source ./lib/zsh.sh
+source ./lib/fish.sh
 
 # Parameters
 #  -u to define a user
@@ -41,6 +42,7 @@ install_os_packages
 setup_os_packages
 install_dotfiles
 install_zsh
+install_fish
 
 unset DOTFILES_USER
 DOTFILES_USER=$USER_PARAM

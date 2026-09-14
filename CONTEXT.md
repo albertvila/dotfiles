@@ -31,3 +31,11 @@ _Avoid_: Bootstrapping, provisioning
 **Per-user config**:
 Custom packages/config layered on top of the defaults via `config_<user>.sh`, keeping identity and credentials in `dotfiles.private`.
 _Avoid_: User profile, personal config
+
+**Login shell**:
+The interactive shell a terminal opens (prompt, completions, keybindings, env). The fish migration covers this and nothing else.
+_Avoid_: Shell, terminal setup
+
+**Script interpreter**:
+The program that runs an executable script, fixed by its shebang line. Changing the login shell never changes it.
+_Avoid_: Shell script runtime

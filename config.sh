@@ -5,6 +5,7 @@ declare -a BREW_APPS=(
   bat
   coreutils
   direnv
+  fish
   gh
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
