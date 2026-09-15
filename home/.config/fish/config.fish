@@ -2,6 +2,9 @@
 # Covers the interactive login shell only, never script interpreters.
 
 # --- PATH & env (all shells) ---
+# Homebrew first: pyenv/direnv/starship/pi all live in /opt/homebrew/bin, and
+# fish (unlike zsh) never runs path_helper, so nothing else puts it on PATH.
+eval (/opt/homebrew/bin/brew shellenv)
 # Order mirrors .zshrc: each fish_add_path prepends, so call lowest-priority first.
 fish_add_path ~/bin ~/.local/bin
 set -l pip_user_bin (python3 -m site --user-base 2>/dev/null)/bin
