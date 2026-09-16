@@ -20,9 +20,9 @@ type Pattern = { pattern: string; regex?: boolean; flags?: string; description: 
 // Bypass all checks (no prompt).
 const allowedPatterns: Pattern[] = [
 	{
-		pattern: "^(AWS_[A-Z_]+=\\S* +)*aws +[a-z0-9.-]+ +(list|get|describe)[a-z0-9.-]*( +[^;&|`$<>()\\n\\r]+)* *$",
+		pattern: "^(AWS_[A-Z_]+=\\S* +)*aws +[a-z0-9.-]+ +(list|get|describe|ls)[a-z0-9.-]*( +[^;&|`$<>()\\n\\r]+)* *$",
 		regex: true,
-		description: "Read-only AWS ops (list/get/describe)",
+		description: "Read-only AWS ops (list/get/describe/ls)",
 		enabled: true,
 	},
 	{
