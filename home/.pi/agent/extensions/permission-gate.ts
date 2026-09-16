@@ -15,7 +15,7 @@
 
 import { isToolCallEventType, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-type Pattern = { pattern: string; regex?: boolean; description: string; enabled: boolean };
+type Pattern = { pattern: string; regex?: boolean; flags?: string; description: string; enabled: boolean };
 
 // Bypass all checks (no prompt).
 const allowedPatterns: Pattern[] = [
@@ -29,6 +29,17 @@ const allowedPatterns: Pattern[] = [
 		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +[a-z0-9_.-]+ +(list|get|ls|cat|status|validate)\\b( +[^;&|`$<>()\\n\\r]+)* *$",
 		regex: true,
 		description: "Read-only Databricks ops (list/get/ls/cat/status/validate)",
+		enabled: true,
+	},
+	{
+		// ponytail: regex can't parse SQL — ceiling is "query starts with a read verb, no semicolons".
+		// Fails closed: legit queries with ; inside string literals get blocked too. Upgrade path: a real SQL parser.
+		// Double-quoted queries also exclude $ and backticks — bash would expand them before databricks runs.
+		pattern:
+			'^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +sql +execute( +--[a-z0-9-]+( +=?[^ "\';&|`$<>()\\\\]+)?)* +--query +("(select|with|show|desc|describe|explain)\\b[^;"`$]*;?"|\'(select|with|show|desc|describe|explain)\\b[^;\']*;?\')( +--[a-z0-9-]+( +=?[^ "\';&|`$<>()\\\\]+)?)* *$',
+		regex: true,
+		flags: "i",
+		description: "Read-only Databricks SQL (SELECT/WITH/SHOW/DESC/EXPLAIN, single statement)",
 		enabled: true,
 	},
 ];
@@ -53,7 +64,7 @@ const promptPatterns: Pattern[] = [
 ];
 
 const matches = (command: string, p: Pattern) =>
-	p.enabled && (p.regex ? new RegExp(p.pattern).test(command) : command.includes(p.pattern));
+	p.enabled && (p.regex ? new RegExp(p.pattern, p.flags).test(command) : command.includes(p.pattern));
 
 export default function (pi: ExtensionAPI) {
 	pi.on("tool_call", async (event, ctx) => {
