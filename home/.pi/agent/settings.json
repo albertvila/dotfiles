@@ -20,7 +20,8 @@
     "npm:pi-clarify",
     "npm:pi-powerline-footer",
     "npm:pi-rewind",
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    "npm:pi-mcp-adapter"
   ],
   "powerline": {
     "welcome": false,
