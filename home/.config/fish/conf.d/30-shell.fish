@@ -12,6 +12,9 @@ alias cat "bat --paging=never"
 functions -q lm; and functions -e lm
 alias fixSound "sudo killall coreaudiod"
 alias gstk "git stash --keep-index"
+# BSD ls has no orphan-symlink color; gls + LS_COLORS or= paints broken links red
+alias ls "gls --color=auto"
+set -gx LS_COLORS 'or=01;31'
 
 abbr -a -- .. "cd .."
 abbr -a -- ... "cd ../.."
