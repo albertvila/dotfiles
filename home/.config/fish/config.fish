@@ -19,6 +19,14 @@ end
 set -gx BUN_INSTALL $HOME/.bun
 test -d $BUN_INSTALL/bin; and fish_add_path $BUN_INSTALL/bin
 
+# Load secrets (~/.env, plain KEY=value lines) — all shells, pi reads these
+if test -f ~/.env
+    for line in (cat ~/.env)
+        set -l kv (string split -m1 = -- $line)
+        test (count $kv) -eq 2; and set -gx $kv[1] $kv[2]
+    end
+end
+
 set -gx EDITOR vim
 set -gx MORE -R
 set -gx LESSOPEN "|bat --color=always --style=plain %s"
