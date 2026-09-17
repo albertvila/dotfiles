@@ -11,7 +11,6 @@ source ./lib/echos.sh
 source ./lib/utils.sh
 source ./lib/dotfiles.sh
 source ./lib/os.sh
-source ./lib/zsh.sh
 source ./lib/fish.sh
 
 # Parameters
@@ -54,7 +53,6 @@ fi
 install_os_packages
 setup_os_packages
 install_dotfiles
-install_zsh
 install_bb_cli_skills
 install_fish
 

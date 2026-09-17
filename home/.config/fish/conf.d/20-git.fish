@@ -1,5 +1,5 @@
-# Bulk git aliases + helpers, ported from home/.scripts/aliases.git.plugin.zsh
-# (oh-my-zsh git plugin, verbatim upstream). compdef/zstyle/autoload dropped:
+# Bulk git aliases + helpers, ported from the oh-my-zsh git plugin
+# (verbatim upstream). compdef/zstyle/autoload dropped:
 # fish completes natively. is-at-least conditionals resolved for git 2.55.
 
 # --- helper functions ---

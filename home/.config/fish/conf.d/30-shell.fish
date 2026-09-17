@@ -1,8 +1,7 @@
 # General aliases + ported shell functions (groups A, B, C, E, H).
-# Loads AFTER 20-git.fish, so the gds/glog overrides below win — same as
-# .zshrc sourcing aliases.zsh after aliases.git.plugin.zsh.
+# Loads AFTER 20-git.fish, so the gds/glog overrides below win.
 
-# --- general aliases (from home/.scripts/aliases.zsh) ---
+# --- general aliases ---
 alias reset "clear && printf '\e[3J'"
 alias vi vim
 alias glog "git log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%ar%C(reset)%n%s' --date-order -n 5"
@@ -31,8 +30,7 @@ end
 # Tab over frecent dirs (recency first), not filesystem paths: `z dotf<TAB>`
 complete -c z -f -a '(fasd -dltR 2>/dev/null)'
 
-# --- fasd tracking (was prezto's zsh-hook; without this, dirs visited in
-# fish never enter the DB and `z` only ever shows zsh-era history) ---
+# --- fasd tracking (without this, dirs visited in fish never enter the DB) ---
 function __fasd_track --on-variable PWD
     status is-interactive; or return
     fasd --proc (fasd --sanitize $PWD) >/dev/null 2>&1
@@ -113,7 +111,7 @@ function __check_local_java --on-variable PWD
     end
 end
 
-# --- custom functions (from home/.scripts/aliases.zsh + functions.zsh) ---
+# --- custom functions ---
 function gbranch --description "create dated branch off main/master/develop and push"
     git fetch
     set -l currentBranch (git branch | grep '\*' | cut -d ' ' -f2)
@@ -208,7 +206,7 @@ function free --description "macOS substitute for linux free"
     sysctl -n -o vm.loadavg | awk '{printf( "Load Avg:        %3.2f %3.2f %3.2f\n", $2, $3, $4);}'
 end
 
-# --- help cheat-sheets (from home/.scripts/help.zsh; print-only) ---
+# --- help cheat-sheets (print-only) ---
 function help-print
     printf '%-70s   %2s\n' $argv[1] $argv[2]
 end

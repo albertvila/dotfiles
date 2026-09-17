@@ -4,7 +4,7 @@ This is a collection of dotfiles and scripts I use for customizing OS X to my li
 
 The setup script is smart enough to back up your existing dotfiles into a `~/.dotfiles_old/` directory if you already have any dotfiles.
 
-I prefer `zsh` as my shell of choice. As such, the setup script will install `prezto` and `zsh`. If `zsh` is installed, and it is not already configured as the default shell, the setup script will execute a `chsh -s $(which zsh)` command. This changes the default shell to zsh, and takes effect as soon as a new zsh is spawned or on next login.
+My shell of choice is `fish`. The setup script installs `fish` and, if it is not already the default shell, runs `chsh -s $(which fish)`. This takes effect as soon as a new fish is spawned or on next login. The fish config lives in `home/.config/fish/` (symlinked to `~/.config/fish/`).
 
 Check `config.sh` file if you want to know all packages/modules to install and the `lib/os.sh` to know the osx defaults that will be changed. Vim plugins are located in `vim/plugins.vim`.
 
@@ -13,15 +13,15 @@ The `config.sh` file contains the default packages/modules, it can be extend wit
 Recap
 - Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
 - Install osx dev packages for brew/pip/npm/gem/yarn/brew cask and osx defaults
-- Install prezto & zsh as shell (https://github.com/sorin-ionescu/prezto)
+- Install fish as shell (https://fishshell.com/)
 - Shell Starship (https://starship.rs/)
 - Colors theme solarized (iterm2, gnome-terminal, vim, intellij) (http://ethanschoonover.com/solarized)
 - Fonts powerline (https://github.com/powerline/fonts)
 
 The customized theme looks like
-![Theme](zsh/theme.png)
+![Theme](misc/theme.png)
 
-If you would like to change the prompt theme, edit `zsh/starship.toml` (symlinked to `~/.config/starship.toml`).
+If you would like to change the prompt theme, edit `home/.config/starship.toml` (symlinked to `~/.config/starship.toml`).
 
 ## Installation
 Before installing under OSX make sure you have the `git` command installed. If not, just open a `Terminal` and install the command line tools by typing `xcode-select --install`.
@@ -145,6 +145,4 @@ npm config set prefix $NVM_DIR/versions/node/v6.13.7
 
 ## External links
 
-iTerm and zsh tips
-- <https://www.undefinednull.com/2015/07/31/iterm-tips-and-zsh-plugins-for-better-development-environment/>
-- <http://reasoniamhere.com/2014/01/11/outrageously-useful-tips-to-master-your-z-shell/>
+- fish shell docs: <https://fishshell.com/docs/current/>
