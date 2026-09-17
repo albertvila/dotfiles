@@ -35,7 +35,7 @@ DOTFILES_USER="default"
 # replaces a previously installed copy, leaves other skills alone.
 function install_bb_cli_skills() {
   if ! command -v bb &>/dev/null; then
-    warn "bb CLI not on PATH (install it from the BB app), skipping bb CLI skills install"
+    warn "bb CLI not on PATH (build from get-bb/bb checkout, link apps/cli/bin/bb), skipping bb CLI skills install"
     return
   fi
   bot "Installing bb CLI skills for external agents ..."
@@ -47,7 +47,7 @@ function install_bb_cli_skills() {
 # entries relative to this repo. Idempotent: skips sources bb already has.
 function install_bb_plugins() {
   if ! command -v bb &>/dev/null; then
-    warn "bb CLI not on PATH (install it from the BB app), skipping bb plugins install"
+    warn "bb CLI not on PATH (build from get-bb/bb checkout, link apps/cli/bin/bb), skipping bb plugins install"
     return
   fi
   local manifest="$DOTFILES_DIR/bb-plugins.txt"
