@@ -4,7 +4,7 @@ function start() {
   if [ ! -e "$HOME/.dotfiles" ]; then
     bot "Installing dotfiles for the first time"
   else
-    last_updated=$(sed = "$HOME/.dotfiles" | sed -n '$p')
+    last_updated=$(tail -n 1 "$HOME/.dotfiles")
     blue=$(blue "$last_updated")
     bot "Dotfiles already installed/updated at $blue"
   fi
@@ -19,12 +19,7 @@ function end() {
 }
 
 function is_osx() {
-  declare -r OS_NAME="$(uname -s)"
-  if [ $OS_NAME == "Darwin" ]; then
-    return
-  fi
-
-  false
+  [ "$(uname -s)" = "Darwin" ]
 }
 
 function execute() {

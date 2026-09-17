@@ -34,7 +34,7 @@ function cleanup() {
     echo $(date) >> "$HOME/.dotfiles_cleanup"
     return
   else
-    lastCleanup=$(sed = "$HOME/.dotfiles_cleanup" | sed -n '$p')
+    lastCleanup=$(tail -n 1 "$HOME/.dotfiles_cleanup")
     cyan=$(cyan "$lastCleanup")
   fi
 
