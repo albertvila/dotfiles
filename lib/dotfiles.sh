@@ -1,29 +1,11 @@
 #!/usr/bin/env bash
 
 function install_dotfiles() {
-  _migrate_cache_symlink
   _backup_existing_dotfiles
 
   _install_dotfiles
   _setup_git
   _setup_vim
-}
-
-# One-time repair for machines that ran the old setup: home/.cache was linked
-# wholesale, so ~/.cache points into the working tree. Turn it back into a real
-# directory, moving the (regenerable) cache content out of the repo.
-# No-op once ~/.cache is a real directory or points somewhere else.
-function _migrate_cache_symlink() {
-  [[ -L "$HOME/.cache" ]] || return 0
-  local target
-  target="$(readlink "$HOME/.cache")"
-  [[ "$target" == "$DOTFILES_DIR/home/.cache" ]] || return 0
-  rm "$HOME/.cache"
-  if [[ -d "$target" ]]; then
-    mv "$target" "$HOME/.cache"
-  else
-    mkdir -p "$HOME/.cache"
-  fi
 }
 
 # It does a cleanup every 30 days

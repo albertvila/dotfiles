@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Checks that setup never links ~/.cache back into this working tree, that it
-# repairs the old symlink once, and that merge dirs and wholesale entries keep
-# being installed.
+# Checks that setup never links ~/.cache back into this working tree, and that
+# merge dirs and wholesale entries keep being installed.
 set -eo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,6 +11,9 @@ export HOME="$ROOT/home"
 export DOTFILES_DIR="$ROOT/repo"
 export DOTFILES_USER=test
 mkdir -p "$HOME"
+
+# The user's real ~/.cache (contents irrelevant), which setup must leave alone.
+mkdir -p "$HOME/.cache/huggingface"
 
 # Fixture: a .cache dir with content, a merge dir, plus a wholesale file and dir.
 mkdir -p \
@@ -34,20 +36,6 @@ check() { if eval "$2"; then echo "ok   - $1"; else echo "FAIL - $1"; fail=1; fi
 
 check "_is_no_link .cache is true" "_is_no_link .cache"
 check "_is_no_link .vimrc is false" "! _is_no_link .vimrc"
-
-# The old symlink ~/.cache -> repo/home/.cache must become a real directory,
-# content moved out of the tree, and the repair must be idempotent.
-ln -s "$DOTFILES_DIR/home/.cache" "$HOME/.cache"
-_migrate_cache_symlink
-check "repair leaves ~/.cache a real dir" "[ -d '$HOME/.cache' ] && [ ! -L '$HOME/.cache' ]"
-check "repair moves cache content out of repo" "[ -f '$HOME/.cache/huggingface/blob' ]"
-check "repair removes repo home/.cache" "[ ! -e '$DOTFILES_DIR/home/.cache' ]"
-_migrate_cache_symlink # no-op on a real dir
-check "repair is idempotent" "[ -d '$HOME/.cache' ] && [ ! -L '$HOME/.cache' ]"
-
-# Rebuild the repo fixture .cache for the link-skip checks below.
-mkdir -p "$DOTFILES_DIR/home/.cache/huggingface"
-touch "$DOTFILES_DIR/home/.cache/huggingface/blob"
 
 # A real ~/.cache must survive the backup step untouched.
 _backup_existing_dotfiles
