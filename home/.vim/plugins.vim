@@ -12,7 +12,7 @@ Plugin 'VundleVim/Vundle.vim'
 
 "*** Add your plugins below ***
 
-" Vim theme like zsh powerline
+" Vim theme like powerline
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 
