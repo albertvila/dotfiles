@@ -38,10 +38,8 @@ declare -a GEM_APPS=(
 
 declare -a PIP_APPS=(
   autopep8 # Needed by python
-  beautysh # Beautifier for sh files (used by atom)
   databricks
   databricks-cli
-  dbx # Databricks dbx tool (https://docs.databricks.com/dev-tools/dbx.html)
   diagrams # Diagrams as code (https://diagrams.mingrammer.com/)
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
