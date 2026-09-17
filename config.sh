@@ -40,6 +40,14 @@ declare -a BREW_CASK_APPS=(
   zoom
 )
 
+# Third-party taps and formulas needing `brew trust` belong to the config that
+# installs their packages; a config that lists none taps none.
+declare -a BREW_TAPS=(
+)
+
+declare -a BREW_TRUSTED_FORMULAS=(
+)
+
 declare -a PIP_APPS=(
 )
 

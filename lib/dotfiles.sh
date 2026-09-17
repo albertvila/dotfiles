@@ -16,7 +16,7 @@ function cleanup() {
     echo $(date) >> "$HOME/.dotfiles_cleanup"
     return
   else
-    lastCleanup=$(sed = "$HOME/.dotfiles_cleanup" | sed -n '$p')
+    lastCleanup=$(tail -n 1 "$HOME/.dotfiles_cleanup")
     cyan=$(cyan "$lastCleanup")
   fi
 
@@ -114,7 +114,7 @@ function _backup_existing_dotfiles() {
   # per-file; backing them up wholesale would relocate real skills/config.
   while IFS= read -r -d '' sourceFile; do
     relative="${sourceFile#$DOTFILES_DIR/home/}"
-    if _is_merge_dir "$relative"; then
+    if _is_merge_dir "$relative" || _is_no_link "$relative"; then
       continue
     fi
     file="$HOME/$relative"
@@ -142,6 +142,15 @@ function _is_merge_dir() {
   esac
 }
 
+# Depth-1 entries never installed: regenerable cache that must stay a real
+# directory in $HOME, not a symlink back into this working tree.
+function _is_no_link() {
+  case "$1" in
+    .cache) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 function _install_dotfiles() {
   bot "Creating symbolic links for config files if needed"
 
@@ -162,7 +171,7 @@ function _install_dotfiles() {
   # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.
   while IFS= read -r -d '' entry; do
     relative="${entry#$DOTFILES_DIR/home/}"
-    if _is_merge_dir "$relative"; then
+    if _is_merge_dir "$relative" || _is_no_link "$relative"; then
       continue
     fi
     targetFile="$HOME/$relative"
