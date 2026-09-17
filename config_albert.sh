@@ -33,6 +33,19 @@ declare -a BREW_CASK_APPS=(
   twingate # VPN client
 )
 
+# Taps for this config's brew packages outside homebrew/core, plus the formulas
+# that need `brew trust` before install.
+declare -a BREW_TAPS=(
+  anomalyco/tap # opencode
+  aws/tap # docker-credential-helper-ecr, session-manager-plugin
+  mobile-dev-inc/tap # maestro
+)
+
+declare -a BREW_TRUSTED_FORMULAS=(
+  anomalyco/tap/opencode
+  mobile-dev-inc/tap/maestro
+)
+
 declare -a PIP_APPS=(
   autopep8 # Needed by python
   databricks-cli
