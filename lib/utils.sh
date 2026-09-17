@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-INSTALLATION_MODE='update'
-
 function start() {
   if [ ! -e "$HOME/.dotfiles" ]; then
     bot "Installing dotfiles for the first time"
-    INSTALLATION_MODE='install'
   else
     last_updated=$(sed = "$HOME/.dotfiles" | sed -n '$p')
     blue=$(blue "$last_updated")

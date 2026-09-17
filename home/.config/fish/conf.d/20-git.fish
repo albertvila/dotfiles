@@ -15,18 +15,10 @@ function git_current_branch --description "name of current branch or short sha"
     string replace -r '^refs/heads/' '' $ref
 end
 
-function current_branch
-    git_current_branch
-end
-
 function _git_log_prettily
     if test -n "$argv[1]"
         git log --pretty=$argv[1]
     end
-end
-
-function work_in_progress
-    command git -c log.showSignature=false log -n 1 2>/dev/null | grep -q -- "--wip--"; and echo "WIP!!"
 end
 
 function git_main_branch

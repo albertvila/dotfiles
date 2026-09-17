@@ -15,10 +15,6 @@ function blue() {
   printf "$COL_BLUE$1$COL_RESET"
 }
 
-function magenta() {
-  printf "$COL_MAGENTA$1$COL_RESET"
-}
-
 function cyan() {
   printf "$COL_CYAN$1$COL_RESET"
 }
@@ -45,7 +41,6 @@ function error() {
 
 function result() {
   [ $1 -eq 0 ] && ok "$2" || error "$2"
-  [ "$3" == "true" ] && [ $1 -ne 0 ] && exit
 }
 
 function ask() {
