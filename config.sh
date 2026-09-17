@@ -40,13 +40,7 @@ declare -a BREW_CASK_APPS=(
   zoom
 )
 
-declare -a GEM_APPS=(
-)
-
 declare -a PIP_APPS=(
-)
-
-declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(

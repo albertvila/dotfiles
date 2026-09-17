@@ -50,8 +50,12 @@ if ! is_osx; then
   exit;
 fi
 
-install_os_packages
-setup_os_packages
+_install_brew_cask
+_install_brew
+_install_pip
+_install_npm
+_install_app_store_apps
+_setup_osx
 install_dotfiles
 install_bb_cli_skills
 install_fish
@@ -65,7 +69,11 @@ if [[ $DOTFILES_USER ]]; then
     exit 1
   fi
   source "$DOTFILES_DIR/config_$DOTFILES_USER.sh"
-  install_os_packages
+  _install_brew_cask
+  _install_brew
+  _install_pip
+  _install_npm
+  _install_app_store_apps
 fi
 
 cleanup

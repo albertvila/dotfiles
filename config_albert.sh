@@ -33,9 +33,6 @@ declare -a BREW_CASK_APPS=(
   twingate # VPN client
 )
 
-declare -a GEM_APPS=(
-)
-
 declare -a PIP_APPS=(
   autopep8 # Needed by python
   databricks
@@ -44,9 +41,6 @@ declare -a PIP_APPS=(
   flake8 # Python code checker
   isort # Needed by atom if we want to sort python imports
   pylint # Needed by python
-)
-
-declare -a YARN_APPS=(
 )
 
 declare -a NPM_PACKAGES=(

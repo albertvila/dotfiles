@@ -21,14 +21,6 @@ function end() {
   echo $(date) >> "$HOME/.dotfiles"
 }
 
-function is_first_execution() {
-  if [ $INSTALLATION_MODE == "install" ]; then
-    return
-  fi
-
-  false
-}
-
 function is_osx() {
   declare -r OS_NAME="$(uname -s)"
   if [ $OS_NAME == "Darwin" ]; then

@@ -1,27 +1,5 @@
 #!/usr/bin/env bash
 
-function install_os_packages() {
-  _install_osx_packages
-}
-
-function setup_os_packages() {
-  _setup_osx
-}
-
-function _install_osx_packages() {
-  _install_brew_cask
-  _install_common_packages
-  _install_app_store_apps
-}
-
-function _install_common_packages() {
-  _install_brew
-  _install_gem
-  _install_pip
-  _install_yarn
-  _install_npm
-}
-
 function _setup_osx() {
   bot "Setting up osx ..."
 
@@ -163,28 +141,8 @@ function _install_brew_cask() {
   ok
 }
 
-function _install_gem() {
-  bot "Checking gem packages ..."
-
-  # Install gem apps
-  for pkg in ${GEM_APPS[@]}; do
-    if gem list | grep -q "^${pkg}"; then
-      ok "[gem] Package '$pkg' is already installed"
-    else
-      warn "[gem] Package '$pkg' is not installed"
-      gem install "$pkg"
-    fi
-  done
-  unset GEM_APPS
-
-  ok
-}
-
 function _install_pip() {
   bot "Checking pip packages ..."
-
-  # In order to silence the DEPRECATION: Python 2.7 will reach the end of its life on January 1st, 2020 warning
-  export PYTHONWARNINGS=ignore
 
   if [[ $(command -v pip) == "" ]]; then
     bot "Going to install pip, this command requires sudo"
@@ -210,27 +168,6 @@ function _install_pip() {
     fi
   done
   unset PIP_APPS
-
-  ok
-}
-
-function _install_yarn() {
-  bot "Checking yarn packages ..."
-
-  # Install yarn apps
-  for pkg in ${YARN_APPS[@]}; do
-    if yarn global list | grep -q "^info \"${pkg}"; then
-      ok "[yarn] Package '$pkg' is already installed"
-
-      # TODO Couldn't find a way to know if the package was outdated
-      warn "[yarn] Going to check if '$pkg' needs an update"
-      yarn global upgrade "$pkg"
-    else
-      warn "[yarn] Package '$pkg' is not installed"
-      yarn global add "$pkg"
-    fi
-  done
-  unset YARN_APPS
 
   ok
 }
