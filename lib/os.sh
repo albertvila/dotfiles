@@ -112,13 +112,14 @@ function _install_brew_cask() {
     eval "$(/opt/homebrew/bin/brew shellenv)"
   fi
 
-  # Install HomeBrew casks
-  brew tap aws/tap
-  brew tap databricks/tap
-  brew tap mobile-dev-inc/tap
-  brew trust --formula mobile-dev-inc/tap/maestro
-  brew tap anomalyco/tap
-  brew trust --formula anomalyco/tap/opencode
+  # Third-party taps and trusted formulas come from the active config, so a
+  # default pass taps nothing a per-user config owns (CONTEXT.md: per-user config)
+  for tap in "${BREW_TAPS[@]}"; do
+    brew tap "$tap"
+  done
+  for formula in "${BREW_TRUSTED_FORMULAS[@]}"; do
+    brew trust --formula "$formula"
+  done
 
   # Install brew cask packages
   for pkg in ${BREW_CASK_APPS[@]}; do
@@ -136,7 +137,7 @@ function _install_brew_cask() {
       brew install --cask "$pkg"
     fi
   done
-  unset BREW_CASK_APPS
+  unset BREW_CASK_APPS BREW_TAPS BREW_TRUSTED_FORMULAS
 
   ok
 }
