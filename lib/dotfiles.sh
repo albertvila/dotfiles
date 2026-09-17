@@ -1,11 +1,29 @@
 #!/usr/bin/env bash
 
 function install_dotfiles() {
+  _migrate_cache_symlink
   _backup_existing_dotfiles
 
   _install_dotfiles
   _setup_git
   _setup_vim
+}
+
+# One-time repair for machines that ran the old setup: home/.cache was linked
+# wholesale, so ~/.cache points into the working tree. Turn it back into a real
+# directory, moving the (regenerable) cache content out of the repo.
+# No-op once ~/.cache is a real directory or points somewhere else.
+function _migrate_cache_symlink() {
+  [[ -L "$HOME/.cache" ]] || return 0
+  local target
+  target="$(readlink "$HOME/.cache")"
+  [[ "$target" == "$DOTFILES_DIR/home/.cache" ]] || return 0
+  rm "$HOME/.cache"
+  if [[ -d "$target" ]]; then
+    mv "$target" "$HOME/.cache"
+  else
+    mkdir -p "$HOME/.cache"
+  fi
 }
 
 # It does a cleanup every 30 days
@@ -114,7 +132,7 @@ function _backup_existing_dotfiles() {
   # per-file; backing them up wholesale would relocate real skills/config.
   while IFS= read -r -d '' sourceFile; do
     relative="${sourceFile#$DOTFILES_DIR/home/}"
-    if _is_merge_dir "$relative"; then
+    if _is_merge_dir "$relative" || _is_no_link "$relative"; then
       continue
     fi
     file="$HOME/$relative"
@@ -142,6 +160,15 @@ function _is_merge_dir() {
   esac
 }
 
+# Depth-1 entries never installed: regenerable cache that must stay a real
+# directory in $HOME, not a symlink back into this working tree.
+function _is_no_link() {
+  case "$1" in
+    .cache) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 function _install_dotfiles() {
   bot "Creating symbolic links for config files if needed"
 
@@ -162,7 +189,7 @@ function _install_dotfiles() {
   # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.
   while IFS= read -r -d '' entry; do
     relative="${entry#$DOTFILES_DIR/home/}"
-    if _is_merge_dir "$relative"; then
+    if _is_merge_dir "$relative" || _is_no_link "$relative"; then
       continue
     fi
     targetFile="$HOME/$relative"
