@@ -151,22 +151,11 @@ function _install_pip() {
     pip install --upgrade --user pip
   fi
 
-  # Install pip apps
-  for pkg in ${PIP_APPS[@]}; do
-    if pip list | grep -E "^${pkg}\s"; then
-      ok "[pip] Package '$pkg' is already installed"
-
-      # Checking if the package needs update
-      if pip list --outdated | grep -E "^${pkg}\s"; then
-        warn "[pip] Package '$pkg' is not up to date, updating it ..."
-        pip install "$pkg" --upgrade --user
-      fi
-
-    else
-      warn "[pip] Package '$pkg' is not installed"
-      pip install "$pkg" --user
-    fi
-  done
+  # One batch, always upgraded: pins travel with the package name (e.g.
+  # isort<8 for lm-pyconv), so the resolver upgrades within constraints.
+  if [[ ${#PIP_APPS[@]} -gt 0 ]]; then
+    pip install --user --upgrade "${PIP_APPS[@]}"
+  fi
   unset PIP_APPS
 
   ok

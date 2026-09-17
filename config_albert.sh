@@ -35,11 +35,10 @@ declare -a BREW_CASK_APPS=(
 
 declare -a PIP_APPS=(
   autopep8 # Needed by python
-  databricks
   databricks-cli
   diagrams # Diagrams as code (https://diagrams.mingrammer.com/)
   flake8 # Python code checker
-  isort # Needed by atom if we want to sort python imports
+  "isort<8.0.0" # lm-pyconv requires isort<8
   pylint # Needed by python
 )
 

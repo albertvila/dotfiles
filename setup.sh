@@ -35,11 +35,53 @@ DOTFILES_USER="default"
 # replaces a previously installed copy, leaves other skills alone.
 function install_bb_cli_skills() {
   if ! command -v bb &>/dev/null; then
-    warn "bb not found, skipping bb CLI skills install"
+    warn "bb CLI not on PATH (install it from the BB app), skipping bb CLI skills install"
     return
   fi
   bot "Installing bb CLI skills for external agents ..."
   bb skill install-cli-skills || warn "bb skill install-cli-skills failed, run it manually once bb is running"
+  ok
+}
+
+# bb plugins from bb-plugins.txt: one source per line (git:/npm:/path:), path:
+# entries relative to this repo. Idempotent: skips sources bb already has.
+function install_bb_plugins() {
+  if ! command -v bb &>/dev/null; then
+    warn "bb CLI not on PATH (install it from the BB app), skipping bb plugins install"
+    return
+  fi
+  local manifest="$DOTFILES_DIR/bb-plugins.txt"
+  if [[ ! -f $manifest ]]; then
+    warn "bb-plugins.txt not found, skipping bb plugins install"
+    return
+  fi
+  bot "Installing bb plugins ..."
+  local line source
+  local installed
+  installed=$(bb plugin list --json 2>/dev/null | jq -r '.plugins[].source')
+  while IFS= read -r line; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z $line || $line == \#* ]] && continue
+    source=$line
+    [[ $line == path:* ]] && source="path:$DOTFILES_DIR/${line#path:}"
+    if grep -qxF "$source" <<< "$installed"; then
+      ok "bb plugin already installed: $line"
+    else
+      execute "bb plugin install --yes ${source#path:}" "bb plugin: $line"
+    fi
+  done < "$manifest"
+  ok
+}
+
+# pi itself + its npm: packages on every setup run.
+function update_pi() {
+  if ! command -v pi &>/dev/null; then
+    warn "pi not found, skipping pi update"
+    return
+  fi
+  bot "Updating pi and extensions ..."
+  execute "pi update --all" "pi update --all"
   ok
 }
 
@@ -57,7 +99,6 @@ _install_npm
 _install_app_store_apps
 _setup_osx
 install_dotfiles
-install_bb_cli_skills
 install_fish
 
 unset DOTFILES_USER
@@ -75,6 +116,11 @@ if [[ $DOTFILES_USER ]]; then
   _install_npm
   _install_app_store_apps
 fi
+
+# Agent tooling (bb, pi) is installed by the user config above, so these run last
+install_bb_cli_skills
+install_bb_plugins
+update_pi
 
 cleanup
 
