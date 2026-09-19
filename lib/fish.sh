@@ -3,25 +3,7 @@
 function install_fish() {
   _install_fish_binary
 
-  _install_fasd
-
   _setup_fish
-}
-
-# fasd powers `z` in fish (conf.d/30-shell.fish); no longer on Homebrew — install from GitHub
-function _install_fasd() {
-  bot "Checking fasd ..."
-
-  if command -v fasd &>/dev/null; then
-    ok "fasd is already installed"
-    return
-  fi
-
-  warn "fasd not found, installing from GitHub ..."
-  curl -sL https://raw.github.com/clvv/fasd/master/fasd -o /opt/homebrew/bin/fasd \
-    && chmod 755 /opt/homebrew/bin/fasd \
-    && ok "fasd installed" \
-    || error "Failed to install fasd"
 }
 
 function _install_fish_binary() {
