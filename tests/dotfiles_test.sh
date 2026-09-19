@@ -35,6 +35,7 @@ fail=0
 check() { if eval "$2"; then echo "ok   - $1"; else echo "FAIL - $1"; fail=1; fi; }
 
 check "_is_no_link .cache is true" "_is_no_link .cache"
+check "_is_merge_dir .gnupg is true" "_is_merge_dir .gnupg"
 check "_is_no_link .vimrc is false" "! _is_no_link .vimrc"
 
 # A real ~/.cache must survive the backup step untouched.
