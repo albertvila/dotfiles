@@ -3,7 +3,6 @@
 # After installing/removing third-party plugins, refresh with:
 #   bb plugin list --json | jq -r '.plugins[] | select(.provenance != "builtin" and .enabled) | .source' | grep -v '^path:'
 # (path: lines are yours — the jq snapshot can't reproduce them, keep them by hand.)
-git:https://github.com/MateoCerquetella/bb-plugins.git@semver:taskboard/:^0.3.3
 git:https://github.com/yusuf8834/bb-sidebar.git@semver:^0.2.0
-path:../bb-plugins/activity-overview
-path:../bb-plugins/cmd-click-external
+path:../bb-plugins/plugins/activity-overview
+path:../bb-plugins/plugins/cmd-click-external
