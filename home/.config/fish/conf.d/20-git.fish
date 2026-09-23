@@ -1,6 +1,6 @@
-# Bulk git aliases + helpers, ported from the oh-my-zsh git plugin
-# (verbatim upstream). compdef/zstyle/autoload dropped:
-# fish completes natively. is-at-least conditionals resolved for git 2.55.
+# Bulk git aliases + helpers (ported upstream).
+# compdef/zstyle/autoload dropped: fish completes natively.
+# is-at-least conditionals resolved for git 2.55.
 
 # --- helper functions ---
 function git_current_branch --description "name of current branch or short sha"

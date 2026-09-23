@@ -20,59 +20,14 @@ abbr -a -- ... "cd ../.."
 abbr -a -- .... "cd ../../.."
 abbr -a -- - "cd -"
 
-# --- tab title (was precmd in .zshrc; ~/w/dotfiles style) ---
+# --- tab title (~/w/dotfiles style) ---
 function fish_title
     set -l d $PWD
     string match -q "$HOME*" $d; and set d (string replace "$HOME" '~' $d)
     string replace workspace w $d
 end
 
-# Tab over frecent dirs (recency first), not filesystem paths: `z dotf<TAB>`
-complete -c z -f -a '(fasd -dltR 2>/dev/null)'
-
-# --- fasd tracking (without this, dirs visited in fish never enter the DB) ---
-function __fasd_track --on-variable PWD
-    status is-interactive; or return
-    fasd --proc (fasd --sanitize $PWD) >/dev/null 2>&1
-end
-
-# --- fasd jump (fasd ships no fish init; was prezto fasd module + `z` alias) ---
-function z --description "fasd cd with visible candidates"
-    set -l matches
-    if test (count $argv) -eq 0
-        set matches (fasd -dltR 2>/dev/null | head -n 15)
-    else
-        set matches (fasd -dl $argv 2>/dev/null | head -n 10)
-    end
-    switch (count $matches)
-        case 0
-            echo "z: no match for '$argv'"
-            return 1
-        case 1
-            if test (count $argv) -eq 0
-                echo $matches[1]
-            else
-                cd $matches[1]
-            end
-        case '*'
-            for i in (seq (count $matches))
-                echo "$i  $matches[$i]"
-            end
-            if test (count $argv) -eq 0
-                return
-            end
-            read -P "cd to [1]: " choice
-            test -z "$choice"; and set choice 1
-            if string match -qr '^[0-9]+$' $choice; and test $choice -ge 1; and test $choice -le (count $matches)
-                cd $matches[$choice]
-            else
-                echo "z: invalid choice"
-                return 1
-            end
-    end
-end
-
-# --- lazy version managers (mirrors the unfunction wrappers in .zshrc) ---
+# --- lazy version managers (init on first use) ---
 function jenv --description "lazy jenv init"
     functions -e jenv java
     jenv init - | source
@@ -104,7 +59,7 @@ function npx --description "lazy nodenv init"
     npx $argv
 end
 
-# --- auto-notice of local java version (was chpwd hook in .zshrc) ---
+# --- auto-notice of local java version ---
 function __check_local_java --on-variable PWD
     if test -f .java-version; and test -r .java-version
         printf "Now using local version of java: %s\n" (cat .java-version)
@@ -215,7 +170,6 @@ function help-dotfiles
     echo "Showing general dotfiles help"
     echo "-----------------------------"
     echo
-    help-print "z [WRITE+TAB]" "Use it to switch between folders, it autocompletes paths"
     help-print ".." "Instead of cd .."
     help-print "-" "Goes back to the previous folder"
     help-print "help-[TAB]" "Displays other available helps"
