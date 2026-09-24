@@ -163,6 +163,18 @@ def _merge(intervals):
     return out
 
 
+def _human_only_ms(manager, rows):
+    """Human wait that overlaps no thread's active turn. That is the part a
+    two-day \"yes\" adds to the span, and the part orchestrator time drops."""
+    if not manager:
+        return 0
+    human = _merge([wait["at"] - wait["ms"], wait["at"]]
+                   for wait in manager["humanWaits"]
+                   if wait.get("counted") and wait.get("ms") and wait.get("at"))
+    work = _merge(iv for row in rows for iv in (row.get("_intervals") or []))
+    return sum(end - start for start, end in _subtract(human, work))
+
+
 def _overlap_ms(a, b):
     i = j = 0
     total = 0
@@ -277,18 +289,15 @@ def analyse_thread(thread, events):
             if (thread.get("isManager") and data.get("initiator") == "user"
                     and target in ("new-turn", "steer")
                     and not turn_open and last_completed is not None and ts > last_completed):
-                # An approval (or any human message) that arrived as a plain
-                # message rather than a pending lifecycle interaction (M2).
-                # A gate that timed out inside the gap closes itself: no human
-                # wait is counted for it, and the idle tail after it is idle.
-                if timeout_since_completion:
-                    row["humanWaits"].append({"kind": "message", "ms": 0, "counted": False,
-                                              "reason": "gate timed out", "at": ts})
-                else:
-                    gap = ts - last_completed
-                    row["humanMs"] += gap
-                    row["humanWaits"].append({"kind": "message", "ms": gap, "counted": True,
-                                              "text": _message_text(data), "at": ts})
+                # An approval that arrives as a plain message, including after
+                # the question widget timed out. The whole gap is waiting on
+                # the human — a two-day "yes" is not orchestrator time.
+                gap = ts - last_completed
+                row["humanMs"] += gap
+                row["humanWaits"].append({"kind": "message", "ms": gap, "counted": True,
+                                          "text": _message_text(data), "at": ts,
+                                          "reason": "after timeout" if timeout_since_completion else None})
+                timeout_since_completion = False
                 last_completed = None
         elif kind == "turn/started":
             turn_open = True
@@ -332,7 +341,8 @@ def analyse_thread(thread, events):
                     row["humanWaits"].append({"kind": "question", "ms": duration, "counted": True,
                                               "text": pending_title, "at": ts})
                 else:
-                    # A gate that timed out is not time waiting on the human (M2).
+                    # The widget died; the wait does not. Counted when the
+                    # reply arrives, or to the log end if it never does.
                     row["questionTimeoutMs"] += duration
                     timeout_since_completion = True
                     row["humanWaits"].append({"kind": "question", "ms": duration, "counted": False,
@@ -377,6 +387,13 @@ def analyse_thread(thread, events):
         row["humanWaits"].append({"kind": "question", "ms": duration, "counted": True,
                                   "text": pending_title, "at": events[-1]["createdAt"],
                                   "stillPending": True})
+    elif timeout_since_completion and last_completed is not None and not turn_open:
+        # Timed out and never answered. The tail to the log end is still the human.
+        duration = events[-1]["createdAt"] - last_completed
+        if duration > 0:
+            row["humanMs"] += duration
+            row["humanWaits"].append({"kind": "question", "ms": duration, "counted": True,
+                                      "reason": "unanswered", "at": events[-1]["createdAt"]})
     row["_intervals"] = intervals
     if row.get("_infra_open") is not None:
         infra.append([row["_infra_open"], events[-1]["createdAt"]])
@@ -467,7 +484,8 @@ def build_findings(rows, ledger, manager):
                        f"reported as waiting, not manager work{extra}")
         if manager["questionTimeoutMs"]:
             out.append(f"manager {manager['threadId']}: a question timed out after "
-                       f"{minutes(manager['questionTimeoutMs'])} and is not counted as human wait")
+                       f"{minutes(manager['questionTimeoutMs'])}; the wait until the reply is human time, "
+                       f"excluded from orchestrator time")
     for item in normalise_items(ledger):
         attempts = item.get("attempts") or []
         failed = [a for a in attempts
@@ -599,6 +617,8 @@ def assemble_record(threads, ledger, identity, pricing=None):
         "startedAt": iso(run_start),
         "endedAt": iso(run_end),
         "spanMs": span,
+        "orchestratorMs": max(0, span - (human_only := _human_only_ms(manager, rows))),
+        "humanExcludedMs": human_only,
         "workWindowMs": work_window,
         "managerWaitMs": manager["waitMs"] if manager else 0,
         "humanWaitMs": manager["humanMs"] if manager else 0,
@@ -757,9 +777,11 @@ def self_test():
     assert rec["run"]["spanMs"] > rec["run"]["workWindowMs"]
     assert rec["run"]["managerWaitMs"] == 120_000, rec["run"]["managerWaitMs"]
 
-    # M2: a message-borne approval counts; a timed-out gate does not
-    assert rec["run"]["humanWaitMs"] == 300_000, rec["run"]["humanWaitMs"]
+    # M2: a message-borne approval counts, and so does the wait after a
+    # timed-out gate until the reply. Review work during that wait stays.
+    assert rec["run"]["humanWaitMs"] == 1_280_000, rec["run"]["humanWaitMs"]
     assert rec["run"]["questionTimeoutMs"] == 390_000, rec["run"]["questionTimeoutMs"]
+    assert rec["run"]["orchestratorMs"] == 700_000, rec["run"]["orchestratorMs"]
 
     # a tell-shaped follow-up is human wait on the manager, never on a child
     ct = next(t for t in rec["threads"] if t["threadId"] == "thr_ct")
@@ -969,8 +991,10 @@ def print_table(record, no_pricing):
     cost = run["cost"]
     print(f"RUN {run['managerThreadId']}  name={run['name'] or '-'}  flow={run['flow'] or '-'}  "
           f"project={run['project'] or '-'}  partial={str(record['partial']).lower()}")
-    print(f"    span={minutes(run['spanMs'])}  work-window={minutes(run['workWindowMs'])}  "
-          f"manager-wait={minutes(run['managerWaitMs'])}  human={minutes(run['humanWaitMs'])}  "
+    print(f"    orchestrator={minutes(run['orchestratorMs'])}  span={minutes(run['spanMs'])}  "
+          f"human={minutes(run['humanExcludedMs'])} excluded  "
+          f"work-window={minutes(run['workWindowMs'])}  "
+          f"manager-wait={minutes(run['managerWaitMs'])}  "
           f"threads={run['threads']}  turns={run['turns']}")
     if no_pricing:
         print("    cost: pricing disabled (--no-pricing)")
