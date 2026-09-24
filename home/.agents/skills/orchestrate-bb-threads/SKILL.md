@@ -19,8 +19,9 @@ and point the operator at `/orchestrate-bb-plan`.
 ## Spawn flags
 
 Every spawn in this skill passes `--parent-self --json --permission-mode
-auto`. On the pi provider `auto` is rejected ("Provider pi only supports full
-permission mode") — pass `full` there.
+auto` and `--project "$BB_PROJECT_ID"`. On the pi provider `auto` is rejected
+("Provider pi only supports full permission mode") — pass `full` there. Without
+`--project`, spawn fails with `missing_required` even inside that project.
 
 ## Models
 
@@ -116,6 +117,7 @@ spawn — it is not your own scope.
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
@@ -172,6 +174,7 @@ spawn — it is not your own scope.
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<reviewer-model>" \
      --title "REVIEW <item-id> · <short title>" \
@@ -193,6 +196,7 @@ spawn — it is not your own scope.
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<ponytail-model>" \
      --title "PONYTAIL · combined diff" \
@@ -247,6 +251,7 @@ and review loops as the shared sections above (*Models*, *Review loops*).
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --new-environment worktree \
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
