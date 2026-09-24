@@ -105,13 +105,23 @@ accumulates the combined diff and makes exactly one commit and one PR at the
 end. Workers never talk to each other — all coordination goes through the
 manager.
 
-**Your first turn dispatches.** Write `$BB_THREAD_STORAGE/orchestration.json`
-and spawn the wave-1 workers before you read any item's code. You never open an
-item's files to change them: the manager dispatches, waits, routes findings and
-unblocks (see *Rules*), and an item implemented here has no worker thread, no
-ledger entry and no reviewer it can honestly claim. A single-item manifest whose
-notes list the exact files to touch is context for the worker you are about to
-spawn — it is not your own scope.
+**Your first turn dispatches.** For `tracker: github <owner/repo>#<parent>`,
+claim the parent and every item issue before spawning. Not an excluded issue:
+
+```sh
+gh issue edit <n> --repo <owner/repo> --add-assignee @me
+gh issue edit <n> --repo <owner/repo> --remove-label ready-for-agent
+```
+
+`@me` is the authenticated `gh` user. Nothing replaces the label. Do not close,
+and do not add or remove any other label. A scratch tracker has no issue to
+claim. Then write `$BB_THREAD_STORAGE/orchestration.json` and spawn the wave-1
+workers before you read any item's code. You never open an item's files to
+change them: the manager dispatches, waits, routes findings and unblocks (see
+*Rules*), and an item implemented here has no worker thread, no ledger entry
+and no reviewer it can honestly claim. A single-item manifest whose notes list
+the exact files to touch is context for the worker you are about to spawn — it
+is not your own scope.
 
 1. **Spawn every ready item's worker**, each to its own visible child thread:
 
@@ -328,8 +338,9 @@ Dispatch on the manifest's `tracker:` value:
 - `tracker: scratch` (work list from `.scratch/<feature>/issues/NN-*.md`) —
   the manager keeps those ticket files in sync with the ledger as items
   settle; see [TICKET-WRITE-BACK.md](TICKET-WRITE-BACK.md).
-- `tracker: github <owner/repo>#<parent>` — comments only, never a close and
-  never a label; see
+- `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
+  `ready-for-agent` only); settlement is comments only, never a close, never
+  any other label. See
   [TICKET-WRITE-BACK-GITHUB.md](TICKET-WRITE-BACK-GITHUB.md).
 
 The task record is orthogonal to the tracker value: when the manifest also
