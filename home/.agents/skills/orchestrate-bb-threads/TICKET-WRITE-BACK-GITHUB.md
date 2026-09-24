@@ -1,10 +1,18 @@
 # Ticket write-back (GitHub)
 
 Reached from [SKILL.md](SKILL.md) when the manifest's tracker is
-`github <owner/repo>#<parent>`. Write-back is **comments only**: the manager
-never closes an issue, and never adds, removes or repurposes a label. Closing
-is the PR's job — the PR body carries the closing lines (see *PR body closing
-lines* in [SKILL.md](SKILL.md)).
+`github <owner/repo>#<parent>`. Claim and settlement are different writes.
+
+**Claim, first turn, before any worker spawns.** The parent and every item
+issue. Not an excluded issue. The commands are in [SKILL.md](SKILL.md) (*Your
+first turn dispatches*): assign `@me`, remove `ready-for-agent`, replace it
+with nothing. No other label, no close.
+
+**Settlement is comments only.** The manager never closes an issue, and never
+adds, removes, or repurposes a label at settlement — the claim already dropped
+`ready-for-agent`, and this write does not touch labels again. Closing is the
+PR's job — the PR body carries the closing lines (see *PR body closing lines*
+in [SKILL.md](SKILL.md)).
 
 An item's issue number comes from its ticket reference in the manifest, never
 from re-deriving it. The run's **excluded** issues — closed sub-issues,
@@ -19,8 +27,8 @@ metadata.
 - Item settles `blocked` → comment the blocker on that item's own issue, so
   the next triage pass sees it without reading the thread.
 - At the commit-and-PR gate, once every item has settled, post the run-summary
-  comment on the **parent** — and nothing else on the parent. No label, no
-  close, no edit to the plan comment.
+  comment on the **parent** — and nothing else on the parent. No further label
+  change, no close, no edit to the plan comment.
 - The parent is never given a per-item comment. When the parent *is* the item
   (it owns no sub-issues), its outcome rides the run summary; the PR body
   closes it with `Closes #n`.
