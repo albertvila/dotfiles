@@ -67,7 +67,12 @@ instead.
 - **`VERDICT CLEAN` ends the loop.** A clean verdict closes the item's
   review even when it carries non-blocking nits: nits go to the operator in
   the run summary — they are not fixed in-run and never trigger a re-review.
-  Only `VERDICT FINDINGS` opens a fix round.
+  Only `VERDICT FINDINGS` opens a fix round. A **finding** is a defect in
+  behaviour, in a named acceptance criterion, or a failure of a gate this run
+  must pass (lint, typecheck, tests). A **nit** is everything else — a
+  preference, a style choice the gate accepts, an observation with no gate
+  behind it. Lint-gate failures are findings: they fail CI, so they open a fix
+  round.
 - Findings loop back to the **same worker**: queue them as a follow-up
   message to the worker's thread (`bb thread queue create <id> "<findings>"`,
   then `bb thread queue send`); if the thread is dead, respawn the item's
@@ -84,6 +89,13 @@ instead.
   titled `FIX · <finding>` on the worker model — a `PONYTAIL …` title is
   reserved for a ponytail pass) implements them → ponytail re-checks only.
   Same cap of 3, same blocked-and-surfaced outcome.
+- **A finding that contradicts the spec is not a fix round.** When a review or
+  ponytail finding conflicts with the approved manifest or the tracker spec,
+  the manager does not dispatch a fix round for it: it surfaces the conflict to
+  the operator at the next gate — the finding text and the spec clause it
+  contradicts, both quoted — records it as a follow-up, and the item may still
+  settle `done`. The settlement comment quotes both sides; an adjudication with
+  no spec citation is a skipped fix round.
 - Scale review depth to the item's risk. Mechanical items (deletions,
   renames, rendering-only, docs, config) get a short prompt: verify the
   change is complete, nothing out of scope was touched, tests/typecheck
@@ -128,7 +140,10 @@ and no reviewer it can honestly claim. A single-item manifest whose notes list
 the exact files to touch is context for the worker you are about to spawn — it
 is not your own scope.
 
-1. **Spawn every ready item's worker**, each to its own visible child thread:
+1. **Spawn every ready item's worker**, each to its own visible child thread.
+   Write the prompt to `$BB_THREAD_STORAGE/prompt-<item-id>.txt` and pass it by
+   substitution — a long multi-line prompt inlined in the command is a
+   shell-quoting bug waiting for a `'`:
 
    ```sh
    bb thread spawn --parent-self \
@@ -137,8 +152,13 @@ is not your own scope.
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
      --permission-mode auto --json \
-     --prompt "Work this item only: <self-contained instructions>. You are in the manager's shared worktree — leave your changes uncommitted and do NOT commit or push. When done, your final message must state DONE or BLOCKED and a 3-line summary of what changed / what blocks you."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-<item-id>.txt")"
    ```
+
+   The file holds: `Work this item only: <self-contained instructions>. You
+   are in the manager's shared worktree — leave your changes uncommitted and
+   do NOT commit or push. When done, your final message must state DONE or
+   BLOCKED and a 3-line summary of what changed / what blocks you.`
 
    Record each returned thread id in the ledger.
 
@@ -196,8 +216,17 @@ is not your own scope.
      --model "<reviewer-model>" \
      --title "REVIEW <item-id> · <short title>" \
      --permission-mode auto --json \
-     --prompt "Fresh-eyes code review. Run /code-review on the frozen diff at $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>) — do NOT review the live worktree diff, another worker may already be changing those files; read worktree files only for surrounding context. Report findings against the item's acceptance criteria. Do not edit files. Your FINAL message must be the complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups instead of reported."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-review-<item-id>.txt")"
    ```
+
+   The file holds: `Fresh-eyes code review. Run /code-review on the frozen
+   diff at $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item
+   scope>) — do NOT review the live worktree diff, another worker may already
+   be changing those files; read worktree files only for surrounding context.
+   Report findings against the item's acceptance criteria. Do not edit files.
+   Your FINAL message must be the complete report starting with VERDICT CLEAN
+   or VERDICT FINDINGS, and findings must not be recorded as follow-ups
+   instead of reported.`
 
    The reviewer may read only the dependency roots it needs — the bb source
    checkout, sibling plugins, and the app bundle (e.g. under
@@ -218,8 +247,15 @@ is not your own scope.
      --model "<ponytail-model>" \
      --title "PONYTAIL · combined diff" \
      --permission-mode auto --json \
-     --prompt "Run /ponytail-review on the full uncommitted diff in this worktree (git diff HEAD). Report findings; do not edit files. Scope the report to over-engineering findings; anything else you notice goes in the same final message labelled out of scope. Your FINAL message must be the complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups instead of reported."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-ponytail.txt")"
    ```
+
+   The file holds: `Run /ponytail-review on the full uncommitted diff in this
+   worktree (git diff HEAD). Report findings; do not edit files. Scope the
+   report to over-engineering findings; anything else you notice goes in the
+   same final message labelled out of scope. Your FINAL message must be the
+   complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and
+   findings must not be recorded as follow-ups instead of reported.`
 
    **Scope.** The pass reports ponytail findings only. Anything else it
    notices — a correctness note outside over-engineering — is an out-of-band
@@ -248,15 +284,24 @@ is not your own scope.
    lm report-upload
    ```
 
+   These two commands are for a repo whose PRs publish `lm-build/*` checks.
    Run the upload even when pr-test fails, so GitHub gets a failure instead of
    a missing check. `lm xpush` does not replace this on a first push: the
    pre-push hook's `pr-test --refresh-pr` no-ops until a PR exists, and a
    hook filecheck report is not the required `lm-build/filecheck` context.
-   Done when the PR head has both `lm-build/filecheck` and
-   `lm-build/projectCheck`. If `report-upload` fails for missing AWS or lm
+   There the PR is done when its head has both `lm-build/filecheck` and
+   `lm-build/projectCheck`; if `report-upload` fails for missing AWS or lm
    credentials, say so and hand the two commands to the operator — do not
-   treat the PR as check-complete. The body carries the closing lines below
-   (see *PR body closing lines*).
+   treat the PR as check-complete.
+
+   In a repo whose checks come from its own CI workflows instead, there is
+   nothing to upload and no `lm-build/*` context will ever appear: the PR is
+   done when those workflow checks are green, and until then the run reports
+   the PR as **open, checks running**, naming the context it is waiting on —
+   never as check-complete. Read the contexts off the open PR before choosing
+   (`gh pr checks <n>`); never read absence from the merged history.
+
+   The body carries the closing lines below (see *PR body closing lines*).
 
 7. **Post-merge cleanup.** After the user merges on GitHub: pull main,
    delete the merged branch, and post a final report (what shipped, per-item
@@ -349,7 +394,8 @@ Write an item `done` only when its review is clean **and** the ponytail pass
 over its files has settled; a diff that changes after a `done` write reopens
 the item explicitly. `finishedAt` is set once the run is done by the
 definition below — every item terminal **and** the PR opened after the
-approval gate.
+approval gate — and it is an **ISO-8601 UTC timestamp**, not a marker, a
+status word or a sentence: the run corpus reads this field as data.
 
 The run is done when every item carries a terminal status (`done`, `failed`,
 or `blocked`), every `done` item's PR is open or merged and handed over, and
