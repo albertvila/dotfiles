@@ -39,4 +39,6 @@ if status is-interactive
     set -gx GPG_TTY (tty)
     direnv hook fish | source
     starship init fish | source
+    # `z` jump: zoxide tracks dirs on PWD change (replaced fasd)
+    zoxide init fish --cmd z | source
 end
