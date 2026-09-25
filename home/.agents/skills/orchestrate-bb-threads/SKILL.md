@@ -37,8 +37,9 @@ These are live catalog ids, not display names. Use the openrouter route only,
 never opencode.
 
 Check existence before spawning with a non-truncating listing:
-`bb provider models openrouter | grep -F '<vendor>/<model>'`. Never read
-absence from a `head`-piped catalog listing — the id can sit past the cut.
+`bb provider models pi | grep -F 'openrouter/<vendor>/<model>'`. The ids are
+on the pi catalog; `bb provider models openrouter` returns no models. Never
+read absence from a `head`-piped catalog listing — the id can sit past the cut.
 An id present in the catalog can still be blocked by an OpenRouter workspace
 guardrail; only a turn reveals that, so "absent from the catalog" and
 "blocked at runtime" are different failures with the same stop-and-ask ending.
@@ -95,6 +96,10 @@ instead.
 - Every review and ponytail thread's FINAL message must be the complete
   report starting with `VERDICT CLEAN` or `VERDICT FINDINGS`; findings must
   not be recorded as follow-ups instead of reported.
+- A completion whose final message does not start with `VERDICT CLEAN` or
+  `VERDICT FINDINGS` is not a pass and not a findings round. Re-prompt that
+  thread once with the contract. Do not increment `reviewCount` for it. A
+  second non-verdict completion is surfaced, not treated as clean.
 
 ## Flow A — single shared PR
 
@@ -146,10 +151,12 @@ spawn — it is not your own scope.
    bb thread output <id>
    ```
 
-   A wait timeout is not a failure — check `bb thread show <id> --json`; if
-   the thread is still working, wait again. Collect the final output and mark
-   the item `done` or `blocked`/`failed` from the worker's DONE/BLOCKED
-   report.
+   The command after a successful spawn is `bb thread wait`. Stay on that
+   wait until it matches idle — no `sleep`, and no `bb thread show` or
+   `bb thread output` while the child is active. A wait that returns before
+   idle is not a failure — check `bb thread show <id> --json`; if the thread
+   is still working, wait again. Collect the final output and mark the item
+   `done` or `blocked`/`failed` from the worker's DONE/BLOCKED report.
 
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
    reports DONE, first freeze the item's diff so the review is immune to
@@ -222,9 +229,24 @@ spawn — it is not your own scope.
    not a plain message — a message can be answered in any thread, and a yes
    relayed through the plan thread never reaches this run's record. If the
    answer arrives out of thread anyway, restate it in this thread before
-   committing. On yes: commit, open
-   exactly one PR (`gh pr create`), and hand over the link. The body carries
-   the closing lines below (see *PR body closing lines*).
+   committing. On yes: commit, push the branch, open exactly one PR
+   (`gh pr create`), then post the lm statuses from that repo root. `<base>`
+   is the detected PR base:
+
+   ```sh
+   lm pr-test --base origin/<base>
+   lm report-upload
+   ```
+
+   Run the upload even when pr-test fails, so GitHub gets a failure instead of
+   a missing check. `lm xpush` does not replace this on a first push: the
+   pre-push hook's `pr-test --refresh-pr` no-ops until a PR exists, and a
+   hook filecheck report is not the required `lm-build/filecheck` context.
+   Done when the PR head has both `lm-build/filecheck` and
+   `lm-build/projectCheck`. If `report-upload` fails for missing AWS or lm
+   credentials, say so and hand the two commands to the operator — do not
+   treat the PR as check-complete. The body carries the closing lines below
+   (see *PR body closing lines*).
 
 7. **Post-merge cleanup.** After the user merges on GitHub: pull main,
    delete the merged branch, and post a final report (what shipped, per-item
@@ -273,6 +295,8 @@ Then run Flow A steps 2–7 with these deltas:
   base-branch detection, then commit the branch (`bb environment commit
   <env-id>`) and mark that environment's PR ready (`bb environment
   pull-request ready <env-id>` — each worktree environment owns its PR).
+  After that PR is open, run Flow A step 6's lm status commands in that
+  item's worktree, against the same detected base. Same done check.
   Its body carries the closing lines below (see *PR body closing lines*).
   Merging items into one PR is the Flow A shape.
 - **Flow A step 7 — merge and clean up N PRs.** Merge in dependency order:
