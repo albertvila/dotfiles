@@ -41,4 +41,16 @@ if status is-interactive
     starship init fish | source
     # `z` jump: zoxide tracks dirs on PWD change (replaced fasd)
     zoxide init fish --cmd z | source
+    # override zoxide's no-arg `cd ~` with the old frecent-dir listing
+    function z --description "zoxide jump; bare z lists frecent dirs"
+        if test (count $argv) -eq 0
+            zoxide query -l | head -n 15
+            return
+        end
+        __zoxide_z $argv
+    end
+    # tab after `z` offers frecent dirs: drop zoxide's alias-wrap rule first,
+    # otherwise it re-enables fish's plain file completion
+    complete --erase --command z
+    complete -c z -f -a '(zoxide query -l)'
 end
