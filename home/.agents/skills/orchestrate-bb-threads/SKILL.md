@@ -19,8 +19,9 @@ and point the operator at `/orchestrate-bb-plan`.
 ## Spawn flags
 
 Every spawn in this skill passes `--parent-self --json --permission-mode
-auto`. On the pi provider `auto` is rejected ("Provider pi only supports full
-permission mode") — pass `full` there.
+auto` and `--project "$BB_PROJECT_ID"`. On the pi provider `auto` is rejected
+("Provider pi only supports full permission mode") — pass `full` there. Without
+`--project`, spawn fails with `missing_required` even inside that project.
 
 ## Models
 
@@ -36,8 +37,9 @@ These are live catalog ids, not display names. Use the openrouter route only,
 never opencode.
 
 Check existence before spawning with a non-truncating listing:
-`bb provider models openrouter | grep -F '<vendor>/<model>'`. Never read
-absence from a `head`-piped catalog listing — the id can sit past the cut.
+`bb provider models pi | grep -F 'openrouter/<vendor>/<model>'`. The ids are
+on the pi catalog; `bb provider models openrouter` returns no models. Never
+read absence from a `head`-piped catalog listing — the id can sit past the cut.
 An id present in the catalog can still be blocked by an OpenRouter workspace
 guardrail; only a turn reveals that, so "absent from the catalog" and
 "blocked at runtime" are different failures with the same stop-and-ask ending.
@@ -65,7 +67,12 @@ instead.
 - **`VERDICT CLEAN` ends the loop.** A clean verdict closes the item's
   review even when it carries non-blocking nits: nits go to the operator in
   the run summary — they are not fixed in-run and never trigger a re-review.
-  Only `VERDICT FINDINGS` opens a fix round.
+  Only `VERDICT FINDINGS` opens a fix round. A **finding** is a defect in
+  behaviour, in a named acceptance criterion, or a failure of a gate this run
+  must pass (lint, typecheck, tests). A **nit** is everything else — a
+  preference, a style choice the gate accepts, an observation with no gate
+  behind it. Lint-gate failures are findings: they fail CI, so they open a fix
+  round.
 - Findings loop back to the **same worker**: queue them as a follow-up
   message to the worker's thread (`bb thread queue create <id> "<findings>"`,
   then `bb thread queue send`); if the thread is dead, respawn the item's
@@ -82,6 +89,13 @@ instead.
   titled `FIX · <finding>` on the worker model — a `PONYTAIL …` title is
   reserved for a ponytail pass) implements them → ponytail re-checks only.
   Same cap of 3, same blocked-and-surfaced outcome.
+- **A finding that contradicts the spec is not a fix round.** When a review or
+  ponytail finding conflicts with the approved manifest or the tracker spec,
+  the manager does not dispatch a fix round for it: it surfaces the conflict to
+  the operator at the next gate — the finding text and the spec clause it
+  contradicts, both quoted — records it as a follow-up, and the item may still
+  settle `done`. The settlement comment quotes both sides; an adjudication with
+  no spec citation is a skipped fix round.
 - Scale review depth to the item's risk. Mechanical items (deletions,
   renames, rendering-only, docs, config) get a short prompt: verify the
   change is complete, nothing out of scope was touched, tests/typecheck
@@ -94,6 +108,10 @@ instead.
 - Every review and ponytail thread's FINAL message must be the complete
   report starting with `VERDICT CLEAN` or `VERDICT FINDINGS`; findings must
   not be recorded as follow-ups instead of reported.
+- A completion whose final message does not start with `VERDICT CLEAN` or
+  `VERDICT FINDINGS` is not a pass and not a findings round. Re-prompt that
+  thread once with the contract. Do not increment `reviewCount` for it. A
+  second non-verdict completion is surfaced, not treated as clean.
 
 ## Flow A — single shared PR
 
@@ -104,24 +122,43 @@ accumulates the combined diff and makes exactly one commit and one PR at the
 end. Workers never talk to each other — all coordination goes through the
 manager.
 
-**Your first turn dispatches.** Write `$BB_THREAD_STORAGE/orchestration.json`
-and spawn the wave-1 workers before you read any item's code. You never open an
-item's files to change them: the manager dispatches, waits, routes findings and
-unblocks (see *Rules*), and an item implemented here has no worker thread, no
-ledger entry and no reviewer it can honestly claim. A single-item manifest whose
-notes list the exact files to touch is context for the worker you are about to
-spawn — it is not your own scope.
+**Your first turn dispatches.** For `tracker: github <owner/repo>#<parent>`,
+claim the parent and every item issue before spawning. Not an excluded issue:
 
-1. **Spawn every ready item's worker**, each to its own visible child thread:
+```sh
+gh issue edit <n> --repo <owner/repo> --add-assignee @me
+gh issue edit <n> --repo <owner/repo> --remove-label ready-for-agent
+```
+
+`@me` is the authenticated `gh` user. Nothing replaces the label. Do not close,
+and do not add or remove any other label. A scratch tracker has no issue to
+claim. Then write `$BB_THREAD_STORAGE/orchestration.json` and spawn the wave-1
+workers before you read any item's code. You never open an item's files to
+change them: the manager dispatches, waits, routes findings and unblocks (see
+*Rules*), and an item implemented here has no worker thread, no ledger entry
+and no reviewer it can honestly claim. A single-item manifest whose notes list
+the exact files to touch is context for the worker you are about to spawn — it
+is not your own scope.
+
+1. **Spawn every ready item's worker**, each to its own visible child thread.
+   Write the prompt to `$BB_THREAD_STORAGE/prompt-<item-id>.txt` and pass it by
+   substitution — a long multi-line prompt inlined in the command is a
+   shell-quoting bug waiting for a `'`:
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
      --permission-mode auto --json \
-     --prompt "Work this item only: <self-contained instructions>. You are in the manager's shared worktree — leave your changes uncommitted and do NOT commit or push. When done, your final message must state DONE or BLOCKED and a 3-line summary of what changed / what blocks you."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-<item-id>.txt")"
    ```
+
+   The file holds: `Work this item only: <self-contained instructions>. You
+   are in the manager's shared worktree — leave your changes uncommitted and
+   do NOT commit or push. When done, your final message must state DONE or
+   BLOCKED and a 3-line summary of what changed / what blocks you.`
 
    Record each returned thread id in the ledger.
 
@@ -144,10 +181,12 @@ spawn — it is not your own scope.
    bb thread output <id>
    ```
 
-   A wait timeout is not a failure — check `bb thread show <id> --json`; if
-   the thread is still working, wait again. Collect the final output and mark
-   the item `done` or `blocked`/`failed` from the worker's DONE/BLOCKED
-   report.
+   The command after a successful spawn is `bb thread wait`. Stay on that
+   wait until it matches idle — no `sleep`, and no `bb thread show` or
+   `bb thread output` while the child is active. A wait that returns before
+   idle is not a failure — check `bb thread show <id> --json`; if the thread
+   is still working, wait again. Collect the final output and mark the item
+   `done` or `blocked`/`failed` from the worker's DONE/BLOCKED report.
 
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
    reports DONE, first freeze the item's diff so the review is immune to
@@ -172,12 +211,22 @@ spawn — it is not your own scope.
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<reviewer-model>" \
      --title "REVIEW <item-id> · <short title>" \
      --permission-mode auto --json \
-     --prompt "Fresh-eyes code review. Run /code-review on the frozen diff at $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>) — do NOT review the live worktree diff, another worker may already be changing those files; read worktree files only for surrounding context. Report findings against the item's acceptance criteria. Do not edit files. Your FINAL message must be the complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups instead of reported."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-review-<item-id>.txt")"
    ```
+
+   The file holds: `Fresh-eyes code review. Run /code-review on the frozen
+   diff at $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item
+   scope>) — do NOT review the live worktree diff, another worker may already
+   be changing those files; read worktree files only for surrounding context.
+   Report findings against the item's acceptance criteria. Do not edit files.
+   Your FINAL message must be the complete report starting with VERDICT CLEAN
+   or VERDICT FINDINGS, and findings must not be recorded as follow-ups
+   instead of reported.`
 
    The reviewer may read only the dependency roots it needs — the bb source
    checkout, sibling plugins, and the app bundle (e.g. under
@@ -193,12 +242,20 @@ spawn — it is not your own scope.
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --environment "$BB_ENVIRONMENT_ID" \
      --model "<ponytail-model>" \
      --title "PONYTAIL · combined diff" \
      --permission-mode auto --json \
-     --prompt "Run /ponytail-review on the full uncommitted diff in this worktree (git diff HEAD). Report findings; do not edit files. Scope the report to over-engineering findings; anything else you notice goes in the same final message labelled out of scope. Your FINAL message must be the complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups instead of reported."
+     --prompt "$(cat "$BB_THREAD_STORAGE/prompt-ponytail.txt")"
    ```
+
+   The file holds: `Run /ponytail-review on the full uncommitted diff in this
+   worktree (git diff HEAD). Report findings; do not edit files. Scope the
+   report to over-engineering findings; anything else you notice goes in the
+   same final message labelled out of scope. Your FINAL message must be the
+   complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and
+   findings must not be recorded as follow-ups instead of reported.`
 
    **Scope.** The pass reports ponytail findings only. Anything else it
    notices — a correctness note outside over-engineering — is an out-of-band
@@ -218,9 +275,33 @@ spawn — it is not your own scope.
    not a plain message — a message can be answered in any thread, and a yes
    relayed through the plan thread never reaches this run's record. If the
    answer arrives out of thread anyway, restate it in this thread before
-   committing. On yes: commit, open
-   exactly one PR (`gh pr create`), and hand over the link. The body carries
-   the closing lines below (see *PR body closing lines*).
+   committing. On yes: commit, push the branch, open exactly one PR
+   (`gh pr create`), then post the lm statuses from that repo root. `<base>`
+   is the detected PR base:
+
+   ```sh
+   lm pr-test --base origin/<base>
+   lm report-upload
+   ```
+
+   These two commands are for a repo whose PRs publish `lm-build/*` checks.
+   Run the upload even when pr-test fails, so GitHub gets a failure instead of
+   a missing check. `lm xpush` does not replace this on a first push: the
+   pre-push hook's `pr-test --refresh-pr` no-ops until a PR exists, and a
+   hook filecheck report is not the required `lm-build/filecheck` context.
+   There the PR is done when its head has both `lm-build/filecheck` and
+   `lm-build/projectCheck`; if `report-upload` fails for missing AWS or lm
+   credentials, say so and hand the two commands to the operator — do not
+   treat the PR as check-complete.
+
+   In a repo whose checks come from its own CI workflows instead, there is
+   nothing to upload and no `lm-build/*` context will ever appear: the PR is
+   done when those workflow checks are green, and until then the run reports
+   the PR as **open, checks running**, naming the context it is waiting on —
+   never as check-complete. Read the contexts off the open PR before choosing
+   (`gh pr checks <n>`); never read absence from the merged history.
+
+   The body carries the closing lines below (see *PR body closing lines*).
 
 7. **Post-merge cleanup.** After the user merges on GitHub: pull main,
    delete the merged branch, and post a final report (what shipped, per-item
@@ -247,6 +328,7 @@ and review loops as the shared sections above (*Models*, *Review loops*).
 
    ```sh
    bb thread spawn --parent-self \
+     --project "$BB_PROJECT_ID" \
      --new-environment worktree \
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
@@ -268,6 +350,8 @@ Then run Flow A steps 2–7 with these deltas:
   base-branch detection, then commit the branch (`bb environment commit
   <env-id>`) and mark that environment's PR ready (`bb environment
   pull-request ready <env-id>` — each worktree environment owns its PR).
+  After that PR is open, run Flow A step 6's lm status commands in that
+  item's worktree, against the same detected base. Same done check.
   Its body carries the closing lines below (see *PR body closing lines*).
   Merging items into one PR is the Flow A shape.
 - **Flow A step 7 — merge and clean up N PRs.** Merge in dependency order:
@@ -310,7 +394,8 @@ Write an item `done` only when its review is clean **and** the ponytail pass
 over its files has settled; a diff that changes after a `done` write reopens
 the item explicitly. `finishedAt` is set once the run is done by the
 definition below — every item terminal **and** the PR opened after the
-approval gate.
+approval gate — and it is an **ISO-8601 UTC timestamp**, not a marker, a
+status word or a sentence: the run corpus reads this field as data.
 
 The run is done when every item carries a terminal status (`done`, `failed`,
 or `blocked`), every `done` item's PR is open or merged and handed over, and
@@ -323,8 +408,9 @@ Dispatch on the manifest's `tracker:` value:
 - `tracker: scratch` (work list from `.scratch/<feature>/issues/NN-*.md`) —
   the manager keeps those ticket files in sync with the ledger as items
   settle; see [TICKET-WRITE-BACK.md](TICKET-WRITE-BACK.md).
-- `tracker: github <owner/repo>#<parent>` — comments only, never a close and
-  never a label; see
+- `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
+  `ready-for-agent` only); settlement is comments only, never a close, never
+  any other label. See
   [TICKET-WRITE-BACK-GITHUB.md](TICKET-WRITE-BACK-GITHUB.md).
 
 The task record is orthogonal to the tracker value: when the manifest also

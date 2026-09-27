@@ -24,6 +24,7 @@ declare -a BREW_APPS=(
   starship
   vim
   yarn
+  zoxide # powers the `z` jump in fish
 )
 
 declare -a BREW_CASK_APPS=(

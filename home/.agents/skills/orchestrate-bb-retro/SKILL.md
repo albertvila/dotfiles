@@ -138,9 +138,10 @@ every number it printed, and did it end in an edit someone can make.
 - **Execution plan** — the flow, the items in dispatch order with their
   blocked-by edges, and the wave structure the run actually followed. Note
   every place it diverged from the plan it approved.
-- **Time per phase** — the span, each phase's summed active time, and the
-  overlap between them. Name the phase that dominated, and where the run
-  spent time outside any turn.
+- **Time per phase** — lead with orchestrator time (span minus human wait
+  that overlaps no work). Then the span, each phase's summed active time,
+  and the overlap between them. Name the phase that dominated. A wait for
+  the human is not time the run spent working.
 - **Cost per model** — tokens and estimated USD per model and per role.
   Flag every thread the pricing table could not cover, and say how much of
   the run that leaves unpriced.
@@ -174,7 +175,12 @@ documents the shapes.
   per-token prices from `https://openrouter.ai/api/v1/models`, cached a day
   in `<dataDir>/cache/openrouter-models.json`. Prices move, and a provider's
   own billing can differ.
-- **Waiting on the human** is a `system/interaction/lifecycle` left pending.
+- **Waiting on the human** is a pending question, a question that timed out,
+  and the idle tail until the human replies — a message that arrives two days
+  later included. That wait is excluded from **orchestrator time**
+  (`orchestratorMs` = span minus the part of the wait that overlaps no
+  thread's active turn). Span stays the wall clock. Do not quote span as how
+  long the orchestrator took.
 - **Roles come from titles** — `REVIEW …`, `PONYTAIL …`, everything else a
   worker. Those titles are `/orchestrate-bb-threads`' own convention, so a
   thread that fits none of them means the run went off-script.
