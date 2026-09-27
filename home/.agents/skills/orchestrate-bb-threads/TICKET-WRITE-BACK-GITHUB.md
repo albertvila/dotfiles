@@ -6,7 +6,8 @@ Reached from [SKILL.md](SKILL.md) when the manifest's tracker is
 **Claim, first turn, before any worker spawns.** The parent and every item
 issue. Not an excluded issue. The commands are in [SKILL.md](SKILL.md) (*Your
 first turn dispatches*): assign `@me`, remove `ready-for-agent`, replace it
-with nothing. No other label, no close.
+with nothing. No other label, no close. Claim once per issue; repeating the
+commands is harmless.
 
 **Settlement is comments only.** The manager never closes an issue, and never
 adds, removes, or repurposes a label at settlement — the claim already dropped
