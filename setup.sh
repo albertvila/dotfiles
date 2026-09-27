@@ -74,6 +74,22 @@ function install_bb_plugins() {
   ok
 }
 
+# twg CLI (Teamwork Graph): Atlassian's own installer drops the binary into
+# ~/.local/bin (no brew formula), already on fish's PATH. Login stays manual
+# (see README): the token prompt needs the user's terminal.
+function install_twg_cli() {
+  local twg="$HOME/.local/bin/twg"
+  bot "Installing/updating the twg CLI and its agent skills ..."
+  if [[ -x $twg ]]; then
+    execute "$twg update --yes" "twg update"
+  else
+    curl -fsSL --retry 2 https://teamwork-graph.atlassian.com/cli/install | bash -s -- --yes --skip-login --skip-skills &>/dev/null
+    result $? "twg install"
+  fi
+  execute "$twg skills install --yes --all-agents" "twg skills install"
+  ok
+}
+
 # pi itself + its npm: packages on every setup run.
 function update_pi() {
   if ! command -v pi &>/dev/null; then
@@ -120,6 +136,7 @@ fi
 # Agent tooling (bb, pi) is installed by the user config above, so these run last
 install_bb_cli_skills
 install_bb_plugins
+install_twg_cli
 update_pi
 
 cleanup

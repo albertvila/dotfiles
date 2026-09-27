@@ -89,6 +89,9 @@ Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more informat
 
 ## Manual steps after first setup
 
+### twg
+- Run `twg setup` to log in to the Teamwork Graph CLI (the token prompt opens a browser, so it needs your terminal)
+
 ### aws
 - Run `aws configure` and set up your aws credentials
 
