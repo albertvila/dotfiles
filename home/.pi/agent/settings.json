@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "0.87.1",
   "theme": "dark",
   "defaultProvider": "openrouter",
-  "defaultModel": "moonshotai/kimi-k3",
+  "defaultModel": "deepseek/deepseek-v4.1-flash",
   "defaultProjectTrust": "always",
   "defaultThinkingLevel": "max",
   "hideThinkingBlock": true,
@@ -21,7 +21,8 @@
     "npm:pi-powerline-footer",
     "npm:pi-rewind",
     "npm:pi-web-access",
-    "npm:pi-mcp-adapter"
+    "npm:pi-mcp-adapter",
+    "ssh://git@github.com/Launchmetrics/LM-AI@main"
   ],
   "powerline": {
     "welcome": false,
@@ -39,5 +40,6 @@
         "git"
       ]
     }
-  }
+  },
+  "steeringMode": "all"
 }
