@@ -26,7 +26,7 @@ const allowedPatterns: Pattern[] = [
 		enabled: true,
 	},
 	{
-		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +[a-z0-9_.-]+ +(list|get|ls|cat|status|validate)\\b( +[^;&|`$<>()\\n\\r]+)* *$",
+		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +[a-z0-9_.-]+ +(list|get|ls|cat|status|validate)[a-z0-9.-]*( +[^;&|`$<>()\\n\\r]+)* *$",
 		regex: true,
 		description: "Read-only Databricks ops (list/get/ls/cat/status/validate)",
 		enabled: true,
