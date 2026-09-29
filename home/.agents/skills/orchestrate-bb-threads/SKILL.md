@@ -60,7 +60,12 @@ instead.
 
 - A worker's DONE is a claim, not proof. Every code-changing item gets a
   separate fresh-eyes review thread; a worker or the manager reviewing its
-  own work does not count. The manager never substitutes its own reading of
+  own work does not count. That thread is always a **spawned child thread**:
+  an `Agent`/subagent call inside the authoring thread is not a review. It is
+  invisible to the run record, it leaves the reviewers' tokens unpriced, and
+  the actor that judged the findings is the actor that wrote the diff. It does
+  not increment `reviewCount`, it never closes an item, and a run that used one
+  has no review to point at. The manager never substitutes its own reading of
   a diff for this review thread. When the manager judges the findings, it
   reads the frozen diff or a bounded path only — never an unbounded scan;
   an unlocatable criterion is reported unverifiable.
@@ -139,6 +144,15 @@ change them: the manager dispatches, waits, routes findings and unblocks (see
 and no reviewer it can honestly claim. A single-item manifest whose notes list
 the exact files to touch is context for the worker you are about to spawn — it
 is not your own scope.
+
+**Turn 1 is a dispatch turn, not a coding turn — and it is checkable.** Before
+the manager opens any item file to change it, `$BB_THREAD_STORAGE/orchestration.json`
+must exist and wave 1 must be spawned. If you have edited an item's file and
+the ledger does not exist, dispatch has not happened: stop, write the ledger,
+spawn the worker, and let it finish the item — do not finish it yourself. A
+single-item manifest is the case this most often tempts, and it is not an
+exception. A run whose record has one thread, no children and no ledger is a
+manager that never dispatched, whatever it shipped.
 
 1. **Spawn every ready item's worker**, each to its own visible child thread.
    Write the prompt to `$BB_THREAD_STORAGE/prompt-<item-id>.txt` and pass it by
@@ -390,9 +404,12 @@ belong to Flow B) — plus the run's `models` and `finishedAt`. Statuses: `todo`
 and each re-review adds `1`. Write the ledger as you go, never batched at
 settlement — `reviewCount` when the iteration completes, `models` and each
 item's `status` as the run moves — the ledger must read true mid-run.
-Write an item `done` only when its review is clean **and** the ponytail pass
-over its files has settled; a diff that changes after a `done` write reopens
-the item explicitly. `finishedAt` is set once the run is done by the
+Write an item `done` only when the ledger shows a completed review pass **and**
+a completed ponytail pass for it, each backed by a child thread id — a `done`
+with no review thread behind it is not settlement, however clean the diff
+looks. A diff that changes after a `done` write reopens the item explicitly.
+Before the step 6 commit gate, assert this from the ledger: an item that
+cannot name its review thread and its ponytail thread has not settled. `finishedAt` is set once the run is done by the
 definition below — every item terminal **and** the PR opened after the
 approval gate — and it is an **ISO-8601 UTC timestamp**, not a marker, a
 status word or a sentence: the run corpus reads this field as data.

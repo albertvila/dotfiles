@@ -486,6 +486,15 @@ def build_findings(rows, ledger, manager):
             out.append(f"manager {manager['threadId']}: a question timed out after "
                        f"{minutes(manager['questionTimeoutMs'])}; the wait until the reply is human time, "
                        f"excluded from orchestrator time")
+    # A manager-only run: the ORCHESTRATE thread dispatched nothing and left no
+    # ledger, so the work it shipped was done in-thread and there is no worker,
+    # no review thread and no ledger entry to audit. The numbers cannot see the
+    # threads that were never spawned, so say it here.
+    if (manager and len(rows) == 1 and not ledger
+            and (manager.get("title") or "").startswith("ORCHESTRATE")):
+        out.append(f"manager {manager['threadId']} ({manager['title']}): manager-only run — "
+                   f"0 children and no ledger; dispatch never happened. An item implemented "
+                   f"in this thread has no worker, no review thread and no ledger entry")
     for item in normalise_items(ledger):
         attempts = item.get("attempts") or []
         failed = [a for a in attempts
@@ -770,6 +779,16 @@ def self_test():
 
     # ledger `items` list vs dict -> the same record, and never a failed write
     assert rec == assemble_record(threads, ledger_dict, identity, pricing)
+
+    # a manager-only ORCHESTRATE run is a finding; a dispatched run never fires it
+    solo = [thread("thr_solo", "ORCHESTRATE thing", "idle", [
+        ev("client/turn/requested", 0, dict(sonnet, initiator="user", target={"kind": "thread-start"})),
+        ev("turn/started", 0),
+        ev("turn/completed", 60_000, {"status": "completed"}),
+    ], is_manager=True)]
+    solo_rec = assemble_record(solo, {}, {"managerThreadId": "thr_solo", "project": "x"}, pricing)
+    assert any("manager-only run" in f for f in solo_rec["findings"]), solo_rec["findings"]
+    assert not any("manager-only run" in f for f in rec["findings"]), rec["findings"]
 
     # M1: span, work window and the manager's wait are three quantities
     assert rec["run"]["spanMs"] == 1_500_000, rec["run"]["spanMs"]
