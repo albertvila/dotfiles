@@ -26,7 +26,7 @@ const need = (d) => {
 };
 
 const allowlist = [
-  need("Read-only AWS ops (list/get/describe/ls)"),
+  need("Read-only AWS ops (list/get/describe/ls/filter)"),
   need("Read-only Databricks ops (list/get/ls/cat/status/validate)"),
 ];
 const denylist = [
@@ -66,12 +66,18 @@ const cases = [
   ["BLOCK", "databricks jobs list-runs --job-id 1 && rm -rf /tmp/x"],
   ["BLOCK", "databricks jobs list-runs --job-id 1; rm -rf /tmp/x"],
 
-  // --- AWS regression guard (the rule next to the one being fixed) ---------
+  // --- AWS read-only allowlist ---------------------------------------------
   ["ALLOW", "aws cloudwatch describe-alarm-history --alarm-name x --region eu-west-1"],
   ["ALLOW", "aws lambda get-function-configuration --function-name x --region eu-west-1"],
   ["ALLOW", "aws logs get-log-events --log-group-name /aws/lambda/x --region eu-west-1"],
+  ["ALLOW", 'aws logs filter-log-events --log-group-name /aws/lambda/x --filter-pattern "ERROR" --start-time 1 --end-time 2 --limit 50 --region eu-west-1'],
+
+  // --- AWS writes must stay blocked (incl. via the `filter` verb) ----------
   ["BLOCK", "aws s3 rm s3://bucket/key --recursive"],
   ["BLOCK", "aws lambda delete-function --function-name x"],
+  ["BLOCK", "aws logs delete-log-group --log-group-name /aws/lambda/x"],
+  ["BLOCK", "aws ec2 terminate-instances --instance-ids i-123"],
+  ["BLOCK", "aws logs filter-log-events --log-group-name x && rm -rf /tmp/x"],
 ];
 
 let failed = 0;
