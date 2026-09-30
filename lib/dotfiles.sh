@@ -165,7 +165,8 @@ function _install_dotfiles() {
     mkdir -p "$(dirname "$targetFile")"
     _symbolic_link "$sourceFile" "$targetFile"
   done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
-    _is_merge_dir "$(basename "$d")" && find "$d" \( -type f -o -type l \) -print0
+    # __pycache__ is regenerable cache, like ~/.cache: prune it, never link it.
+    _is_merge_dir "$(basename "$d")" && find "$d" -name __pycache__ -prune -o \( -type f -o -type l \) -print0
   done)
 
   # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.
