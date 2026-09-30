@@ -2,6 +2,7 @@
 name: orchestrate-bb-plan
 description: "Plan a BB orchestration run and take one approval before anything is dispatched, then spawn and babysit the manager thread that executes it. Use when the user says '/orchestrate-bb-plan', or gives a BB Task key, a `.scratch/` feature directory, or a GitHub issue number, `owner/repo#n` or issue URL to run."
 argument-hint: "<BB Task key|ULID> | @.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url>"
+disable-model-invocation: true
 ---
 
 # Orchestrate BB Plan
