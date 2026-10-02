@@ -39,3 +39,21 @@ _Avoid_: Shell, terminal setup
 **Script interpreter**:
 The program that runs an executable script, fixed by its shebang line. Changing the login shell never changes it.
 _Avoid_: Shell script runtime
+
+## Permission gate
+
+**Read-only allowlist**:
+The `aws` and `databricks` commands that run with no prompt and no model.
+_Avoid_: Whitelist
+
+**Catch-all deny**:
+The hard block on an `aws` or `databricks` command that missed the read-only allowlist.
+_Avoid_: Strict mode, default deny
+
+**Middle band**:
+An `aws` or `databricks` command outside the read-only allowlist that still looks like a read and is not a write or an export. A verb on neither list is not in the band. A Jev pass may run it unattended.
+_Avoid_: Escalation, gray area
+
+**Jev**:
+TypeSafe's yes/no judgment model. A pass authorizes only a middle-band command.
+_Avoid_: LLM judge, model router
