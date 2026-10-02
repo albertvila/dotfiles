@@ -91,10 +91,14 @@ instead.
 - Findings loop back to the **same worker**: queue them as a follow-up
   message to the worker's thread (`bb thread queue create <id> "<findings>"`,
   then `bb thread queue send`); if the thread is dead, respawn the item's
-  worker with the findings in the prompt. Re-review. **Cap: 3 review passes
-  per item** (`reviewCount` reaching 3). A 4th pass is never spawned: the
-  item is marked `blocked`, its findings are surfaced to the user, and the
-  rest of the frontier keeps moving.
+  worker with the findings in the prompt. Re-review. **Cap: 3 findings
+  rounds per item** — a findings round is a pass that returns `VERDICT
+  FINDINGS`; a re-review after a `VERDICT CLEAN` (a ponytail reduction, a
+  gate-config addition, a post-review change) does not consume the cap.
+  `reviewCount` still counts every completed review iteration, so record
+  `fixRounds` beside it and read the cap off that. A 4th findings round is
+  never spawned: the item is marked `blocked`, its findings are surfaced to
+  the user, and the rest of the frontier keeps moving.
   **Flow B respawn:** when the worker's thread is dead, respawn with
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
@@ -255,7 +259,14 @@ manager that never dispatched, whatever it shipped.
    standards — do NOT review the live worktree diff, another worker may
    already be changing those files; read worktree files only for surrounding
    context. Do not edit files, and do not spawn your own sub-agents to do any
-   of it — report in this thread. The reviewer may read only the dependency
+   of it — report in this thread. This worktree is shared with other items'
+   uncommitted work: do not run any command that writes to it — no formatters,
+   no `databricks bundle validate` (it reformats YAML on disk), no `git
+   checkout`, `git restore` or `git stash`. If you need resolved output or a
+   test environment, copy the repo to a scratch dir under `/tmp` and work
+   there. If a command you believed read-only turns out to mutate, report it;
+   never restore with `git checkout --`, which resets to HEAD and discards the
+   concurrent item's edits. The reviewer may read only the dependency
    roots it needs — the bb source checkout, sibling plugins, and the app
    bundle (e.g. under ~/personal_workspace and ~/.bb/plugins) — and must never
    run unbounded scans: never find /, never an unbounded grep -r. A criterion
@@ -337,6 +348,17 @@ manager that never dispatched, whatever it shipped.
    never as check-complete. Read the contexts off the open PR before choosing
    (`gh pr checks <n>`); never read absence from the merged history.
 
+   **When a post-PR step fails for an environmental reason** — credentials, a
+   repo ruleset, a push permission, an account-level grant — collect every
+   operator action it needs and ask once, not once per failure as it surfaces.
+   An operator-directed change after the PR is open still runs through a worker
+   thread, a frozen diff, and a fresh review before the commit.
+
+   **A question is not a go.** When the operator's message is a question
+   ("shouldn't we use X?" / "thoughts?"), answer it in that turn and wait. Do
+   not dispatch or commit the change it implies until the operator answers with
+   a direction; a question read as consent is a gate opened for them.
+
    The body carries the closing lines below (see *PR body closing lines*).
 
 7. **Post-merge cleanup.** After the user merges on GitHub: pull main,
@@ -411,6 +433,15 @@ repo: there is no shared worktree and no single PR. Each item gets its own
 per-item environment and its own per-repo gate, and no single PR closes the
 run. Never treat this shape as `flow: "A"`.
 
+**A tracker repo differing from the code repo is not that shape.** When the
+tracker (and spec) lives in one repo but every item's code lands in a single
+code repo — a BIT-spec → PLS-code move, say — the run is the Flow A shape:
+one shared worktree in the **code repo**, one PR, one combined ponytail pass.
+The only delta is the environment: workers, reviews and ponytail spawn against
+the code repo's worktree, not `$BB_ENVIRONMENT_ID`; the tracker's issues are
+still claimed and commented. A per-item ponytail pass is not required here —
+the combined pass covers the single diff.
+
 ## The ledger
 
 There is no Tasks panel for this — the manager IS the tracker. When the user
@@ -438,7 +469,11 @@ Before the step 6 commit gate, assert this from the ledger: an item that
 cannot name its review thread and its ponytail thread has not settled. `finishedAt` is set once the run is done by the
 definition below — every item terminal **and** the PR opened after the
 approval gate — and it is an **ISO-8601 UTC timestamp**, not a marker, a
-status word or a sentence: the run corpus reads this field as data.
+status word or a sentence: the run corpus reads this field as data. **A turn
+that runs after `finishedAt` reopens the run: clear `finishedAt` and set it
+again only when the run is terminal once more.** An operator-directed change
+after the PR is open is exactly that case. A `finishedAt` earlier than the
+manager's last event is ledger drift, and the retro reads it as such.
 
 The run is done when every item carries a terminal status (`done`, `failed`,
 or `blocked`), every `done` item's PR is open or merged and handed over, and
@@ -453,7 +488,10 @@ Dispatch on the manifest's `tracker:` value:
   settle; see [TICKET-WRITE-BACK.md](TICKET-WRITE-BACK.md).
 - `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
   `ready-for-agent` only); settlement is comments only, never a close, never
-  any other label. See
+  any other label. A change after settlement that contradicts a posted comment
+  (an operator-directed run-as switch, say) gets a correcting comment as part
+  of the landing step — writeback is append-only, so the correction is a new
+  comment, never an edit, and it is not optional. See
   [TICKET-WRITE-BACK-GITHUB.md](TICKET-WRITE-BACK-GITHUB.md).
 
 The task record is orthogonal to the tracker value: when the manifest also

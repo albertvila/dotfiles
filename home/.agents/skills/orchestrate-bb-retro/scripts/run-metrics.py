@@ -241,7 +241,7 @@ def analyse_thread(thread, events):
         "events": len(events),
         "turns": 0, "turnsFailed": 0,
         "models": [], "model": None,
-        "tokens": None, "tokenEventSeen": False, "costReported": None,
+        "tokens": None, "tokenEventSeen": False, "tokenEpochs": 0, "costReported": None,
         "start": None, "end": None,
         "wallMs": 0, "activeMs": 0, "workMs": 0, "idleMs": 0,
         "humanMs": 0, "waitMs": 0, "waitedOn": [], "waitingOn": None,
@@ -258,6 +258,7 @@ def analyse_thread(thread, events):
     infra = []
     infra_reasons = set()
     intervals = []
+    token_totals = []
     open_turn = None
     turn_open = False
     last_completed = None
@@ -325,7 +326,8 @@ def analyse_thread(thread, events):
             usage = data.get("tokenUsage") or {}
             total = usage.get("total") or {}
             row["tokenEventSeen"] = True
-            row["tokens"] = total or None
+            if total:
+                token_totals.append(total)
             row["costReported"] = total.get("cost", usage.get("cost"))
         elif kind == "system/interaction/lifecycle":
             interaction = data.get("interaction") or {}
@@ -394,6 +396,25 @@ def analyse_thread(thread, events):
             row["humanMs"] += duration
             row["humanWaits"].append({"kind": "question", "ms": duration, "counted": True,
                                       "reason": "unanswered", "at": events[-1]["createdAt"]})
+    # A thread that compacts resets its cumulative counter: a total that drops
+    # below the running one starts a new epoch. Sum the epochs so compaction
+    # does not shrink the thread's tokens (and cost) to the surviving epoch.
+    token_epochs = []
+    current = None
+    for total in token_totals:
+        if current is not None and (total.get("totalTokens") or 0) < (current.get("totalTokens") or 0):
+            token_epochs.append(current)
+        current = total
+    if current is not None:
+        token_epochs.append(current)
+    row["tokenEpochs"] = len(token_epochs)
+    if token_epochs:
+        summed = collections.Counter()
+        for epoch in token_epochs:
+            for key, value in epoch.items():
+                if isinstance(value, (int, float)) and not isinstance(value, bool) and key != "cost":
+                    summed[key] += value
+        row["tokens"] = dict(summed) or None
     row["_intervals"] = intervals
     if row.get("_infra_open") is not None:
         infra.append([row["_infra_open"], events[-1]["createdAt"]])
@@ -529,7 +550,7 @@ def _task_link(ledger, identity):
     return key, task_id, resolution
 
 
-def assemble_record(threads, ledger, identity, pricing=None):
+def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
     """events + ledger + run identity -> the run record.
 
     `threads` is a list of `{"meta": <bb thread>, "events": [...]}`. Pure: no
@@ -639,6 +660,7 @@ def assemble_record(threads, ledger, identity, pricing=None):
         "threads": len(rows),
         "turns": sum(r["turns"] for r in rows),
         "cost": cost,
+        "pricing": pricing_meta,
     }
     record = {
         "schemaVersion": SCHEMA_VERSION,
@@ -779,6 +801,29 @@ def self_test():
 
     # ledger `items` list vs dict -> the same record, and never a failed write
     assert rec == assemble_record(threads, ledger_dict, identity, pricing)
+
+    # a compacted thread resets its counter; epochs are summed, not last-wins
+    compacted = [thread("thr_cc", "07 · worker", "idle", [
+        ev("client/turn/requested", 0, dict(sonnet)),
+        ev("turn/started", 0),
+        ev("thread/tokenUsage/updated", 50_000, {"tokenUsage": {"total": {
+            "inputTokens": 2000, "cachedInputTokens": 4000, "cacheReadInputTokens": 4000,
+            "cacheWriteInputTokens": 0, "outputTokens": 200, "totalTokens": 6200}}}),
+        ev("turn/completed", 60_000, {"status": "completed"}),
+        ev("turn/started", 60_000),
+        ev("thread/tokenUsage/updated", 90_000, {"tokenUsage": {"total": {
+            "inputTokens": 10, "cachedInputTokens": 3000, "cacheReadInputTokens": 3000,
+            "cacheWriteInputTokens": 0, "outputTokens": 50, "totalTokens": 3060}}}),
+        ev("turn/completed", 100_000, {"status": "completed"}),
+    ])]
+    cc = analyse_thread(compacted[0]["meta"], compacted[0]["events"])
+    assert cc["tokenEpochs"] == 2, cc["tokenEpochs"]
+    assert cc["tokens"]["totalTokens"] == 9260, cc["tokens"]
+    assert cc["tokens"]["inputTokens"] == 2010, cc["tokens"]
+
+    # pricing provenance is carried verbatim into the record
+    meta = {"source": "cache", "fetchedAt": iso(1_700_000_000_000)}
+    assert assemble_record(threads, ledger_list, identity, pricing, meta)["run"]["pricing"] == meta
 
     # a manager-only ORCHESTRATE run is a finding; a dispatched run never fires it
     solo = [thread("thr_solo", "ORCHESTRATE thing", "idle", [
@@ -980,12 +1025,13 @@ def project_name(project_id):
 
 
 def openrouter_pricing(cache_path, enabled):
-    """model id -> per-token USD prices, or {} when unavailable."""
+    """(model id -> per-token USD prices, provenance); prices empty when unavailable."""
     if not enabled:
-        return {}
+        return {}, {"source": "disabled", "fetchedAt": None}
     if cache_path and os.path.exists(cache_path) and time.time() - os.path.getmtime(cache_path) < PRICING_TTL:
         try:
-            return json.load(open(cache_path))
+            return (json.load(open(cache_path)),
+                    {"source": "cache", "fetchedAt": iso(int(os.path.getmtime(cache_path) * 1000))})
         except json.JSONDecodeError:
             pass
     try:
@@ -993,7 +1039,7 @@ def openrouter_pricing(cache_path, enabled):
             payload = json.load(r)["data"]
     except Exception as exc:  # offline, or the endpoint moved
         print(f"# pricing unavailable ({exc}); reporting tokens only", file=sys.stderr)
-        return {}
+        return {}, {"source": "unavailable", "fetchedAt": None}
     table = {
         m["id"]: {k: float(v) for k, v in (m.get("pricing") or {}).items()
                   if isinstance(v, str) and v.replace(".", "", 1).isdigit()}
@@ -1002,7 +1048,7 @@ def openrouter_pricing(cache_path, enabled):
     if cache_path:
         os.makedirs(os.path.dirname(cache_path), exist_ok=True)
         json.dump(table, open(cache_path, "w"))
-    return table
+    return table, {"source": "openrouter", "fetchedAt": iso(int(time.time() * 1000))}
 
 
 def print_table(record, no_pricing):
@@ -1072,12 +1118,12 @@ def main():
 
     threads = fetch_run(args.manager)
     manager_meta = threads[0]["meta"]
-    pricing = openrouter_pricing(os.path.join(data_dir, "cache", "openrouter-models.json"),
-                                 not args.no_pricing)
+    pricing, pricing_meta = openrouter_pricing(os.path.join(data_dir, "cache", "openrouter-models.json"),
+                                               not args.no_pricing)
     record = assemble_record(threads, ledger,
                              {"managerThreadId": args.manager,
                               "project": project_name(manager_meta.get("projectId"))},
-                             pricing)
+                             pricing, pricing_meta)
 
     if args.output_dir:
         os.makedirs(args.output_dir, exist_ok=True)
