@@ -1,12 +1,23 @@
+[init]
+	defaultBranch = main
 [push]
 	default = simple
+	autoSetupRemote = true
 [core]
 	editor = vim
 	excludesfile = ~/.gitignore
 [merge]
 	ff = false
+	conflictstyle = zdiff3
 [pull]
 	rebase = merges
+[fetch]
+	prune = true
+[rerere]
+	enabled = true
+	autoupdate = true
+[diff]
+	colorMoved = default
 [commit]
 	template = ~/.gitmessage
 	gpgsign = true
