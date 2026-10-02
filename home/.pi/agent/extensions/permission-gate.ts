@@ -23,6 +23,9 @@
  * so this file is the only copy; do not look for the upstream.
  */
 
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { parseEnv } from "node:util";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 type Decision = "allow" | "block" | "prompt";
@@ -31,9 +34,8 @@ type Pattern = { pattern: string; regex?: boolean; flags?: string; description: 
 // Jev middle-band tuning. Threshold, timeout, and alias live here and nowhere else.
 const JEV_PASS_AT = 0.9;
 const JEV_TIMEOUT_MS = 1_500;
-const JEV_PROVIDER = "openrouter";
 const JEV_MODEL = "~typesafe/jev-latest";
-const JEV_ENDPOINT = "systemone";
+const JEV_ENDPOINT = "https://openrouter.ai/api/v1/systemone";
 
 // Bypass all checks (no prompt).
 const allowedPatterns: Pattern[] = [
@@ -163,18 +165,17 @@ export function parseJevDecision(payload: unknown): boolean | undefined {
 /** One Decisions call on the command alone. Any failure means fall through. */
 async function consultJev(command: string, ctx: ExtensionContext): Promise<boolean | undefined> {
 	try {
-		const model = ctx.modelRegistry.findOfType("classifier", JEV_PROVIDER, JEV_MODEL);
-		if (!model) return undefined;
-		const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-		if (!auth.ok || !auth.apiKey) return undefined;
+		// Reuse the experiment's workspace key. BB may not inherit the shell env;
+		// read the same key from ~/.env without loading or changing chat credentials.
+		const key = (process.env.JEV_OPENROUTER_API_KEY || parseEnv(readFileSync(`${homedir()}/.env`, "utf8")).JEV_OPENROUTER_API_KEY)?.trim();
+		if (!key) return undefined;
 
 		const signals = [AbortSignal.timeout(JEV_TIMEOUT_MS)];
 		if (ctx.signal) signals.push(ctx.signal);
-		const base = (auth.baseUrl ?? model.baseUrl).replace(/\/+$/, "");
 
-		const response = await fetch(`${base}/${JEV_ENDPOINT}`, {
+		const response = await fetch(JEV_ENDPOINT, {
 			method: "POST",
-			headers: { authorization: `Bearer ${auth.apiKey}`, "content-type": "application/json" },
+			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
 			body: JSON.stringify({
 				model: JEV_MODEL,
 				state: { command },

@@ -20,10 +20,12 @@ grep -q "JEV_TIMEOUT_MS = 1_500" "$GATE_FILE"
 
 node --input-type=module <<'EOF'
 import { pathToFileURL } from "node:url";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 
 // The test imports the extension's real decision functions. It must not
 // re-implement the order or the middle-band rules.
-const { evaluate, isJevEligible, parseJevDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
+const { default: registerGate, evaluate, isJevEligible, parseJevDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
 
 let failed = 0;
 const check = (label, actual, expected) => {
@@ -191,6 +193,75 @@ const payloads = [
 ];
 
 for (const [expected, payload] of payloads) check(`Jev parse ${JSON.stringify(payload)}`, parseJevDecision(payload), expected);
+
+// Exercise the real adapter: BB can have neither an exported key nor a classifier
+// catalog. Use only the dedicated key, without changing chat authentication.
+let handler;
+registerGate({ on: (event, fn) => { if (event === "tool_call") handler = fn; } });
+const savedEnv = { ...process.env };
+const savedFetch = globalThis.fetch;
+const home = mkdtempSync(`${tmpdir()}/jev-gate-`);
+const command = "aws s3api head-object --bucket b --key k";
+const context = { hasUI: false, get modelRegistry() { throw new Error("Catalog must not be used"); } };
+const invoke = (cmd = command, ctx = context) => handler({ toolName: "bash", input: { command: cmd } }, ctx);
+let calls = 0, request, probability = 0.95;
+const fakeFetch = async (url, options) => {
+  calls += 1;
+  request = { url, options };
+  return { ok: true, json: async () => ({ answers: { read_only: { type: "noul", noul: probability } } }) };
+};
+try {
+  process.env.HOME = home;
+  delete process.env.JEV_OPENROUTER_API_KEY;
+  process.env.OPENROUTER_API_KEY = "unchanged-chat-key";
+  writeFileSync(`${home}/.env`, 'JEV_OPENROUTER_API_KEY="  file-jev-key  "\nOPENROUTER_API_KEY=must-not-load\n');
+  globalThis.fetch = fakeFetch;
+  check("isolated home for credential test", homedir(), home);
+  check("workspace-file pass runs with no catalog", await invoke(), undefined);
+  check("one Jev call", calls, 1);
+  check("fixed Jev endpoint", request?.url, "https://openrouter.ai/api/v1/systemone");
+  check("only the workspace key is sent", request?.options.headers.authorization, "Bearer file-jev-key");
+  check("chat authentication is unchanged", process.env.OPENROUTER_API_KEY, "unchanged-chat-key");
+  check("dotenv key is not installed into process environment", process.env.JEV_OPENROUTER_API_KEY, undefined);
+  check("request judges the command alone", JSON.stringify(JSON.parse(request?.options.body ?? "{}").state), JSON.stringify({ command }));
+  check("request has an abort signal", request?.options.signal instanceof AbortSignal, true);
+
+  process.env.JEV_OPENROUTER_API_KEY = "  environment-jev-key  ";
+  check("exported workspace key also passes", await invoke(), undefined);
+  check("exported key overrides file key", request?.options.headers.authorization, "Bearer environment-jev-key");
+  probability = 0.1;
+  check("live-handler deny names Jev", (await invoke())?.reason?.startsWith("Blocked by Jev:"), true);
+  for (const [label, fetcher] of [
+    ["non-200", async () => ({ ok: false })],
+    ["network error", async () => { throw new Error("offline"); }],
+    ["bad JSON", async () => ({ ok: true, json: async () => { throw new Error("bad JSON"); } })],
+  ]) {
+    globalThis.fetch = fetcher;
+    check(`${label} retains catch-all deny`, (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
+  }
+  globalThis.fetch = fakeFetch;
+  const aborted = AbortSignal.abort();
+  await invoke(command, { hasUI: false, signal: aborted });
+  check("tool abort is composed into request", request?.options.signal.aborted, true);
+
+  const before = calls;
+  for (const cmd of ["aws s3 cp s3://b/k .", "aws s3api head-object --bucket b && echo x", "sudo aws s3 ls", "rm -rf /tmp/x"]) {
+    check(`unsafe command remains blocked: ${cmd}`, (await invoke(cmd))?.block, true);
+  }
+  check("unsafe commands never call Jev", calls, before);
+  check("sudo still uses confirmation", await invoke("sudo aws s3 ls", { hasUI: true, ui: { select: async () => "Yes" } }), undefined);
+  delete process.env.JEV_OPENROUTER_API_KEY;
+  writeFileSync(`${home}/.env`, "OPENROUTER_API_KEY=not-a-jev-key\n");
+  check("missing dedicated key retains catch-all deny", (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
+  rmSync(`${home}/.env`);
+  check("missing dotenv retains catch-all deny", (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
+  check("missing key never calls Jev", calls, before);
+} finally {
+  globalThis.fetch = savedFetch;
+  for (const key of Object.keys(process.env)) if (!(key in savedEnv)) delete process.env[key];
+  Object.assign(process.env, savedEnv);
+  rmSync(home, { recursive: true, force: true });
+}
 
 process.exit(failed);
 EOF

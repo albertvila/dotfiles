@@ -1,0 +1,7 @@
+# Jev may pass only the middle band
+
+The permission gate hard-denies `aws` and `databricks` commands outside the read-only allowlist. A Jev pass may run one unattended only when that command still looks like a read and contains no write or export token. Unknown verbs stay denied. The call reuses the existing dedicated `JEV_OPENROUTER_API_KEY`, read from the process environment or the same key in `~/.env`, without changing chat authentication or requiring Pi's classifier catalog.
+
+We rejected an unattended catch-all, because a wrong yes would run a write as Albert; advice-only, because it does not remove the friction; and dropping the tier. Jev is not used to pick orchestration models: that choice is a static role table the operator already approves.
+
+Credential correction, 2026-10-02: Albert approved replacing the original Pi-login decision after the working `experiments/jev-shadow` setup showed it was the wrong source. The same request returns HTTP 404 with stored chat OAuth and HTTP 200 with the existing Jev workspace key. BB does not necessarily inherit the shell variable, so the gate reads that one key from `~/.env` when needed; it does not load the file into process environment. Chat-only model synchronization can omit Jev, so the gate calls the fixed OpenRouter System One endpoint directly rather than looking up a classifier. Missing key and transport errors remain fail-closed.
