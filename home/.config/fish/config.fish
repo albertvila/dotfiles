@@ -30,6 +30,8 @@ end
 set -gx EDITOR vim
 set -gx MORE -R
 set -gx LESSOPEN "|bat --color=always --style=plain %s"
+# colored man pages; needs less >= 551
+set -gx MANPAGER 'less -R --use-color -Dd+r -Du+b'
 
 set -gx ANDROID_HOME $HOME/Library/Android/sdk
 fish_add_path -a $ANDROID_HOME/emulator $ANDROID_HOME/platform-tools $ANDROID_HOME/cmdline-tools/latest/bin ~/.maestro/bin
