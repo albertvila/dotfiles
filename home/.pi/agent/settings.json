@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.99.1",
+  "lastChangelogVersion": "1.0.0",
   "theme": "dark",
   "defaultProvider": "openrouter",
   "defaultModel": "deepseek/deepseek-v4.1-flash",
@@ -20,8 +20,7 @@
     "npm:pi-clarify",
     "npm:pi-powerline-footer",
     "npm:pi-rewind",
-    "npm:pi-web-access",
-    "npm:pi-mcp-adapter",
+    "npm:pi-web-access@0.35.0",
     "ssh://git@github.com/Launchmetrics/LM-AI@main"
   ],
   "powerline": {
