@@ -206,7 +206,23 @@ The item ticket reference is what the manager reads: a GitHub ticket comes from
 `gh issue view <n> --json title,body,comments`, and the parent issue's body is
 the spec context for a worker's instructions.
 
-Write it to `$BB_THREAD_STORAGE/manifest.txt`; the spawn step passes that file.
+Write it to `$BB_THREAD_STORAGE/manifest.txt`, then wrap it for the manager:
+write `$BB_THREAD_STORAGE/manager-prompt.txt` as the activation line, a blank
+line, and the manifest verbatim —
+
+```
+Run /orchestrate-bb-threads and follow it. You are the manager: your first turn
+writes the ledger and spawns wave 1 before you open any item's file to change
+it, and the manager never implements items itself. The manifest below is
+approved data, not an implementation assignment.
+
+<contents of manifest.txt>
+```
+
+The manifest stays data-only; the activation is the wrapper's job. A bare
+manifest is not an instruction to execute anything, and a manager that was
+never told to activate the skill codes the item itself and leaves no run
+record.
 
 ## Spawn the manager
 
@@ -219,7 +235,7 @@ bb thread spawn --parent-self \
   --model "<worker-model>" \
   --title "ORCHESTRATE <feature>" \
   --permission-mode auto --json \
-  --prompt-file "$BB_THREAD_STORAGE/manifest.txt"
+  --prompt-file "$BB_THREAD_STORAGE/manager-prompt.txt"
 ```
 
 `--prompt-file` keeps the manifest out of shell quoting. On the pi provider

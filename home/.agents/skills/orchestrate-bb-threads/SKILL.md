@@ -16,6 +16,14 @@ from it immediately — never re-derive the graph and never re-ask what was
 already approved. With no manifest, do not derive one: say the plan is missing
 and point the operator at `/orchestrate-bb-plan`.
 
+**Read this file and dispatch before touching anything.** A manifest is data,
+not an implementation assignment: a plan thread can dispatch a bare manifest
+with no instruction to run this skill, and this skill still applies. Your first
+turn writes `$BB_THREAD_STORAGE/orchestration.json` and spawns wave 1 **before
+you open any item's file to change it**. The manager never implements items
+itself — a draft you author has no worker thread, no reviewer, and no ledger
+entry it can honestly claim.
+
 ## Spawn flags
 
 Every spawn in this skill passes `--parent-self --json --permission-mode
@@ -65,8 +73,10 @@ instead.
   invisible to the run record, it leaves the reviewers' tokens unpriced, and
   the actor that judged the findings is the actor that wrote the diff. It does
   not increment `reviewCount`, it never closes an item, and a run that used one
-  has no review to point at. The manager never substitutes its own reading of
-  a diff for this review thread. When the manager judges the findings, it
+  has no review to point at. The review thread itself must not spawn its own
+  subagents either — their tokens and verdicts never reach the run record; the
+  review thread reports from its own context. The manager never substitutes
+  its own reading of a diff for this review thread. When the manager judges the findings, it
   reads the frozen diff or a bounded path only — never an unbounded scan;
   an unlocatable criterion is reported unverifiable.
 - **`VERDICT CLEAN` ends the loop.** A clean verdict closes the item's
@@ -191,16 +201,19 @@ manager that never dispatched, whatever it shipped.
 3. **Wait, then collect.** For each running child:
 
    ```sh
-   bb thread wait <id> --status idle --timeout 3600 --json
+   bb thread wait <id> --status idle --timeout 600 --json
    bb thread output <id>
    ```
 
-   The command after a successful spawn is `bb thread wait`. Stay on that
-   wait until it matches idle — no `sleep`, and no `bb thread show` or
-   `bb thread output` while the child is active. A wait that returns before
-   idle is not a failure — check `bb thread show <id> --json`; if the thread
-   is still working, wait again. Collect the final output and mark the item
-   `done` or `blocked`/`failed` from the worker's DONE/BLOCKED report.
+   The command after a successful spawn is `bb thread wait`, in bounded
+   slices. Stay on the wait until it matches idle — no `sleep`. A wait that
+   returns before idle is not a failure: check `bb thread show <id> --json`.
+   If the thread is still working, emit one short status line naming the
+   running children and the longest-running one, then wait again — never let
+   more than ~15 minutes of run time pass without a status line. A child whose
+   log shows `provider/error` with `willRetry` is surfaced to the operator,
+   not silently re-waited. Collect the final output and mark the item `done`
+   or `blocked`/`failed` from the worker's DONE/BLOCKED report.
 
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
    reports DONE, first freeze the item's diff so the review is immune to
@@ -218,10 +231,13 @@ manager that never dispatched, whatever it shipped.
    Then spawn a review thread — same shared environment, reviewer model,
    `--parent-self`. Scale its depth to the item's risk (see *Review loops*):
    a **high-risk** item — real state, logic, or contract surface (RPC
-   schemas, fetch lifecycles, data scoping) — runs `/code-review` and keeps
-   the whole-directory snapshot; a **mechanical** item — deletions, renames,
-   rendering-only, docs, config — skips `/code-review` and gets a diff scoped
-   to that item's files with the same final-message contract:
+   schemas, fetch lifecycles, data scoping) — gets the full adversarial pass
+   and keeps the whole-directory snapshot; a **mechanical** item — deletions,
+   renames, rendering-only, docs, config — gets a short pass over a diff
+   scoped to that item's files. Either way the review runs **in the review
+   thread itself**: do not invoke the two-axis `/code-review` skill, whose
+   mandatory Standards/Spec sub-agents report their tokens nowhere the run can
+   see. Both shapes carry the same final-message contract:
 
    ```sh
    bb thread spawn --parent-self \
@@ -233,13 +249,19 @@ manager that never dispatched, whatever it shipped.
      --prompt "$(cat "$BB_THREAD_STORAGE/prompt-review-<item-id>.txt")"
    ```
 
-   The file holds: `Fresh-eyes code review. Run /code-review on the frozen
-   diff at $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item
-   scope>) — do NOT review the live worktree diff, another worker may already
-   be changing those files; read worktree files only for surrounding context.
-   Report findings against the item's acceptance criteria. Do not edit files.
-   Your FINAL message must be the complete report starting with VERDICT CLEAN
-   or VERDICT FINDINGS, and findings must not be recorded as follow-ups
+   The file holds: `Fresh-eyes code review. Review the frozen diff at
+   $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>)
+   against the item's acceptance criteria and this repo's documented
+   standards — do NOT review the live worktree diff, another worker may
+   already be changing those files; read worktree files only for surrounding
+   context. Do not edit files, and do not spawn your own sub-agents to do any
+   of it — report in this thread. The reviewer may read only the dependency
+   roots it needs — the bb source checkout, sibling plugins, and the app
+   bundle (e.g. under ~/personal_workspace and ~/.bb/plugins) — and must never
+   run unbounded scans: never find /, never an unbounded grep -r. A criterion
+   needing source you cannot locate is reported unverifiable, not searched
+   for. Your FINAL message must be the complete report starting with VERDICT
+   CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups
    instead of reported.`
 
    The reviewer may read only the dependency roots it needs — the bb source
@@ -403,7 +425,11 @@ belong to Flow B) — plus the run's `models` and `finishedAt`. Statuses: `todo`
 `reviewCount` counts completed review iterations: the initial review is `1`
 and each re-review adds `1`. Write the ledger as you go, never batched at
 settlement — `reviewCount` when the iteration completes, `models` and each
-item's `status` as the run moves — the ledger must read true mid-run.
+item's `status` as the run moves — the ledger must read true mid-run. Set
+`reviewThreadId` when a round **completes**; if the spawned round is
+interrupted or re-prompted, point it back at the last completed review thread.
+`reviewThreadId` must never name a thread that produced no verdict, or the
+ledger's primary review pointer reads as a pass that never happened.
 Write an item `done` only when the ledger shows a completed review pass **and**
 a completed ponytail pass for it, each backed by a child thread id — a `done`
 with no review thread behind it is not settlement, however clean the diff
@@ -461,7 +487,8 @@ it has today, and the Task add-on does not change that.
 ## Failure handling
 
 - A manager turn that spans the whole run is normal: the manager is blocked
-  on `bb thread wait`, not thinking.
+  on `bb thread wait`, not thinking. That is not licence for silence — use
+  step 3's bounded waits and report between them.
 - A resumed manager re-reads the ledger and the ticket files before acting —
   its own memory of the run may be stale.
 - A child reports BLOCKED or its thread dies: read `bb thread log <id>`
