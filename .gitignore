@@ -2,3 +2,4 @@ home/.vim/bundle/*
 home/.vim/.netrwhist
 get-pip.py
 __pycache__/
+experiments/
