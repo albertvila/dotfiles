@@ -25,6 +25,9 @@
   ],
   "powerline": {
     "welcome": false,
+    "cost": {
+      "subscriptionDisplay": "reported-cost"
+    },
     "fixedEditor": false,
     "layout": {
       "left": [
