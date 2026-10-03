@@ -101,9 +101,9 @@ A wave dispatches in parallel and settles in parallel — one shell block each:
 ```sh
 for id in <id1> <id2>; do
   herdr agent prompt "item-$id" "$(cat "$RUNDIR/prompts/item-$id.txt")" \
-    --wait --timeout 12000 > "$RUNDIR/logs/prompt-item-$id.json" 2>&1 &
+    > "$RUNDIR/logs/prompt-item-$id.json" 2>&1 &
 done
-wait                       # every prompt now confirmed submitted (or its code read)
+wait                       # prompts are in their panes; the status each leaves is read next
 # settle-wait the wave with the loop above in parallel; freeze each diff as it settles
 for id in <id1> <id2>; do
   ( while :; do
@@ -114,6 +114,24 @@ for id in <id1> <id2>; do
 done
 wait
 ```
+
+**A prompt's exit code is not a delivery report.** `--wait --timeout <ms>` says
+whether the agent's status became readable inside that window and nothing more:
+`{"error":{"code":"timeout"}}` from a prompt whose agent is working is the normal
+outcome of a short window, not a lost prompt. Never re-prompt on that code alone —
+`herdr agent get` and `herdr agent read` say whether the text arrived, and a
+genuinely unprompted agent is re-prompted only after that read. The log is for the
+case where the prompt never landed at all.
+
+**Wake on the first settle, not the last.** A block that ends in `wait` hands back
+control only when the slowest agent in it is done, so a worker that settled two
+minutes in keeps its review waiting for as long as its sibling runs — the run pays
+for the slowest agent twice, once in work and once in the wait. Settle each agent
+in its own bounded call, or wake on the first (`wait -n`), and do its work the
+moment it settles: freeze that diff, dispatch that review, then go back to waiting
+for the rest. Keep the settle loop's budget short and *below* the timeout that
+wraps the call — a 1500s budget inside a 1600s bash timeout reports neither, and
+the turn is gone for 26 minutes.
 
 **A stalled turn is not a settle.** `idle` — or a `wait` timeout — with no report
 file on disk means the turn died mid-work, not that the agent finished: read the
@@ -178,7 +196,11 @@ out absolutely in the prompt file**: a worker tab is a fresh shell with no
 > Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>.diff`, not the live
 > worktree — another worker may already be changing those files; read worktree
 > files for surrounding context only. Report findings against the item's
-> acceptance criteria. Do not edit files. Read only the dependency roots you
+> acceptance criteria. Do not edit files. A test proved non-vacuous by reverting
+> the change is reverted in a **scratch copy** — a `/tmp` copy, or
+> `git worktree add --detach` — never in this worktree, which holds other items'
+> uncommitted work; a gate you run in this worktree measures whatever else is
+> uncommitted here, so name the revision your evidence is about. Read only the dependency roots you
 > need; never run unbounded scans (no `find /`, no recursive grep over `/`). A
 > criterion needing source you cannot locate is reported **unverifiable**. Write
 > your full report to `$RUNDIR/reports/review-<slug>-r<n>.md` whose FIRST line is
@@ -263,12 +285,16 @@ projection pairs each `fixes` entry with a review round and reads an unmatched
 one as a round still in flight — a settled run then reports `E150`.
 `finishedAt` is set once the run is done by the definition below.
 
-**Stamp the times honestly, and assert them.** An item's `endedAt` is that item's
-own last settlement — its worker, its review, its fix round — never the gate's
-`requestedAt`; gate times belong in `gates` and nowhere else. Before writing,
-check what you are about to record: every agent's `startedAt ≤ endedAt`, and both
-inside that agent's session window. An interval that runs backwards or predates
-the agent's own transcript is a write error, not a rounding artefact.
+**Stamp the times honestly, and assert them.** Every timestamp you write is read
+from `date -u` at the moment of the event — never typed, never rounded to the
+minute, never the time you meant to ask at. A literal `requestedAt` written 65
+seconds before the gate question was posted shortens the human wait the retro
+reports; an `endedAt` rounded down understates the item. An item's `endedAt` is
+that item's own last settlement — its worker, its review, its fix round — never the
+gate's `requestedAt`; gate times belong in `gates` and nowhere else. Before
+writing, check what you are about to record: every agent's `startedAt ≤ endedAt`,
+and both inside that agent's session window. An interval that runs backwards or
+predates the agent's own transcript is a write error, not a rounding artefact.
 
 **A reopen clears the terminal marker.** Reopening an item sets `status` back to
 `running`, nulls the item's `endedAt`, records why under the item, and clears
@@ -398,7 +424,11 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `gates.commit.requestedAt`, and **end the turn** with the question. This pane
    is the only one that can answer it, so the reply that arrives here is the
    approval, and nothing is committed before it. On yes: record
-   `gates.commit.approvedAt`, commit, push the branch, open exactly one PR
+   `gates.commit.approvedAt`, **create the run branch first** — this pane's
+   worktree is checked out on the base branch, so a bare `git push HEAD` puts the
+   run's commit on the base and needs a force-push to undo it; `git checkout -b
+   "<branch>"`, or `git push origin HEAD:refs/heads/<branch>`, before anything
+   leaves the worktree — commit, push the branch, open exactly one PR
    (`gh pr create`), then post the repo's own status checks if its PRs publish
    `lm-build/*`:
 
@@ -418,6 +448,11 @@ agent, no ledger entry and no reviewer it can honestly claim.
    delete the merged branch, post the final report (what shipped, per-item
    outcomes), and release every tab this coordinator created — including the
    worker tabs kept open through the run. The operator's own panes are theirs.
+   The merge usually lands after `finishedAt`, when this pane's turn is already
+   over, so the operator saying "merged" is the re-entry that runs this step: stamp
+   `pr.mergedAt` and `postMerge` in that turn. A ledger closed with
+   `postMerge.pending` ("operator merge of PR …") and `mergedAt: null` is a run
+   whose step 7 has not happened yet — nobody should read that as a finished one.
 
 ## Flow B — one worktree and PR per item
 
@@ -490,6 +525,14 @@ A per-run override is the manifest's model line: "workers on X, reviewers on Y";
 ponytail follows the worker model unless the line also names one. Check every
 named pattern against `pi --list-models` before dispatching, and record the
 effective choice in the ledger's `models` — `pi-default` when no flag was passed.
+
+**The reviewer model follows the item's risk, not the role.** The table's reviewer
+is the model for a **high-risk** item; a **mechanical** item — the same ones step 4
+excuses from `/code-review` — is reviewed on the worker model instead. A review is
+the longest single agent in a run and the run cannot close until the last one
+settles, so the slowest model on a mechanical diff is wall clock and money spent on
+nothing: 39 minutes and $2.76 for a CLEAN verdict on a 63-line diff, against 59
+minutes for the 535-line high-risk one, in the run this line came from.
 
 **A model that does not work stops the run.** That covers every failure: the
 pattern missing from `pi --list-models`, a refused start, or the first turn
