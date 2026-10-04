@@ -207,7 +207,8 @@ every one is a candidate for the *What to fix* section.
   is findings rounds, not passes — a re-review after `CLEAN` is legal); a review
   that used `/code-review` subagents, pricing them nowhere; a ponytail fix that
   changed behaviour and shipped without a fresh-eyes review of its delta; the
-  coordinator reviewing work it dispatched.
+  coordinator reviewing work it dispatched; a review brief that carried no
+  acceptance line, so the reviewer re-derived the criteria from the ticket.
 - **Release** — a tab closed before its verdict was read; a report that never
   reached disk because the only record was the scrollback; a tab the coordinator
   did not create closed; a dirty worktree removed with `--force`.
@@ -221,7 +222,8 @@ every one is a candidate for the *What to fix* section.
   `reviewedHead` is a finding. A `land` or `unattended` run that merged, or that
   finished without the verification ask, is a finding. An `unattended` run that
   reduced tickets is a finding.
-- **Verification** — a PR opened with checks red; an item marked `done` from a
+- **Verification** — a PR opened with checks red; a PR body with no intent
+  block, so the merge gate got a diff skim; an item marked `done` from a
   claim rather than a clean review; `finishedAt` written while an item was still
   in flight.
 - **Respawn fidelity** — a killed worker respawned into a different pane or under

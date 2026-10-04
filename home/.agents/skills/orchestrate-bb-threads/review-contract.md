@@ -6,6 +6,8 @@ One review rule, read by both runtimes. The spawn commands, agent names and ledg
 
 A **finding** is a defect in behaviour, in a named acceptance criterion, or a failure of a gate this run must pass (lint, typecheck, tests). Lint-gate failures are findings: they fail CI. A **nit** is everything else — a preference, a style choice the gate accepts, an observation with no gate behind it.
 
+**Intent comes from the manifest, and it is the plan's.** The item's `acceptance` and `out-of-scope` lines are quoted into the review brief from the approved manifest; a criterion re-derived from the ticket at review time is off-contract, because the ticket was written before the work. The `out-of-scope` line bounds what a reviewer may require — a finding that the item omitted something it declared out of scope is not a finding. Work performed *beyond* that boundary is still reviewable: scope creep is a defect, not an exemption.
+
 ## CLEAN ends the loop
 
 `VERDICT CLEAN` closes the item's review even when it carries non-blocking nits. Nits go to the operator in the run summary: they are not fixed in-run and never open a re-review. Only `VERDICT FINDINGS` opens a fix round.
