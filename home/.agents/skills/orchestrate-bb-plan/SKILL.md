@@ -197,25 +197,23 @@ attachments have no replace-in-place, so a re-plan appends a versioned record
 
 ## The manifest
 
-The manager's prompt is a **manifest**: data only, no instructions. Field list,
-and nothing else:
+The manager's prompt is a **manifest**: data only, no instructions. The field
+list, the item line and wave line formats, and what every header line means are
+[`manifest-contract.md`](manifest-contract.md) — that file owns the shape, and
+the shape is the same in both runtimes. What goes in it is this skill's:
 
-- the feature name and the Task identity (key or ULID) when there is one
-- the tracker, explicit and never inferred from the shape of a reference:
-  `tracker: scratch <feature>` or `tracker: github <owner/repo>#<parent>`
-- the flow: `A`, `B`, or the cross-repo shape named as itself
-- `mode: gated`, `mode: land`, or `mode: unattended` — never omit it
-- the items, one per line:
-  `id · short title · ticket · file scope · blockedBy · acceptance ·
-  out-of-scope` — the ticket is the item's own reference, `#<issue-number>` for
-  GitHub, so the manager fetches exactly the ticket an item names rather than
-  re-deriving it. `acceptance` and `out-of-scope` are the item's intent, one
-  line each, verbatim from the plan discussion: the manager quotes them in the
-  worker prompt, the review brief and the PR body, and never substitutes the
-  ticket's own wording
-- the waves: which item ids dispatch together
-- run notes the tickets cannot supply: cross-repo paths, run-alone handling,
-  approval gates
+- the feature name, and the Task identity as `task:` when the run has one
+- the tracker, explicit and never inferred from the shape of a reference
+- the flow — `A`, `B`, or `A+cross-repo` when the items mix an in-repo item with
+  one whose files sit outside every repository
+- the `mode` line, never omitted
+- the items, each naming its own ticket — `#<issue-number>` for GitHub, so the
+  manager fetches exactly the ticket an item names rather than re-deriving it —
+  with its acceptance and out-of-scope lines one line each, verbatim from the
+  plan discussion: the manager quotes them in the worker prompt, the review
+  brief and the PR body, and never substitutes the ticket's own wording
+- the waves, and any run note the tickets cannot supply: cross-repo paths,
+  run-alone handling, approval gates
 - a model line only when the operator overrode the role defaults
 
 The test for inclusion is procedural: **does this line tell the executor how to
@@ -229,9 +227,21 @@ The item ticket reference is what the manager reads: a GitHub ticket comes from
 `gh issue view <n> --json title,body,comments`, and the parent issue's body is
 the spec context for a worker's instructions.
 
-Write it to `$BB_THREAD_STORAGE/manifest.txt`, then wrap it for the manager:
-write `$BB_THREAD_STORAGE/manager-prompt.txt` as the activation line, a blank
-line, and the manifest verbatim —
+Write it to `$BB_THREAD_STORAGE/manifest.txt` and check it — the contract's
+checker is the machine form of the completeness rule above:
+
+```sh
+python3 ~/.agents/skills/orchestrate-bb-threads/scripts/validate-manifest.py "$BB_THREAD_STORAGE/manifest.txt"
+```
+
+`FAIL:` names every error with the line it is on; a non-zero exit means the
+manifest is not the plan that was approved. Fix what it names and run it again.
+If a fix changes an item, a file scope, an acceptance line, a wave or the mode,
+the approval no longer covers the run — re-render the plan and take it again
+(`unattended` records it rather than asking) before anything is dispatched.
+
+Then wrap it for the manager: write `$BB_THREAD_STORAGE/manager-prompt.txt` as
+the activation line, a blank line, and the manifest verbatim —
 
 ```
 Run /orchestrate-bb-threads and follow it. You are the manager: your first turn
