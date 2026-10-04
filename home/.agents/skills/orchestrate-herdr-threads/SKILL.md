@@ -188,7 +188,9 @@ out absolutely in the prompt file**: a worker tab is a fresh shell with no
 (start flags, wait loops); those are this skill's. Every prompt also quotes the
 item's `acceptance` and `out-of-scope` lines verbatim from the manifest: those
 are the criteria a review checks, and a reviewer never re-derives them from the
-ticket.
+ticket. The review brief also quotes the worker's own `HARDEST:`, `REJECTED:`
+and `UNSURE:` lines from its report; where the report omitted them, the brief
+says so rather than passing silence off as certainty.
 
 **Worker** (`item-<slug>.txt`) — ends with:
 
@@ -197,16 +199,21 @@ ticket.
 > human input — if something blocks you, stop and report. Run the item's tests
 > and name the command in your report. Write your report to
 > `$RUNDIR/reports/item-<slug>.md`: what changed, the acceptance evidence, the
-> exact test command and result. Your final message is three lines — `DONE` or
-> `BLOCKED`, one line of what changed, one line of what remains.
+> exact test command and result, then three one-line answers — `HARDEST:` the
+> hardest decision you made, `REJECTED:` the alternatives you rejected and why,
+> `UNSURE:` what you are least confident about. Your final message is three
+> lines — `DONE` or `BLOCKED`, one line of what changed, one line of what
+> remains.
 
 **Review** (`review-<slug>-r<n>.txt`) — ends with:
 
 > Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>.diff`, not the live
 > worktree — another worker may already be changing those files; read worktree
 > files for surrounding context only. Report findings against the item's
-> acceptance criteria and within its out-of-scope line, both quoted above. Do
-> not edit files. A test proved non-vacuous by reverting
+> acceptance criteria and within its out-of-scope line, both quoted above, and
+> read the worker's `HARDEST:`/`REJECTED:`/`UNSURE:` lines quoted above as a lead
+> to check against the frozen diff, never as a verdict. Do not edit files. A
+> test proved non-vacuous by reverting
 > the change is reverted in a **scratch copy** — a `/tmp` copy, or
 > `git worktree add --detach` — never in this worktree, which holds other items'
 > uncommitted work; a gate you run in this worktree measures whatever else is

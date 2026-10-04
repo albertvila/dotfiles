@@ -223,7 +223,8 @@ every one is a candidate for the *What to fix* section.
   finished without the verification ask, is a finding. An `unattended` run that
   reduced tickets is a finding.
 - **Verification** — a PR opened with checks red; a PR body with no intent
-  block, so the merge gate got a diff skim; an item marked `done` from a
+  block, so the merge gate got a diff skim; a worker report with no
+  `HARDEST:`/`REJECTED:`/`UNSURE:` lines; an item marked `done` from a
   claim rather than a clean review; `finishedAt` written while an item was still
   in flight.
 - **Respawn fidelity** — a killed worker respawned into a different pane or under
