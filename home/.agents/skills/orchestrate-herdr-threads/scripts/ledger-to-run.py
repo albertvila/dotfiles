@@ -74,6 +74,66 @@ def run_id(feature, started_at):
     return "run-%s%s" % (slug, ("-" + started_at[:10]) if started_at else "")
 
 
+def ponytail_passes(ledger):
+    """The ponytail passes in order.
+
+    The schema's `ponytail` is a **list** of passes; an older ledger holds one
+    mapping instead. Both are read here, because a projection that crashes on the
+    shape the skill writes takes the whole pane view down with it.
+    """
+    passes = ledger.get("ponytail") or []
+    if isinstance(passes, dict):
+        passes = [passes]
+    return [entry for entry in passes if isinstance(entry, dict) and entry.get("agent")]
+
+
+def ledger_errors(ledger):
+    """The ledger write errors provable from the ledger alone.
+
+    The retro reads the transcripts and owns the rest (an interval outside its own
+    agent's session window). These are errors, not warnings, because each one is a
+    coordinator write mistake — a stamp typed instead of read, or a terminal marker
+    standing over live work — and the coordinator runs this projection after every
+    ledger write, so it sees them at the moment it makes them.
+    """
+    problems = []
+
+    def backwards(start, end, where):
+        begun, done = stamp(start), stamp(end)
+        if begun and done and done < begun:
+            problems.append("%s: endedAt %s precedes startedAt %s" % (where, end, start))
+
+    finished = ledger.get("finishedAt")
+    for item_id, item in (ledger.get("items") or {}).items():
+        where = "items[%s]" % item_id
+        backwards(item.get("startedAt"), (item.get("worker") or {}).get("endedAt"),
+                  where + ".worker")
+        for review in item.get("reviews") or []:
+            spot = "%s.reviews[pass %s]" % (where, review.get("pass"))
+            backwards(review.get("startedAt"), review.get("endedAt"), spot)
+            if review.get("verdict") and not review.get("endedAt"):
+                problems.append("%s: verdict %s with no endedAt" % (spot, review["verdict"]))
+        for fix in item.get("fixes") or []:
+            backwards(fix.get("startedAt"), fix.get("endedAt"),
+                      "%s.fixes[pass %s]" % (where, fix.get("pass")))
+        if finished and item.get("status") not in ("done", "failed", "blocked"):
+            problems.append("%s: status %r under finishedAt %s"
+                            % (where, item.get("status"), finished))
+    for pass_ in ponytail_passes(ledger):
+        where = "ponytail[pass %s]" % pass_.get("pass")
+        backwards(pass_.get("startedAt"), pass_.get("endedAt"), where)
+        if pass_.get("verdict") and not pass_.get("endedAt"):
+            problems.append("%s: verdict %s with no endedAt" % (where, pass_["verdict"]))
+        if finished and not pass_.get("verdict"):
+            problems.append("%s: no verdict under finishedAt %s" % (where, finished))
+        fix = pass_.get("fix") or {}
+        backwards(fix.get("startedAt"), fix.get("endedAt"), where + ".fix")
+    for name, gate in (ledger.get("gates") or {}).items():
+        if isinstance(gate, dict):
+            backwards(gate.get("requestedAt"), gate.get("approvedAt"), "gates.%s" % name)
+    return problems
+
+
 def attempts_for_item(item_id, item):
     """The item's attempt history, one per round: initial, then one per fix."""
     task_id = "I" + item_id
@@ -105,14 +165,21 @@ def attempts_for_item(item_id, item):
             attempt["cause"] = {"type": "initial"}
         else:
             attempt["cause"] = {"type": "sent_back"}
-            if previous_review is not None:
+            sent_it_back = bool(previous_review) and not str(
+                (previous_review or {}).get("verdict") or "").upper().startswith("CLEAN")
+            if sent_it_back:
                 attempt["cause"]["by"] = previous_review.get("agent")
                 attempt["cause"]["ref"] = "R%s\u00b7a%s" % (item_id, previous_review.get("pass"))
                 # Why it came back: the report is where the findings are.
                 if previous_review.get("report"):
                     attempt["cause"]["reason"] = str(previous_review["report"])
-            elif fix:
+            else:
+                # No FINDINGS before it: a ponytail note the coordinator judged a
+                # defect, or a round it opened itself. Naming a CLEAN review as
+                # the sender would put words in its report.
                 attempt["cause"]["by"] = "coordinator"
+            if fix and fix.get("findings"):
+                attempt["cause"]["reason"] = str(fix["findings"])
 
         verdict = (review or {}).get("verdict")
         if verdict is None:
@@ -213,6 +280,73 @@ def review_task(item_id, item):
     }
 
 
+def ponytail_task(item_ids, passes):
+    """One task for the whole-run over-engineering lane, one attempt per pass.
+
+    The ledger's `ponytail` is a list of passes: findings → fix → re-check. Every
+    pass keeps its own agent and timestamps, a fix round between passes is its own
+    attempt with `cause.sent_back` naming the pass that opened it, and the task's
+    state follows the last pass — so a two-pass lane is three attempts, not one
+    overwritten row.
+    """
+    attempts = []
+    for pass_ in passes:
+        verdict = str(pass_.get("verdict") or "").upper()
+        settled = verdict in ("CLEAN", "FINDINGS")
+        previous = attempts[-1] if attempts else None
+        cause = ({"type": "initial"} if not previous else
+                 {"type": "followup", "by": previous["actor"], "ref": previous["id"]})
+        attempt = {
+            "id": "%s\u00b7a%d" % (PONYTAIL, len(attempts) + 1),
+            "n": len(attempts) + 1,
+            "cause": cause,
+            "actor": pass_.get("agent") or "ponytail",
+            "state": "done" if settled else "working",
+        }
+        if settled:
+            attempt["outcome"] = {"result": "done", "evidence": "reported",
+                                  "receipt": "VERDICT %s" % verdict}
+            if pass_.get("report"):
+                attempt["outcome"]["reason"] = str(pass_["report"])
+        started, ended = stamp(pass_.get("startedAt")), stamp(pass_.get("endedAt"))
+        if started:
+            attempt["started_at"] = started
+        if ended:
+            attempt["ended_at"] = ended
+        attempts.append(attempt)
+        fix = pass_.get("fix") or {}
+        if fix:
+            attempt = {
+                "id": "%s\u00b7a%d" % (PONYTAIL, len(attempts) + 1),
+                "n": len(attempts) + 1,
+                "cause": {"type": "sent_back", "by": pass_.get("agent") or "ponytail",
+                          "ref": attempts[-1]["id"]},
+                "actor": fix.get("agent") or "fix",
+                "state": "done",
+                "outcome": {"result": "done", "evidence": "reported",
+                            "receipt": "fix round applied; the next pass re-checks"},
+            }
+            if fix.get("findings"):
+                attempt["cause"]["reason"] = str(fix["findings"])
+            started, ended = stamp(fix.get("startedAt")), stamp(fix.get("endedAt"))
+            if started:
+                attempt["started_at"] = started
+            if ended:
+                attempt["ended_at"] = ended
+            attempts.append(attempt)
+    settled = str(passes[-1].get("verdict") or "").upper() in ("CLEAN", "FINDINGS")
+    return {
+        "id": PONYTAIL,
+        "title": "ponytail review: whole-run diff (%d pass%s)"
+                 % (len(passes), "" if len(passes) == 1 else "es"),
+        "kind": "review",
+        "owner": passes[-1].get("agent") or "ponytail",
+        "state": "done" if settled else "working",
+        "deps": ["I" + i for i in item_ids],
+        "attempts": attempts,
+    }
+
+
 def operator_task(task_id, title, kind, requested, approved, detail, events, inputs=None, deps=None):
     """A human-decision task: plan question, or the commit fan-in gate."""
     requested, approved = stamp(requested), stamp(approved)
@@ -299,35 +433,9 @@ def project(ledger, now):
                                commit.get("requestedAt"), commit.get("approvedAt"), "commit approved",
                                events, inputs=["I" + i for i in item_ids], deps=["I" + i for i in item_ids]))
 
-    ponytail = ledger.get("ponytail")
-    if ponytail:
-        verdict = str(ponytail.get("verdict") or "PENDING").upper()
-        settled = verdict in ("CLEAN", "FINDINGS")
-        task = {
-            "id": PONYTAIL,
-            "title": "ponytail review: whole-run diff",
-            "kind": "review",
-            "owner": ponytail.get("agent") or "ponytail",
-            "state": "done" if settled else "working",
-            "deps": ["I" + i for i in item_ids],
-            "attempts": [{
-                "id": "%s\u00b7a1" % PONYTAIL,
-                "n": 1,
-                "cause": {"type": "initial"},
-                "actor": ponytail.get("agent") or "ponytail",
-                "state": "done" if settled else "working",
-                "outcome": ({"result": "done", "evidence": "reported", "receipt": "VERDICT %s" % verdict}
-                            if settled else None),
-            }],
-        }
-        if ponytail.get("verdict") is None:
-            task["attempts"][0].pop("outcome", None)
-        started, ended = stamp(ponytail.get("startedAt")), stamp(ponytail.get("endedAt"))
-        if started:
-            task["attempts"][0]["started_at"] = started
-        if ended:
-            task["attempts"][0]["ended_at"] = ended
-        tasks.append(task)
+    passes = ponytail_passes(ledger)
+    if passes:
+        tasks.append(ponytail_task(item_ids, passes))
 
     document = {
         "dagr": 3,
@@ -372,13 +480,16 @@ def self_test():
         "items": {
             "01": {"title": "one", "status": "done", "blockedBy": [], "reviewCount": 2,
                    "worker": {"agent": "item-01", "pane": "w1:p2"},
-                   "reviews": [{"pass": 1, "agent": "review-01-r1", "verdict": "FINDINGS", "report": "reports/r1.md"},
-                               {"pass": 2, "agent": "review-01-r2", "verdict": "CLEAN", "report": "reports/r2.md"}],
+                   "reviews": [{"pass": 1, "agent": "review-01-r1", "verdict": "FINDINGS", "report": "reports/r1.md",
+                                "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:05:00Z"},
+                               {"pass": 2, "agent": "review-01-r2", "verdict": "CLEAN", "report": "reports/r2.md",
+                                "startedAt": "2026-09-27T10:10:00Z", "endedAt": "2026-09-27T10:12:00Z"}],
                    "fixes": [{"pass": 1, "agent": "fix-01-f1"}]},
             "02": {"title": "two", "status": "blocked", "blockedBy": ["01"], "reviewCount": 0,
                    "worker": {"agent": "item-02", "pane": "w1:p3"}, "reviews": [], "fixes": []},
         },
-        "ponytail": {"agent": "ponytail", "verdict": "CLEAN", "report": "reports/p.md"},
+        "ponytail": {"agent": "ponytail", "verdict": "CLEAN", "report": "reports/p.md",
+                     "startedAt": "2026-09-27T10:40:00Z", "endedAt": "2026-09-27T10:41:00Z"},
     }
     doc = project(ledger, "2026-09-27T11:00:00Z")
 
@@ -415,6 +526,54 @@ def self_test():
     assert gate["kind"] == "gate" and gate["inputs"] == ["I01", "I02"] and gate["state"] == "queued"
     assert doc["events"][0]["verb"] == "answer" and doc["events"][0]["by"] == "operator"
     assert project(ledger, "2026-09-27T11:00:00Z") == doc  # deterministic
+
+    # The schema's `ponytail` is a list of passes, and a two-pass lane must
+    # project as findings → fix → re-check instead of crashing the pane view.
+    two_pass = copy.deepcopy(ledger)
+    two_pass["ponytail"] = [
+        {"pass": 1, "agent": "ponytail", "verdict": "FINDINGS", "report": "reports/p1.md",
+         "startedAt": "2026-09-27T10:20:00Z", "endedAt": "2026-09-27T10:21:00Z",
+         "fix": {"pass": 1, "agent": "item-01", "startedAt": "2026-09-27T10:22:00Z",
+                 "endedAt": "2026-09-27T10:25:00Z",
+                 "findings": "two overrides that override nothing"}},
+        {"pass": 2, "agent": "ponytail-2", "verdict": "CLEAN", "report": "reports/p2.md",
+         "startedAt": "2026-09-27T10:26:00Z", "endedAt": "2026-09-27T10:33:00Z"},
+    ]
+    doc_two = project(two_pass, "2026-09-27T11:00:00Z")
+    pon = next(t for t in doc_two["tasks"] if t["id"] == PONYTAIL)
+    assert pon["state"] == "done" and "2 passes" in pon["title"], pon
+    assert [a["state"] for a in pon["attempts"]] == ["done", "done", "done"], pon["attempts"]
+    assert [a["cause"]["type"] for a in pon["attempts"]] == ["initial", "sent_back", "followup"]
+    assert [a["id"] for a in pon["attempts"]] == ["PON\u00b7a1", "PON\u00b7a2", "PON\u00b7a3"]
+    assert pon["attempts"][2]["cause"]["ref"] == "PON\u00b7a2"
+    assert pon["attempts"][1]["cause"]["reason"] == "two overrides that override nothing"
+    assert project(two_pass, "2026-09-27T11:00:00Z") == doc_two
+
+    # A fix no review sent back (a ponytail note the coordinator judged a defect)
+    # names the coordinator, never a CLEAN review.
+    quiet_fix = copy.deepcopy(ledger)
+    quiet_fix["items"]["01"]["reviews"][0]["verdict"] = "CLEAN"
+    quiet_fix["items"]["01"]["fixes"][0]["findings"] = "restore the dropped state tone"
+    cause = next(t for t in project(quiet_fix, "2026-09-27T11:00:00Z")["tasks"]
+                 if t["id"] == "I01")["attempts"][1]["cause"]
+    assert cause["by"] == "coordinator" and cause["reason"] == "restore the dropped state tone", cause
+
+    # Write errors the ledger can prove on its own.
+    assert ledger_errors(ledger) == [], ledger_errors(ledger)
+    broken = copy.deepcopy(ledger)
+    broken["items"]["01"]["reviews"][0]["startedAt"] = "2026-09-27T10:20:00Z"
+    broken["items"]["01"]["reviews"][0]["endedAt"] = "2026-09-27T10:19:00Z"
+    broken["gates"]["commit"] = {"requestedAt": "2026-09-27T11:00:00Z",
+                                 "approvedAt": "2026-09-27T10:59:00Z"}
+    found = ledger_errors(broken)
+    assert any("precedes startedAt" in p for p in found), found
+    assert any(p.startswith("gates.commit") for p in found), found
+    live = copy.deepcopy(ledger)
+    live["finishedAt"] = "2026-09-27T11:00:00Z"
+    live["items"]["02"]["status"] = "running"
+    assert any("under finishedAt" in p for p in ledger_errors(live))
+    live["ponytail"] = {"agent": "ponytail"}  # a pass still in flight
+    assert any(p.startswith("ponytail[pass None]: no verdict") for p in ledger_errors(live))
 
     dagr = find_dagr()
     if dagr:
@@ -459,13 +618,18 @@ def main():
     os.replace(temp, out)
     print(out)
 
+    problems = ledger_errors(ledger)
+    for problem in problems:
+        print("ledger write error: %s" % problem, file=sys.stderr)
+    code = 1 if problems else 0
+
     if args.check:
         dagr = find_dagr()
         if not dagr:
             print("ledger-to-run: dagr not found; skipped check", file=sys.stderr)
             return 1
-        return subprocess.run([dagr, "check", out]).returncode
-    return 0
+        code = subprocess.run([dagr, "check", out]).returncode or code
+    return code
 
 
 if __name__ == "__main__":

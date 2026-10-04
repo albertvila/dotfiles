@@ -119,7 +119,9 @@ number it printed, and did it end in an edit someone can make.
   time). Break it down by role — workers, reviews, fixes, ponytail, coordinator —
   and name the phase that dominated and the longest single agent span. Gate waits
   (plan approval, commit approval) are human time, reported separately; any other
-  human wait is not separable and is marked **partial**.
+  human wait is not separable and is marked **partial**. A host suspend inside the
+  span is named separately too — it is environment, not work and not a gate, and
+  the run's working wall clock is the span with it removed.
 - **Cost per model** — tokens and USD per model and per role, from pi's own
   recorded usage. Flag every session whose turns recorded no cost, and say how
   much of the run that leaves unpriced.
@@ -152,7 +154,18 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
   agent that fits neither means the run went off-script.
 - **Overlap is design, not waste**: in a shared-worktree run reviews run beside
-  the next worker. `activeSumSec` − `coveredSec` is that overlap.
+  the next worker. `activeSumSec` − `coveredSec` is that overlap — computed over
+  **unique sessions**, because a fix round re-prompts the worker's own session and
+  counting that transcript once per role would double its time *and* its price;
+  the coordinator is clipped to the ledger's own `startedAt`/`endedAt`, with the
+  part outside the run reported as `coordinatorRunSec`/`outsideRunSec` rather
+  than absorbed into `covered`.
+- **A span is not work, and the script says which is which.** `workSumSec` is
+  per-session span minus gaps > 10m, deduped; `quietSumSec` is what that removes
+  — a host suspend, or the hours between a re-prompted worker's turns. `ledgerDrift`
+  lists every ledger interval its own transcript contradicts (backwards, before
+  the session's first message, after its last). Quote it instead of re-deriving it
+  by hand: a drifted row is a finding, not arithmetic to redo.
 - **Gate waits** come from the ledger's `gates.plan` / `gates.commit`
   `requestedAt` → `approvedAt` pairs (in a Flow B run, each item's own
   `commitGate`). A gate with a request and no approval in a finished run is a
@@ -168,6 +181,16 @@ every one is a candidate for the *What to fix* section.
 
 - **Preflight** — a run dispatched without `herdr integration status` reading
   `pi: current`; a stalled prompt misread as a running worker.
+- **Host suspend** — a multi-hour gap written up as a model, provider or
+  orchestrator failure without checking the machine's own sleep log. A closed lid
+  drops the network and then freezes everything: every in-flight turn dies on
+  provider timeouts in the same minute, the run stops dead, and it resumes only
+  when the operator wakes the host and prompts `continue`. Check `pmset -g log`
+  (macOS: look for `Clamshell Sleep` / `Maintenance Sleep` and the wake, and for
+  the last write landing inside a maintenance-sleep window), `journalctl -b` or
+  `last` elsewhere, **before** naming a cause. If the host slept, that is the
+  finding — the smallest change is a keep-awake or a stated expectation for
+  `land`/`unattended` runs, never a model swap.
 - **Flow** — Flow A items with overlapping scopes dispatched together; a Flow B
   item started in the wrong workspace, so two items shared one branch; a Flow A
   worker given its own worktree, so the combined diff never existed.
@@ -188,9 +211,12 @@ every one is a candidate for the *What to fix* section.
 - **Model claims** — a role reported on a model that was never passed; a respawn
   that silently inherited different flags; a run that continued past a model
   failure instead of stopping to ask.
-- **Gates** — a dispatch before the plan approval, or a commit before the
-  operator's yes; a coordinator that kept working after asking; human wait where
-  the skill expects none.
+- **Gates** — a dispatch before the plan approval when `mode` is `gated` or
+  `land`; a commit before the operator's yes when `mode` is `gated`; a
+  coordinator that kept working after asking; human wait where the skill
+  expects none. A `land` or `unattended` run that left the PR unmerged, or
+  merged without `--match-head-commit` of `reviewedHead`, is a finding. An
+  `unattended` run that reduced tickets is a finding.
 - **Verification** — a PR opened with checks red; an item marked `done` from a
   claim rather than a clean review; `finishedAt` written while an item was still
   in flight.
