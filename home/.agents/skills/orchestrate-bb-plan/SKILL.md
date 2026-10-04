@@ -1,7 +1,7 @@
 ---
 name: orchestrate-bb-plan
-description: "Plan a BB orchestration run and take one approval before anything is dispatched, then spawn and babysit the manager thread that executes it. Use when the user says '/orchestrate-bb-plan', or gives a BB Task key, a `.scratch/` feature directory, or a GitHub issue number, `owner/repo#n` or issue URL to run."
-argument-hint: "<BB Task key|ULID> | @.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url>"
+description: "Plan a BB orchestration run and take one approval before anything is dispatched, then spawn and babysit the manager thread that executes it. Use when the user says '/orchestrate-bb-plan', or gives a BB Task key, a `.scratch/` feature directory, or a GitHub issue number, `owner/repo#n` or issue URL to run. Pass --land to skip the commit yes and merge, or --unattended to skip the plan yes as well."
+argument-hint: "<BB Task key|ULID> | @.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url> [--land|--unattended]"
 disable-model-invocation: true
 ---
 
@@ -106,7 +106,8 @@ Every excluded issue is named by number in the approval message, under the
    or independent rollback: a reset or history rewrite, an item ending in a
    push or merge rather than a PR, or an acceptance criterion no single
    reviewer can cover. Name that exception in the approval message instead of
-   leaving it implicit.
+   leaving it implicit. `mode: unattended` skips this reduction: one ticket,
+   one item. Say that in the plan record.
 5. Flag the special handling so the manager and its reviewers start with the
    facts: run-alone resets, items ending in a push or merge, approval gates
    (commit plans, force-pushes), and any acceptance criterion reaching into
@@ -138,19 +139,25 @@ One screen, no scrolling.
 
 ## One approval
 
+Read `mode` from the argument before rendering: `--unattended`, `--land`, or
+neither (`gated`). Both flags is a stop. `land` or `unattended` on a
+cross-repo or `A+cross-repo` plan is a stop — name the shape. The contract is
+`../orchestrate-bb-threads/run-mode.md`.
+
 Present in the approval message: the flow (A, B, or the cross-repo shape named
-as itself), the reduction made — **tickets in, items out**, with every excluded
+as itself), the mode, the reduction made — **tickets in, items out**, with every excluded
 issue named by number beneath it and, for a GitHub input, which source produced
 the ticket set (sub-issues or the parent body's task list) — the waves, the
-per-item notes, and the model assignments, with the diagram inline. Then wait
-for one yes.
+per-item notes, and the model assignments, with the diagram inline.
 
-Exactly one plan approval exists in a run. Nothing is dispatched before it, and
-the manager never re-asks what was approved here.
+`gated` and `land` wait for one yes. `unattended` does not wait and does not
+end the turn: write the plan record with both gate timestamps equal to now and
+`auto: true`, then continue. Nothing is dispatched before that record exists,
+and the manager never re-asks what was approved here.
 
 ## Record the plan on accept
 
-On the operator's yes, record the plan on the run's tracker, in this order.
+On the operator's yes, or immediately when `mode` is `unattended`, record the plan on the run's tracker, in this order.
 
 A GitHub input requires no BB Task, and none is created: the parent issue is
 the run's record. When a Task key and a GitHub issue are both given, both
@@ -188,6 +195,7 @@ and nothing else:
 - the tracker, explicit and never inferred from the shape of a reference:
   `tracker: scratch <feature>` or `tracker: github <owner/repo>#<parent>`
 - the flow: `A`, `B`, or the cross-repo shape named as itself
+- `mode: gated`, `mode: land`, or `mode: unattended` — never omit it
 - the items, one per line:
   `id · short title · ticket · file scope · blockedBy` — the ticket is the
   item's own reference, `#<issue-number>` for GitHub, so the manager fetches

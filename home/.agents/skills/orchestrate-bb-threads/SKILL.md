@@ -10,11 +10,15 @@ child thread per item, keeps the ledger, routes review findings, and lands the
 run. It does not plan.
 
 **A manifest in the prompt is the approved plan.** The manifest carries the
-items with their file scopes and blockers, the flow, the waves, and any run
-notes or model overrides (see `/orchestrate-bb-plan`, *The manifest*). Start
+items with their file scopes and blockers, the flow, the waves, the `mode`
+line, and any run notes or model overrides (see `/orchestrate-bb-plan`, *The manifest*). Start
 from it immediately — never re-derive the graph and never re-ask what was
 already approved. With no manifest, do not derive one: say the plan is missing
 and point the operator at `/orchestrate-bb-plan`.
+
+Read [run-mode.md](run-mode.md) before the first spawn. It owns `mode`, the CI
+baseline, the validation exit code, Flow B bases, and the merge command. A
+sentence in this file that disagrees with it is wrong.
 
 **Read this file and dispatch before touching anything.** A manifest is data,
 not an implementation assignment: a plan thread can dispatch a bare manifest
@@ -316,13 +320,17 @@ manager that never dispatched, whatever it shipped.
    item's pass is not skippable, and a single combined pass is not a
    substitute.
 
-6. **Commit + open one PR.** Propose the commit message and file list to the
-   user (per repo conventions; detect the PR base branch), and wait for an
+6. **Commit + open one PR.** Do not open this gate until [run-mode.md](run-mode.md)
+   validation exited 0. `land` and `unattended` skip the question: record the
+   gate with `auto: true` and the conventional message, then create the run
+   branch before pushing and commit. `gated`
+   proposes the commit message and file list to the
+   user (per repo conventions; detect the PR base branch), and waits for an
    explicit yes. Ask the gate with a pending interaction (`AskUserQuestion`),
    not a plain message — a message can be answered in any thread, and a yes
    relayed through the plan thread never reaches this run's record. If the
    answer arrives out of thread anyway, restate it in this thread before
-   committing. On yes: commit, push the branch, open exactly one PR
+   committing. On yes: create the run branch first, then commit, push that branch, open exactly one PR
    (`gh pr create`), then post the lm statuses from that repo root. `<base>`
    is the detected PR base:
 
@@ -361,7 +369,9 @@ manager that never dispatched, whatever it shipped.
 
    The body carries the closing lines below (see *PR body closing lines*).
 
-7. **Post-merge cleanup.** After the user merges on GitHub: pull main,
+7. **Post-merge cleanup.** `land` and `unattended` merge with the command in
+   [run-mode.md](run-mode.md) before this step; `gated` waits until the user
+   merges on GitHub. Then pull main,
    delete the merged branch, and post a final report (what shipped, per-item
    outcomes). Retiring the worktree is a hand-off, not a manager action:
    `bb environment delete` is refused while any thread in the environment is
@@ -371,23 +381,27 @@ manager that never dispatched, whatever it shipped.
 ## Flow B — PR per item
 
 Trigger: the manifest's flow is `B`. Every worker gets its
-own worktree+**branch**; all items run fully **parallel** — isolation means
-they never clobber each other, so there is no file-overlap gating and no
-shared worktree. One PR per item, reviewed by the user on GitHub. Same models
+own worktree+**branch**. One PR per item. Same models
 and review loops as the shared sections above (*Models*, *Review loops*).
+Items with no `blockedBy` start together. An item with blockers stays `todo`
+until those PRs are merged, then its worktree is created from the updated
+target — see [run-mode.md](run-mode.md). Do not review it against a base that
+lacks its blockers, and do not rebase it onto them afterwards.
 
-1. **Spawn every ready item's worker — one worktree+branch each.** Drop
+1. **Spawn every item whose blockers are already merged — one worktree+branch each.** Drop
    `--environment "$BB_ENVIRONMENT_ID"` (sharing is the Flow A move) and pass
-   `--new-environment worktree` so each worker provisions its own
-   worktree+branch off the project base branch; all ready items spawn at
-   once. Record the returned thread id **and its environment id** in the
+   `--new-environment worktree --base-branch origin/<target>` so the worktree
+   starts at the target the blockers just landed on, not the project default
+   from before this run. Fetch first. Record the returned thread id **and its environment id** in the
    ledger — review and ponytail threads reuse that environment to see the
    branch.
 
    ```sh
+   git fetch origin <target>
    bb thread spawn --parent-self \
      --project "$BB_PROJECT_ID" \
      --new-environment worktree \
+     --base-branch origin/<target> \
      --model "<worker-model>" \
      --title "<item-id> · <short title>" \
      --permission-mode auto --json \
@@ -397,34 +411,27 @@ and review loops as the shared sections above (*Models*, *Review loops*).
 Then run Flow A steps 2–7 with these deltas:
 
 - **Flow A step 2 — no file-overlap gating.** The disjoint-files rule and the
-  review/worker overlap rule do not apply here. Keep every item moving at once
-  with short waits. Cross-item dependencies still gate dispatch: an item stays
-  `todo` until its `blockedBy` items settle.
+  review/worker overlap rule do not apply here. Keep every unblocked item
+  moving at once. An item stays `todo` until its blockers' PRs are merged, not
+  merely `done`.
 - **Flow A steps 4–5 — review and ponytail in the item's environment.** Both
   spawn with `--environment "<worker-env-id>"` in place of
   `"$BB_ENVIRONMENT_ID"`, and the ponytail pass runs per branch on that
   branch's uncommitted diff.
-- **Flow A step 6 — one PR per item.** Same commit-message approval and
-  base-branch detection, then commit the branch (`bb environment commit
+- **Flow A step 6 — one PR per item.** The commit gate is [run-mode.md](run-mode.md):
+  `gated` asks, `land` and `unattended` do not. Then commit the branch (`bb environment commit
   <env-id>`) and mark that environment's PR ready (`bb environment
   pull-request ready <env-id>` — each worktree environment owns its PR).
   After that PR is open, run Flow A step 6's lm status commands in that
   item's worktree, against the same detected base. Same done check.
   Its body carries the closing lines below (see *PR body closing lines*).
   Merging items into one PR is the Flow A shape.
-- **Flow A step 7 — merge and clean up N PRs.** Merge in dependency order:
-  first the items whose `blockedBy` list is already fully settled (base
-  items), then the items that name them in their `blockedBy`, working outward
-  through the dependency graph — `bb environment pull-request merge <env-id>`
-  (merge/squash/rebase per repo convention). Resolve cross-PR conflicts that
-  appear as later branches land: rebase/merge the conflicting branch onto the
-  now-merged base and re-run its checks (the branch is yours to fix; its item
-  already proved the diff). Then delete the merged branches (provider
-  teardown keeps the branch; remove local + remote per repo convention) and
-  hand worktree retirement to the user: the manager never archives threads
-  (see *Rules*), and `bb environment delete <env-id>` is refused while
-  threads are live — once the user archives the item's threads, they (or a
-  later cleanup pass) retire each worktree.
+- **Merge the wave, then dispatch the next.** Merge each ready PR with the
+  `gh pr merge --match-head-commit` command in [run-mode.md](run-mode.md).
+  Do not use `bb environment pull-request merge`. After the wave is merged,
+  fetch and spawn the items it unblocked. Hand worktree retirement to the
+  user: the manager never archives threads (see *Rules*), and
+  `bb environment delete <env-id>` is refused while threads are live.
 
 ## Cross-repo runs
 
@@ -448,10 +455,10 @@ There is no Tasks panel for this — the manager IS the tracker. When the user
 asks for a status view, regenerate the plan diagram with fresh status colors
 (done / in review / todo) from the ledger. Keep
 `$BB_THREAD_STORAGE/orchestration.json` mapping each item to
-`{ threadId, envId, status, blockedBy, reviewCount, prUrl }` — `threadId` is
+`{ threadId, envId, status, blockedBy, reviewCount, prUrl, reviewedHead }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
-belong to Flow B) — plus the run's `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`.
+belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` waits until [run-mode.md](run-mode.md)'s merge has happened.
 
 `reviewCount` counts completed review iterations: the initial review is `1`
 and each re-review adds `1`. Write the ledger as you go, never batched at

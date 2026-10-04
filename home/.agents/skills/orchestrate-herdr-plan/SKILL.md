@@ -1,7 +1,7 @@
 ---
 name: orchestrate-herdr-plan
-description: "Plan a Herdr orchestration run and take one approval before anything is dispatched, then run it as the coordinator of this Herdr pane with /orchestrate-herdr-threads. Use when the user says '/orchestrate-herdr-plan', or gives a `.scratch/` feature directory, a GitHub issue number, `owner/repo#n` or an issue URL to run."
-argument-hint: "@.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url>"
+description: "Plan a Herdr orchestration run and take one approval before anything is dispatched, then run it as the coordinator of this Herdr pane with /orchestrate-herdr-threads. Use when the user says '/orchestrate-herdr-plan', or gives a `.scratch/` feature directory, a GitHub issue number, `owner/repo#n` or an issue URL to run. Pass --land to skip the commit yes and merge, or --unattended to skip the plan yes as well."
+argument-hint: "@.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url> [--land|--unattended]"
 disable-model-invocation: true
 ---
 
@@ -106,7 +106,8 @@ excluded issue is named by number in the approval message, under the
    scopes merge into one item unless the work needs independent verifiability or
    independent rollback: a reset or history rewrite, an item ending in a push or
    merge rather than a PR, or an acceptance criterion no single reviewer can
-   cover. Name that exception in the approval message.
+   cover. Name that exception in the approval message. `mode: unattended` skips
+   this reduction: one ticket, one item. Say that in the plan record.
 5. Flag the special handling so the coordinator and its reviewers start with the
    facts: run-alone resets, items ending in a push or merge, approval gates, and
    any acceptance criterion reaching into another repo or plugin — list that
@@ -150,24 +151,34 @@ the run's end boxes (ponytail pass, then commit+PR or ticket write-back).
 
 ## One approval
 
+Read `mode` from the argument before rendering: `--unattended`, `--land`, or
+neither (`gated`). Both flags is a stop. `land` or `unattended` on a
+cross-repo or `A+cross-repo` plan is a stop — name the shape. The contract is
+`../orchestrate-bb-threads/run-mode.md`.
+
 Present in the approval message: the flow (A, B, the cross-repo shape named as
 itself, or `A+cross-repo` when the items mix an in-repo item with one whose files
-sit outside every repository), the reduction made — **tickets in, items out**,
+sit outside every repository), the mode, the reduction made — **tickets in, items out**,
 with every excluded issue named by number beneath it and, for a GitHub input,
 which source produced the ticket set — the waves, the per-item notes, the launch
-reality above, and the diagram. Then **end the turn** with the question. Timestamp
-the ask first (`date -u +%Y-%m-%dT%H:%M:%SZ`) — that timestamp becomes the plan
-gate's `requestedAt`. Nothing is dispatched before the yes: no tab, no agent, no
-worktree.
+reality above, and the diagram. Timestamp the ask first
+(`date -u +%Y-%m-%dT%H:%M:%SZ`) — that timestamp becomes the plan gate's
+`requestedAt`.
 
-An approval in Herdr is the operator's next message in this pane; a coordinator
-that keeps working after asking has ignored the gate.
+`gated` and `land` **end the turn** with the question. Nothing is dispatched
+before the yes: no tab, no agent, no worktree. An approval in Herdr is the
+operator's next message in this pane; a coordinator that keeps working after
+asking has ignored the gate.
+
+`unattended` does not end the turn and does not ask. Set `approvedAt` to the
+same timestamp as `requestedAt`, set `auto: true`, write the plan record, and
+continue in this turn.
 
 ## Record the plan on accept
 
-On the operator's yes, timestamp the accept
-(`date -u +%Y-%m-%dT%H:%M:%SZ`) — that is the plan gate's `approvedAt` — and
-write the record once:
+On the operator's yes, or immediately when `mode` is `unattended`, timestamp the accept
+(`date -u +%Y-%m-%dT%H:%M:%SZ`) — that is the plan gate's `approvedAt`; for
+`unattended` it equals `requestedAt` — and write the record once:
 
 - **`.scratch` input** — `$RUNDIR/plan.md` is already the record; append nothing
   to the spec and change no ticket. The spec's own `**Status:**` line is flipped
@@ -192,6 +203,8 @@ Field list, and nothing else:
   outside every repository (no worktree, no branch, no PR is possible). Never
   write such a run as plain `A`: the threads skill dispatches on this field, and
   the ledger and the retro trust it
+- `mode: gated`, `mode: land`, or `mode: unattended` — never omit it. The
+  threads skill treats a missing line as `gated`
 - the base branch for a Flow B or cross-repo run: `base: <ref>`
 - the plan gate: `plan-gate: requested=<ISO-8601 UTC> approved=<ISO-8601 UTC>`,
   so the ledger opens with real human-wait numbers
@@ -210,7 +223,8 @@ review loops and the ledger mechanics live in `/orchestrate-herdr-threads`.
 
 ## Execute the run
 
-In this same turn as the approval reply, follow `/orchestrate-herdr-threads` in
+In this same turn as the approval reply — or the same turn as the plan record,
+when `mode` is `unattended` — follow `/orchestrate-herdr-threads` in
 this pane. Read that skill's file; do not restate it and do not spawn a
 coordinator — this pane is the coordinator.
 
