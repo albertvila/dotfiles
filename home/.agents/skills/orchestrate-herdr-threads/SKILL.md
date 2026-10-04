@@ -277,8 +277,9 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
 }
 ```
 
-Record the coordinator's own session once at the start, and `reviewCount` counts
-completed iterations — the initial review is 1, each re-review adds 1. Write an
+Record the coordinator's own session once at the start. `reviewCount` counts
+every completed pass; the findings-round cap reads off the review rounds that
+opened a `fixes[]` entry, per the review contract. Write an
 item `done` only when its review is clean **and** the ponytail pass over its
 files has settled; a diff that changes after a `done` write reopens the item
 explicitly. `ponytail` is a list of passes, appended in order like `reviews` —
@@ -432,11 +433,12 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `$RUNDIR/snapshots/post-<slug>/` and point the review at that instead.
 
    Then start a fresh-eyes review agent — same workspace, reviewer model, its
-   own tab. Scale its depth to the item's risk: a **high-risk** item — real
-   state, logic, or contract surface (schemas, fetch lifecycles, data scoping) —
-   runs `/code-review`; a **mechanical** item — deletions, renames,
-   rendering-only, docs, config — skips `/code-review` and gets the frozen diff
-   plus a short completeness check. Both keep the verdict contract.
+   own tab. Scale its depth to the item's risk, per the review contract: a
+   **high-risk** item — real state, logic, or contract surface (schemas, fetch
+   lifecycles, data scoping) — gets the full adversarial prompt in this thread;
+   a **mechanical** item — deletions, renames, rendering-only, docs, config —
+   gets the frozen diff plus a short completeness check. Neither invokes the
+   two-axis `/code-review` skill.
 5. **One ponytail pass on the combined diff**, once every item's review is
    clean, in its own tab on the full uncommitted diff. The pass reports ponytail
    findings only; anything else it notices goes in the same report as an
@@ -444,8 +446,9 @@ agent, no ledger entry and no reviewer it can honestly claim.
    acceptance criterion — is not a preference: it opens a fix round before the
    commit gate.** The coordinator confirms it against HEAD, the item's files are
    fixed by the worker model (the item's own agent while its pane is live), and
-   the next ponytail pass re-checks it; an item still inside its review loop gets
-   a normal re-review as well. A preference, a style choice, or an observation
+   the next ponytail pass re-checks it; a fix that changes behaviour, state or a
+   contract surface also gets a fresh-eyes review of its delta, per the review
+   contract. A preference, a style choice, or an observation
    with no gate behind it stays out-of-band: not fixed in-run, reported to the
    operator in the run summary. In a multi-repo run there is no combined diff:
    one ponytail pass per item diff, none optional.
@@ -567,7 +570,7 @@ effective choice in the ledger's `models` — `pi-default` when no flag was pass
 
 **The reviewer model follows the item's risk, not the role.** The table's reviewer
 is the model for a **high-risk** item; a **mechanical** item — the same ones step 4
-excuses from `/code-review` — is reviewed on the worker model instead. A review is
+gives the short pass — is reviewed on the worker model instead. A review is
 the longest single agent in a run and the run cannot close until the last one
 settles, so the slowest model on a mechanical diff is wall clock and money spent on
 nothing: 39 minutes and $2.76 for a CLEAN verdict on a 63-line diff, against 59
@@ -582,51 +585,28 @@ inherits nothing from the agent that died.
 
 ## Review loops
 
-- A worker's `DONE` is a claim, not proof. Every code-changing item gets a
-  separate fresh-eyes review agent; a worker or the coordinator reviewing its
-  own work does not count. When the coordinator judges findings it reads the
-  frozen diff or a bounded path only — never an unbounded scan; an unlocatable
-  criterion is reported unverifiable.
-- **`VERDICT CLEAN` ends the loop.** A clean verdict closes the item's review
-  even when it carries non-blocking nits: nits go to the operator in the run
-  summary — they are not fixed in-run and never trigger a re-review. Only
-  `VERDICT FINDINGS` opens a fix round. A **finding** is a defect in behaviour,
-  in a named acceptance criterion, or a failure of a gate this run must pass
-  (lint, typecheck, tests). A **nit** is everything else — a preference, a style
-  choice the gate accepts, an observation with no gate behind it. Lint-gate
-  failures are findings: they fail CI, so they open a fix round.
+What a review is, when it ends, how deep it goes and how a fix round is capped:
+[../orchestrate-bb-threads/review-contract.md](../orchestrate-bb-threads/review-contract.md).
+A worker's `DONE` is a claim, not proof. This section carries only the Herdr
+mechanics.
+
+- Every code-changing item gets a separate fresh-eyes review agent; a worker or
+  the coordinator reviewing its own work does not count. When the coordinator
+  judges findings it reads the frozen diff or a bounded path only — never an
+  unbounded scan; an unlocatable criterion is reported unverifiable.
 - Findings loop back to the **same worker** while its pane is live: re-prompt
   that agent with `prompts/fix-<slug>-f<n>.txt`. If the pane is gone, start a
-  fresh `fix-<slug>-f<n>` agent in the item's worktree. Re-review. **A re-review
-  is scoped to the delta**: its brief names what changed and only the pass-1
-  conclusions that change could have invalidated, because a re-check told to
-  re-settle every earlier conclusion is the run's longest and most expensive
-  agent spent re-deriving a report it already wrote. A delta that changes no
-  logic, state or contract surface (stylesheets, docs, renames) does not re-open
-  the acceptance criteria at all. **Cap: 3 review passes per item** (`reviewCount` reaching 3). A 4th pass is never
-  started: the item is marked `blocked`, its findings are surfaced to the
-  operator, and the rest of the frontier keeps moving.
-- Ponytail fixes are **not** code-reviewed by the item's reviewer: ponytail
-  findings → a fresh worker (titled `FIX · <one-line>` on the worker model)
-  implements them → the ponytail pass re-checks only. The one exception is the
-  defect note step 5 now routes: it is fixed like a finding, re-checked by the
-  next ponytail pass, and re-reviewed when the item's loop is still open. Same
-  cap of 3, same blocked-and-surfaced outcome. That
-  fix round is named under `ponytail[]`, never in `items[].fixes` — the ledger's
+  fresh `fix-<slug>-f<n>` agent in the item's worktree. A ponytail fix runs as a
+  fresh worker titled `FIX · <one-line>` on the worker model. A 4th findings
+  round is never started: the item is `blocked`, its findings are surfaced, and
+  the frontier keeps moving.
+- A non-verdict completion is re-prompted once in the same reviewer — its tab is
+  still open — and does not increment `reviewCount`.
+- Record `reviewCount` for every completed pass; the findings rounds are the
+  review rounds that opened a `fixes[]` entry, and the cap reads off those. A
+  ponytail fix round is named under `ponytail[]`, never in `items[].fixes` — the
   `fixes` array is review-scoped, and the projection reads an extra entry there
   as an in-flight review round.
-- **A finding that contradicts the spec is not a fix round.** When a review or
-  ponytail finding conflicts with the approved manifest or the ticket, the
-  coordinator does not dispatch a fix round for it: it surfaces the conflict to
-  the operator in the verification ask — the finding text and the spec clause it
-  contradicts, both quoted — records it as a follow-up, and the item does not
-  settle `done`. `land` and `unattended` still open the PR and do not merge.
-  An adjudication with no spec citation is a skipped fix round.
-- A completion whose message and report do not start with `VERDICT CLEAN` or
-  `VERDICT FINDINGS` is not a pass and not a findings round. Re-prompt that same
-  reviewer once with the contract — its tab is still open — and do not increment
-  `reviewCount`. A second non-verdict completion is surfaced, never treated as
-  clean.
 
 ## Ticket write-back
 
@@ -693,6 +673,10 @@ has today.
 - A `herdr agent start` that exits non-zero is **not** relaunched blindly: read
   its error code and surface it. A refused start is a fact about the run, not a
   retry prompt.
+- **A turn that ended mid-run is re-entered from the ledger.** After a context
+  exhaustion, a provider error or a suspended host, read `$RUNDIR/orchestration.json`
+  and continue from it — never from memory, and never by starting a second
+  coordinator. This pane is the run's only coordinator.
 - The coordinator never answers a blocked dialog it cannot answer from the
   approved manifest, never stops an agent it did not start, and never closes a
   tab it did not create.
