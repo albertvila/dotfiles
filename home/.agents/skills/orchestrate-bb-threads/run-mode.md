@@ -5,8 +5,8 @@ The manifest line `mode:` is `gated`, `land`, or `unattended`. A missing line is
 | mode | plan yes | commit yes | who merges |
 |---|---|---|---|
 | gated | required | required | Flow A: the operator. Flow B: this run, after that yes |
-| land | required | skipped | this run, after green checks |
-| unattended | skipped | skipped | this run, after green checks |
+| land | required | skipped | nobody. Open the PRs, then stop |
+| unattended | skipped | skipped | nobody. Open the PRs, then stop |
 
 `unattended` does not reduce tickets. One ticket, one item. Reduction is the judgment the plan yes exists to check.
 
@@ -48,16 +48,20 @@ An item with `blockedBy` stays `todo` until those items' PRs are merged to the t
 
 `gated` asks for the commit message and waits. `land` and `unattended` do not ask. The message is a conventional commit built from the item titles, written into the ledger. Then commit and push. Flow A creates the run branch before anything is pushed: a bare push of `HEAD` lands the commit on the base.
 
-Record `reviewedHead` as the sha just pushed. Merge only when `gh pr view --json headRefOid` equals that sha, checks are green net of `ciBaseline`, and the PR is not a draft (`gh pr ready` if it is).
+Record `reviewedHead` as the sha just pushed. Only `gated` Flow B merges, and only when `gh pr view --json headRefOid` equals that sha, checks are green net of `ciBaseline`, and the PR is not a draft (`gh pr ready` if it is).
 
 ```sh
 gh pr merge <url> --<method> --match-head-commit <reviewedHead> --delete-branch
 ```
 
-`<method>` is the first the repo allows of squash, merge, rebase. Do not use `bb environment pull-request merge`. It cannot pin the head.
+`<method>` is the first the repo allows of squash, merge, rebase. Do not use `bb environment pull-request merge`. It cannot pin the head. `land` and `unattended` do not run this command.
 
-Pause, and do not merge, on any of these: a red check the change caused, a head that moved, a spec-conflict finding, a findings cap, a `BLOCKED` worker, a model that did not start, missing `lm` or AWS credentials. Do not revert. Name the sha and stop.
+Pause, and do not merge, on any of these: a red check the change caused, a head that moved, a findings cap, a `BLOCKED` worker, a model that did not start, missing `lm` or AWS credentials. Do not revert. Name the sha and stop.
 
-After a merge, if the target's new check-runs add a failure that is not in `ciBaseline`, pause and name the merge commit. Do not revert it.
+After a `gated` Flow B merge, if the target's new check-runs add a failure that is not in `ciBaseline`, pause and name the merge commit. Do not revert it.
 
-`finishedAt` for `land` and `unattended` waits until that merge has happened, or the run is paused. An open PR is not finished.
+`finishedAt` for `land` and `unattended` is set when every item that could start has an open PR. An unmerged PR is the finished state. Items still `todo` because a blocker PR is unmerged stay `todo` and are named in the verification ask. Do not dispatch that next wave.
+
+## Verification
+
+After the PRs are open, spawn the retro. Do not wait for it to finish, and do not merge. Then ask the operator to verify the opened PRs. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.

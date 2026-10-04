@@ -215,8 +215,9 @@ rules; every one is a candidate for the *What to fix* section.
 - **Gates** — human wait where the skill expects none, or none where `mode`
   requires a plan yes (`gated`, `land`) or a commit yes (`gated` only). A
   `gated` run that committed without asking is the expensive version of this
-  finding. A `land` or `unattended` run that left the PR unmerged, or merged
-  without `--match-head-commit` of `reviewedHead`, is the same finding.
+  finding. A `gated` Flow B merge without `--match-head-commit` of
+  `reviewedHead` is the same finding. A `land` or `unattended` run that merged,
+  or that finished without the verification ask, is a finding.
 - **Verification** — a worker's DONE taken as proof, a PR opened with
   checks red, an item marked done from a claim rather than a clean review.
 - **Ledger drift** — items whose status contradicts their threads, threads

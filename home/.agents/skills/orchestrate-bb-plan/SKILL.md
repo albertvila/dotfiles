@@ -1,6 +1,6 @@
 ---
 name: orchestrate-bb-plan
-description: "Plan a BB orchestration run and take one approval before anything is dispatched, then spawn and babysit the manager thread that executes it. Use when the user says '/orchestrate-bb-plan', or gives a BB Task key, a `.scratch/` feature directory, or a GitHub issue number, `owner/repo#n` or issue URL to run. Pass --land to skip the commit yes and merge, or --unattended to skip the plan yes as well."
+description: "Plan a BB orchestration run and take one approval before anything is dispatched, then spawn and babysit the manager thread that executes it. Use when the user says '/orchestrate-bb-plan', or gives a BB Task key, a `.scratch/` feature directory, or a GitHub issue number, `owner/repo#n` or issue URL to run. Pass --land to skip the commit yes, open the PRs, and stop for verification. Pass --unattended to do that without a plan yes. Neither flag merges."
 argument-hint: "<BB Task key|ULID> | @.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url> [--land|--unattended]"
 disable-model-invocation: true
 ---
@@ -285,4 +285,5 @@ bb thread spawn --parent-self \
 ```
 
 The plan thread's job ends there: report the run's outcome and the retro thread
-to the operator.
+to the operator. When `mode` is `land` or `unattended`, that report is the verification
+ask in `../orchestrate-bb-threads/run-mode.md`. Do not merge.
