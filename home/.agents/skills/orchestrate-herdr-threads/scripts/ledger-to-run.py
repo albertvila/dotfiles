@@ -53,8 +53,8 @@ PONYTAIL = "PON"
 # The closed block vocabulary. Both runtimes write these codes and both retro
 # scripts read them; the contract owns the set and the path behind each code.
 CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "cap_exhausted", "spec_conflict",
-    "model_unavailable", "dispatch_failed", "unclassified",
+    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
+    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
 ))
 
 

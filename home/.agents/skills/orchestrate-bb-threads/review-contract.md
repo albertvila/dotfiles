@@ -28,6 +28,8 @@ A **findings round** is a pass that returns `VERDICT FINDINGS`. A pass after a `
 
 **A re-review is scoped to the delta.** Its brief names what changed and only the earlier conclusions that change could have invalidated. A delta that changes no logic, state or contract surface (stylesheets, docs, renames) does not re-open the acceptance criteria at all. A re-check told to re-settle every earlier conclusion is the run's longest and most expensive agent, spent re-deriving a report it already wrote.
 
+**A re-review is gated on the artifact having moved.** Each pass reads its own frozen diff, and the next pass is spawned only when the new freeze differs from the one the previous pass read. Identical bytes are not a new round: the fix settled without changing anything, so the item is `blocked` with `cause.code: artifact_unchanged`, its findings are surfaced, and the frontier keeps moving. Re-reading unchanged evidence spends one of the three findings rounds on a verdict that is already written.
+
 ## Ponytail fixes
 
 A ponytail finding's fix is re-checked by the next ponytail pass. It skips the fresh-eyes review only when its diff adds no executable behaviour — a pure deletion, a comment, a formatting change. A fix that adds or changes behaviour, state or a contract surface gets a fresh-eyes review of the fix delta before the item settles, and that pass does not consume the findings cap. A ponytail note that names a defect is a finding, not a preference.

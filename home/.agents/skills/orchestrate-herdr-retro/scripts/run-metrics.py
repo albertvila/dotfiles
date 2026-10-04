@@ -26,8 +26,8 @@ DEFAULT_RUNDIR = "."
 # runtime. An item the run stopped on carries a code from this set; anything else
 # is a finding, not a typo to paper over.
 CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "cap_exhausted", "spec_conflict",
-    "model_unavailable", "dispatch_failed", "unclassified",
+    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
+    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
 ))
 
 # A session whose messages pause longer than this is not working: it is waiting on

@@ -89,6 +89,13 @@ This section carries only the BB mechanics.
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
   would orphan the item's branch and desync the ledger's `envId`.
+- **A re-review waits on the artifact, not on the fix's word.** Before spawning
+  review pass n+1, freeze the diff again to `diffs/<item-id>-r<n+1>.diff` (or
+  `snapshots/post-<item-id>-r<n+1>/`) and compare it with the freeze the previous
+  pass read — `cmp -s` for a diff, `diff -rq` for a snapshot. Identical bytes are
+  not a new round: the item is `blocked` with `cause.code: artifact_unchanged`,
+  its findings are surfaced, and the frontier keeps moving. Changed bytes are the
+  delta the re-review is scoped to, and the brief names it.
 - A ponytail fix runs as a **new** child thread on the worker model, titled
   `FIX · <finding>` — a `PONYTAIL …` title is reserved for a ponytail pass.
 - Record `reviewCount` for every completed pass and `fixRounds` for the findings
@@ -195,12 +202,14 @@ manager that never dispatched, whatever it shipped.
 
    ```sh
    mkdir -p "$BB_THREAD_STORAGE/diffs"
-   git diff HEAD -- <item files> > "$BB_THREAD_STORAGE/diffs/<item-id>.diff"
+   git diff HEAD -- <item files> > "$BB_THREAD_STORAGE/diffs/<item-id>-r<n>.diff"
    ```
 
+   `<n>` is the review pass the freeze feeds, and the file is never rewritten:
+   pass n+1 writes its own, which is what lets the re-review gate compare the two.
    If the workspace isn't git-tracked (e.g. a gitignored plugin dir), copy
-   the item's files into `$BB_THREAD_STORAGE/snapshots/post-<item-id>/`
-   instead and have the review diff against the previous item's snapshot.
+   the item's files into `$BB_THREAD_STORAGE/snapshots/post-<item-id>-r<n>/`
+   instead and have the review diff against the previous round's snapshot.
 
    Then spawn a review thread — same shared environment, reviewer model,
    `--parent-self`. Scale its depth to the item's risk (see *Review loops*):
@@ -224,7 +233,7 @@ manager that never dispatched, whatever it shipped.
    ```
 
    The file holds: `Fresh-eyes code review. Review the frozen diff at
-   $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>;
+   $BB_THREAD_STORAGE/diffs/<item-id>-r<n>.diff (item <item-id>: <item scope>;
    acceptance: <the item's acceptance line>; out-of-scope: <the item's
    out-of-scope line>; worker's own account: <the worker's HARDEST / REJECTED /
    UNSURE lines, verbatim from its final message>) against the acceptance stated

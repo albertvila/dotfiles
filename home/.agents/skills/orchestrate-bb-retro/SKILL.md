@@ -217,7 +217,9 @@ rules; every one is a candidate for the *What to fix* section.
   subagents, whose tokens and verdicts never reached the ledger; a ponytail fix
   that changed behaviour and shipped without a fresh-eyes review of its delta; a
   review brief that carried no acceptance line, so the reviewer re-derived the
-  criteria from the ticket.
+  criteria from the ticket; a re-review spawned against a freeze identical to the
+  one the previous pass read, instead of a `blocked` item with
+  `artifact_unchanged`.
 - **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
   count against the cap; the cap is 3 **findings rounds** (`fixRounds`), not
   three passes. At the cap the item should have been surfaced as blocked with
