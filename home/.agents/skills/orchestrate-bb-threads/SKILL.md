@@ -70,72 +70,28 @@ instead.
 
 ## Review loops
 
-- A worker's DONE is a claim, not proof. Every code-changing item gets a
-  separate fresh-eyes review thread; a worker or the manager reviewing its
-  own work does not count. That thread is always a **spawned child thread**:
-  an `Agent`/subagent call inside the authoring thread is not a review. It is
-  invisible to the run record, it leaves the reviewers' tokens unpriced, and
-  the actor that judged the findings is the actor that wrote the diff. It does
-  not increment `reviewCount`, it never closes an item, and a run that used one
-  has no review to point at. The review thread itself must not spawn its own
-  subagents either — their tokens and verdicts never reach the run record; the
-  review thread reports from its own context. The manager never substitutes
-  its own reading of a diff for this review thread. When the manager judges the findings, it
-  reads the frozen diff or a bounded path only — never an unbounded scan;
-  an unlocatable criterion is reported unverifiable.
-- **`VERDICT CLEAN` ends the loop.** A clean verdict closes the item's
-  review even when it carries non-blocking nits: nits go to the operator in
-  the run summary — they are not fixed in-run and never trigger a re-review.
-  Only `VERDICT FINDINGS` opens a fix round. A **finding** is a defect in
-  behaviour, in a named acceptance criterion, or a failure of a gate this run
-  must pass (lint, typecheck, tests). A **nit** is everything else — a
-  preference, a style choice the gate accepts, an observation with no gate
-  behind it. Lint-gate failures are findings: they fail CI, so they open a fix
-  round.
-- Findings loop back to the **same worker**: queue them as a follow-up
-  message to the worker's thread (`bb thread queue create <id> "<findings>"`,
-  then `bb thread queue send`); if the thread is dead, respawn the item's
-  worker with the findings in the prompt. Re-review. **Cap: 3 findings
-  rounds per item** — a findings round is a pass that returns `VERDICT
-  FINDINGS`; a re-review after a `VERDICT CLEAN` (a ponytail reduction, a
-  gate-config addition, a post-review change) does not consume the cap.
-  `reviewCount` still counts every completed review iteration, so record
-  `fixRounds` beside it and read the cap off that. A 4th findings round is
-  never spawned: the item is marked `blocked`, its findings are surfaced to
-  the user, and the rest of the frontier keeps moving.
+What a review is, when it ends, how deep it goes and how a fix round is capped:
+[review-contract.md](review-contract.md). A worker's DONE is a claim, not proof.
+This section carries only the BB mechanics.
+
+- The review thread is always a **spawned child thread**. An `Agent`/subagent
+  call inside the authoring thread is not a review: it is invisible to the run
+  record, its tokens are unpriced, and the actor that judged the findings is the
+  actor that wrote the diff. The manager never substitutes its own reading of a
+  diff for the review thread; when it judges findings it reads the frozen diff
+  or a bounded path only, and an unlocatable criterion is unverifiable.
+- Findings loop back to the **same worker**: queue them as a follow-up message
+  (`bb thread queue create <id> "<findings>"`, then `bb thread queue send`); if
+  the thread is dead, respawn the item's worker with the findings in the prompt.
   **Flow B respawn:** when the worker's thread is dead, respawn with
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
   would orphan the item's branch and desync the ledger's `envId`.
-- Ponytail fixes are **not** code-reviewed: ponytail findings → a **new
-  worker** (a fresh child thread running `/implement` in the same worktree,
-  titled `FIX · <finding>` on the worker model — a `PONYTAIL …` title is
-  reserved for a ponytail pass) implements them → ponytail re-checks only.
-  Same cap of 3, same blocked-and-surfaced outcome.
-- **A finding that contradicts the spec is not a fix round.** When a review or
-  ponytail finding conflicts with the approved manifest or the tracker spec,
-  the manager does not dispatch a fix round for it: it surfaces the conflict to
-  the operator in the verification ask — the finding text and the spec clause it
-  contradicts, both quoted — records it as a follow-up, and the item does not
-  settle `done`. `land` and `unattended` still open the PR and do not merge.
-  The settlement comment quotes both sides; an adjudication with
-  no spec citation is a skipped fix round.
-- Scale review depth to the item's risk. Mechanical items (deletions,
-  renames, rendering-only, docs, config) get a short prompt: verify the
-  change is complete, nothing out of scope was touched, tests/typecheck
-  pass. Items with real state, logic, or contract surface (RPC schemas,
-  fetch lifecycles, data scoping) get the full adversarial pass: every
-  acceptance criterion verified in code, edge cases probed, test fixtures
-  judged for genuine pinning. A uniformly maximal checklist wastes 10–30
-  min per low-risk item; a uniformly minimal one misses the bug only a deep
-  pass catches.
-- Every review and ponytail thread's FINAL message must be the complete
-  report starting with `VERDICT CLEAN` or `VERDICT FINDINGS`; findings must
-  not be recorded as follow-ups instead of reported.
-- A completion whose final message does not start with `VERDICT CLEAN` or
-  `VERDICT FINDINGS` is not a pass and not a findings round. Re-prompt that
-  thread once with the contract. Do not increment `reviewCount` for it. A
-  second non-verdict completion is surfaced, not treated as clean.
+- A ponytail fix runs as a **new** child thread on the worker model, titled
+  `FIX · <finding>` — a `PONYTAIL …` title is reserved for a ponytail pass.
+- Record `reviewCount` for every completed pass and `fixRounds` for the findings
+  rounds; read the cap off `fixRounds`. A non-verdict completion is re-prompted
+  once in the same thread and does not increment `reviewCount`.
 
 ## Flow A — single shared PR
 
@@ -309,12 +265,12 @@ manager that never dispatched, whatever it shipped.
    complete report starting with VERDICT CLEAN or VERDICT FINDINGS, and
    findings must not be recorded as follow-ups instead of reported.`
 
-   **Scope.** The pass reports ponytail findings only. Anything else it
-   notices — a correctness note outside over-engineering — is an out-of-band
-   note the manager surfaces to the operator: never a fix round, never a
-   re-review.
-
-   The fix path and the cap are in *Review loops*.
+   **Scope.** The pass reports ponytail findings only. A note that names a
+   defect — real behaviour, or a named acceptance criterion — is a finding and
+   opens a fix round; a preference, a style choice, or an observation with no
+   gate behind it stays out-of-band, reported to the operator in the run summary
+   and never fixed in-run. The fix path and the cap are in *Review loops* and
+   [review-contract.md](review-contract.md).
 
    In a multi-repo run (see *Cross-repo runs*) there is no combined diff to
    pass: run one ponytail pass per item diff, none optional — the last
@@ -456,13 +412,13 @@ There is no Tasks panel for this — the manager IS the tracker. When the user
 asks for a status view, regenerate the plan diagram with fresh status colors
 (done / in review / todo) from the ledger. Keep
 `$BB_THREAD_STORAGE/orchestration.json` mapping each item to
-`{ threadId, envId, status, blockedBy, reviewCount, prUrl, reviewedHead }` — `threadId` is
+`{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
 belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
 
-`reviewCount` counts completed review iterations: the initial review is `1`
-and each re-review adds `1`. Write the ledger as you go, never batched at
+`reviewCount` counts every completed pass; `fixRounds` counts the findings
+rounds, and the cap reads off `fixRounds` (see [review-contract.md](review-contract.md)). Write the ledger as you go, never batched at
 settlement — `reviewCount` when the iteration completes, `models` and each
 item's `status` as the run moves — the ledger must read true mid-run. Set
 `reviewThreadId` when a round **completes**; if the spawned round is
@@ -540,6 +496,13 @@ it has today, and the Task add-on does not change that.
 - A child reports BLOCKED or its thread dies: read `bb thread log <id>`
   before respawning anything, record the blocker in the ledger, surface it to
   the user, and keep working the rest of the frontier.
+- **The manager never dies mid-item.** When its context is nearly full it
+  writes the ledger and stops — it does not start an item it cannot finish.
+  A manager that stopped with items still `running` or `todo` is replaced by a
+  successor that reads that same ledger, which the plan thread spawns (see
+  `/orchestrate-bb-plan`, *Wait for the run*). The manager never spawns its own
+  replacement, and never forks itself: a fork inherits the context that just
+  ran out.
 
 ## Rules
 

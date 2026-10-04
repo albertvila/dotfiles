@@ -267,9 +267,31 @@ Exit only when `finishedAt` is set in that ledger. A wait timeout is not a
 failure: if the thread is still working, wait again. A long plan turn — an hour
 or more — is normal: it is blocked on `bb thread wait`, not thinking.
 
-A manager that reports `error`, or reaches a terminal state without a
-`finishedAt`, is surfaced to the operator with its log. The plan thread never
-respawns it.
+A manager that reaches a terminal state without `finishedAt` gets **one
+successor**, and only when the ledger shows the run unfinished — an item still
+`running` or `todo` — with no pending gate. Do not respawn the dead thread: a
+fork inherits the context that just ran out. Spawn a fresh manager from the same
+manifest, with the ledger's absolute path as its first line, and wait on that:
+
+```sh
+dataDir=$(bb status --json | jq -r '.dataDir')
+ledger="$dataDir/thread-storage/<manager-id>/orchestration.json"
+{ echo "You are the successor manager for this run. Read $ledger first and
+continue from it — it is the run's record, and you write it in place, not your
+own \$BB_THREAD_STORAGE."; cat "$BB_THREAD_STORAGE/manifest.txt"; } \
+  > "$BB_THREAD_STORAGE/manager-prompt-successor.txt"
+bb thread spawn --parent-self \
+  --environment "$BB_ENVIRONMENT_ID" \
+  --model "<worker-model>" \
+  --title "ORCHESTRATE <feature> · successor" \
+  --permission-mode auto --json \
+  --prompt-file "$BB_THREAD_STORAGE/manager-prompt-successor.txt"
+```
+
+The successor writes that same ledger file, so this loop keeps reading one
+record. Record the succession on the ledger. A manager that ended on a pending
+gate is not replaced — wait again. A second terminal state without `finishedAt`
+is surfaced to the operator with both logs.
 
 ## Spawn the retro
 

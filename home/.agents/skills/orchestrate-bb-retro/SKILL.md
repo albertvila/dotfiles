@@ -205,10 +205,14 @@ rules; every one is a candidate for the *What to fix* section.
   one item split across two models.
 - **Review** — an item that shipped with no review thread; a review read
   from the live worktree rather than the frozen diff or branch; the manager
-  reviewing work it dispatched.
-- **Iterations** — `reviewCount` of 2 or more means a fix round happened;
-  at the cap the item should have been surfaced as blocked. An item that
-  moved on after its third failure is a rule violation, not a success.
+  reviewing work it dispatched; a review thread that used `/code-review`
+  subagents, whose tokens and verdicts never reached the ledger; a ponytail fix
+  that changed behaviour and shipped without a fresh-eyes review of its delta.
+- **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
+  count against the cap; the cap is 3 **findings rounds** (`fixRounds`), not
+  three passes. At the cap the item should have been surfaced as blocked. An
+  item that moved on after its fourth findings round is a rule violation,
+  not a success.
 - **Dispatch** — a long stretch between the run's start and the first
   dispatch; a wave that went out one thread at a time when the plan called
   for parallel lanes.

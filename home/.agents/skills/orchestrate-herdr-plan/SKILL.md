@@ -240,6 +240,11 @@ A worker that reports `blocked` is surfaced to the operator with its question;
 the operator's reply in this pane resumes the run. The coordinator never
 respawns a worker just to avoid a gate.
 
+**A turn that ended mid-run is re-entered from the ledger.** After a context
+exhaustion, a provider error or a suspended host, read `$RUNDIR/orchestration.json`
+and continue from it — never from memory. This pane is the run's only
+coordinator, so it never starts a second one.
+
 ## Spawn the retro
 
 Once `finishedAt` is set in the ledger, spawn the retro as the run's own last

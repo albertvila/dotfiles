@@ -203,7 +203,10 @@ every one is a candidate for the *What to fix* section.
 - **Review** — an item that shipped with no `REVIEW` tab; a review pointed at the
   live worktree instead of `$RUNDIR/diffs/`; a new-file item handed the empty
   `git diff HEAD` and nobody noticed; a non-verdict completion counted as an
-  iteration; `reviewCount` at 4 instead of a blocked-and-surfaced item; the
+  iteration; a 4th findings round instead of a blocked-and-surfaced item (the cap
+  is findings rounds, not passes — a re-review after `CLEAN` is legal); a review
+  that used `/code-review` subagents, pricing them nowhere; a ponytail fix that
+  changed behaviour and shipped without a fresh-eyes review of its delta; the
   coordinator reviewing work it dispatched.
 - **Release** — a tab closed before its verdict was read; a report that never
   reached disk because the only record was the scrollback; a tab the coordinator
