@@ -65,3 +65,25 @@ After a `gated` Flow B merge, if the target's new check-runs add a failure that 
 ## Verification
 
 After the PRs are open, spawn the retro. Do not wait for it to finish, and do not merge. Then ask the operator to verify the opened PRs. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
+
+## After the operator merges
+
+`land` and `unattended` leave the PRs open, so the merge lands after the run read
+`finishedAt` and after the manager's turn ended — nobody is alive to notice it.
+The verification ask is the re-entry: the operator's message that the PRs are
+merged resumes the run's owner (the plan thread on BB, this pane on Herdr), and
+that reply runs the cleanup the merge path would have run.
+
+1. `gh pr view <url> --json state,mergedAt` must read `MERGED` for every PR
+   before anything is deleted. A PR that is not merged stops this here.
+2. Delete each merged branch, local and remote, per repo convention.
+3. Post the final report: what shipped, each item's outcome, and where the run
+   diverged from its plan.
+4. Hand the worktrees over. BB: give the operator each environment id —
+   `bb environment delete` is refused while a thread in it is live, and no run
+   archives threads. Herdr: release the tabs this run created and remove each
+   item worktree with `herdr worktree remove --workspace <item-ws>`, never
+   `--force`.
+
+A run whose verification ask never gets a "merged" reply is finished but not
+cleaned up. Say so rather than guess which branches are safe to delete.

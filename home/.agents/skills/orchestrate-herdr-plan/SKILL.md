@@ -266,6 +266,8 @@ started working. Only `agent_prompt_stalled` or `agent_blocked` needs the
 inspection the threads skill's reply table prescribes.
 
 The retro is read-only against the run; it cannot spawn anything, and it does
-not need to. This pane's job ends by reporting the run's outcome and the retro
-tab to the operator. When `mode` is `land` or `unattended`, that report is the verification
-ask in `../orchestrate-bb-threads/run-mode.md`. Do not merge.
+not need to. For `gated` this pane's job ends by reporting the run's outcome and
+the retro tab to the operator. For `land` and `unattended` that report is the
+verification ask in `../orchestrate-bb-threads/run-mode.md`, and it is **not**
+the last act: the operator's reply that the PRs are merged resumes this pane,
+which runs that file's *After the operator merges* steps. Do not merge.

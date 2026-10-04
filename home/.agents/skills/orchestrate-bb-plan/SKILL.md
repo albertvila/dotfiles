@@ -249,7 +249,8 @@ bb thread spawn --parent-self \
 `--prompt-file` keeps the manifest out of shell quoting. On the pi provider
 `auto` is rejected ("Provider pi only supports full permission mode") — pass
 `full` there, matching the plan thread's own ceiling. Record the manager's
-thread id.
+thread id as `<run-manager-id>`: it is the run's identity, where the ledger
+lives, and the first entry in the ledger's `managerChain`.
 
 ## Wait for the run
 
@@ -289,9 +290,11 @@ bb thread spawn --parent-self \
 ```
 
 The successor writes that same ledger file, so this loop keeps reading one
-record. Record the succession on the ledger. A manager that ended on a pending
-gate is not replaced — wait again. A second terminal state without `finishedAt`
-is surfaced to the operator with both logs.
+record. Append its thread id to the ledger's `managerChain` and wait on it, but
+keep `<run-manager-id>` as the run's identity — the ledger stays in the first
+manager's storage, and that is the id the retro is given. A manager that ended
+on a pending gate is not replaced — wait again. A second terminal state without
+`finishedAt` is surfaced to the operator with both logs.
 
 ## Spawn the retro
 
@@ -303,9 +306,19 @@ bb thread spawn --parent-self \
   --environment "$BB_ENVIRONMENT_ID" \
   --title "RETRO <feature>" \
   --permission-mode auto --json \
-  --prompt "/orchestrate-bb-retro <manager-id>"
+  --prompt "/orchestrate-bb-retro <run-manager-id>"
 ```
 
-The plan thread's job ends there: report the run's outcome and the retro thread
-to the operator. When `mode` is `land` or `unattended`, that report is the verification
-ask in `../orchestrate-bb-threads/run-mode.md`. Do not merge.
+`<run-manager-id>` is the run's identity — the **first** manager, whose storage
+holds the ledger — never the last successor. The retro reaches a successor's
+children through the ledger's `managerChain`; hand it the successor and the
+items dispatched before the succession drop out of the numbers.
+
+For `gated` that is the plan thread's last act: report the run's outcome and the
+retro thread to the operator.
+
+For `land` and `unattended` it is **not**. The run is finished with the PRs open
+and the merge happens after it, so post the verification ask from
+`../orchestrate-bb-threads/run-mode.md` and stay the run's owner. The operator's
+reply that the PRs are merged resumes this thread, which runs that file's
+*After the operator merges* steps. Do not merge.

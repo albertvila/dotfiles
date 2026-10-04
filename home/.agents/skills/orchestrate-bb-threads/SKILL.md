@@ -415,7 +415,13 @@ asks for a status view, regenerate the plan diagram with fresh status colors
 `{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
-belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
+belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
+
+`managerChain` lists the manager threads that held this run, oldest first. The
+plan thread appends a successor when it replaces a manager whose context ran out
+(see `/orchestrate-bb-plan`, *Wait for the run*). The first id is the run's
+identity — where this ledger lives — and the retro walks the chain so a
+successor's children are not lost from the numbers.
 
 `reviewCount` counts every completed pass; `fixRounds` counts the findings
 rounds, and the cap reads off `fixRounds` (see [review-contract.md](review-contract.md)). Write the ledger as you go, never batched at
