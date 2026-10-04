@@ -318,9 +318,8 @@ branch updates the field, or the ledger names a branch it already deleted.
 
 The run is done when every item carries a terminal status (`done`, `failed`, or
 `blocked`), every `done` item's PR is open or merged and handed over, and the
-blocked items are surfaced to the operator. `land` and `unattended` are not done
-on an open PR: `finishedAt` waits until run-mode.md's merge has happened, or the
-run is paused. An out-of-repo item
+blocked items are surfaced to the operator. `land` and `unattended` set
+`finishedAt` when the PRs are open. An unmerged PR is finished for those modes. An out-of-repo item
 (`A+cross-repo`) has no PR to hand over: its named operator gate stands in for
 one, and it is surfaced like a blocked item until that gate is done. Once
 `finishedAt` is written, the run's last act is its retro agent — spawn it exactly
@@ -480,8 +479,7 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `gh pr checks <n>` names what is still running, and the PR is done when those
    are green — never read absence from merged history. The body carries the
    closing lines below.
-7. **Post-merge cleanup.** `land` and `unattended` merge with the command in
-   [run-mode.md](../orchestrate-bb-threads/run-mode.md) before this step; `gated`
+7. **Post-merge cleanup.** `land` and `unattended` do not merge. `gated`
    waits until the operator merges. Then pull the base branch,
    delete the merged branch, post the final report (what shipped, per-item
    outcomes), and release every tab this coordinator created — including the
@@ -523,9 +521,10 @@ Then run Flow A steps 2–7 with these deltas:
   [run-mode.md](../orchestrate-bb-threads/run-mode.md): `gated` asks, `land` and
   `unattended` do not. Commit the branch from the coordinator with
   `git -C <wt-path>`.
-- **Merge the wave, then dispatch the next.** Merge each ready PR with the
-  `gh pr merge --match-head-commit` command in run-mode.md. After the wave is
-  merged, fetch and create worktrees for the items it unblocked. Retire each
+- **Merge the wave, then dispatch the next.** Only `gated` merges each ready
+  PR, with the `gh pr merge --match-head-commit` command in run-mode.md.
+  `land` and `unattended` do not merge and do not dispatch the next wave. After a
+  `gated` wave is merged, fetch and create worktrees for the items it unblocked. Retire each
   item's worktree once its PR is merged and its agents are gone:
   `herdr worktree remove --workspace <item-ws>`. Do **not** pass `--force`: a
   dirty worktree refusing to be removed is the signal that work is still in it,
@@ -558,7 +557,7 @@ Role defaults, passed on `herdr agent start` as pi flags after `--`:
 | Role | Start flag | Default |
 |---|---|---|
 | worker | *(none)* | pi's configured default (`~/.pi/agent/settings.json`) |
-| code-review | `-- --model openrouter/anthropic/claude-sonnet-5` | sonnet-5 |
+| code-review | `-- --model openrouter/z-ai/glm-5.3` | GLM 5.3 |
 | ponytail | *(none)* | pi's configured default |
 
 A per-run override is the manifest's model line: "workers on X, reviewers on Y";
@@ -619,9 +618,10 @@ inherits nothing from the agent that died.
 - **A finding that contradicts the spec is not a fix round.** When a review or
   ponytail finding conflicts with the approved manifest or the ticket, the
   coordinator does not dispatch a fix round for it: it surfaces the conflict to
-  the operator at the next gate — the finding text and the spec clause it
-  contradicts, both quoted — records it as a follow-up, and the item may still
-  settle `done`. An adjudication with no spec citation is a skipped fix round.
+  the operator in the verification ask — the finding text and the spec clause it
+  contradicts, both quoted — records it as a follow-up, and the item does not
+  settle `done`. `land` and `unattended` still open the PR and do not merge.
+  An adjudication with no spec citation is a skipped fix round.
 - A completion whose message and report do not start with `VERDICT CLEAN` or
   `VERDICT FINDINGS` is not a pass and not a findings round. Re-prompt that same
   reviewer once with the contract — its tab is still open — and do not increment

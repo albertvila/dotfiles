@@ -214,9 +214,10 @@ every one is a candidate for the *What to fix* section.
 - **Gates** — a dispatch before the plan approval when `mode` is `gated` or
   `land`; a commit before the operator's yes when `mode` is `gated`; a
   coordinator that kept working after asking; human wait where the skill
-  expects none. A `land` or `unattended` run that left the PR unmerged, or
-  merged without `--match-head-commit` of `reviewedHead`, is a finding. An
-  `unattended` run that reduced tickets is a finding.
+  expects none. A `gated` Flow B merge without `--match-head-commit` of
+  `reviewedHead` is a finding. A `land` or `unattended` run that merged, or that
+  finished without the verification ask, is a finding. An `unattended` run that
+  reduced tickets is a finding.
 - **Verification** — a PR opened with checks red; an item marked `done` from a
   claim rather than a clean review; `finishedAt` written while an item was still
   in flight.

@@ -42,7 +42,7 @@ Role defaults, passed via `--model` when spawning:
 | Role        | Default model (`--model` id)           |
 |-------------|----------------------------------------|
 | worker      | `openrouter/deepseek/deepseek-v4.1-flash` |
-| code-review | `openrouter/anthropic/claude-sonnet-5`    |
+| code-review | `openrouter/z-ai/glm-5.3`                     |
 | ponytail    | `openrouter/deepseek/deepseek-v4.1-flash` |
 
 These are live catalog ids, not display names. Use the openrouter route only,
@@ -115,9 +115,10 @@ instead.
 - **A finding that contradicts the spec is not a fix round.** When a review or
   ponytail finding conflicts with the approved manifest or the tracker spec,
   the manager does not dispatch a fix round for it: it surfaces the conflict to
-  the operator at the next gate — the finding text and the spec clause it
-  contradicts, both quoted — records it as a follow-up, and the item may still
-  settle `done`. The settlement comment quotes both sides; an adjudication with
+  the operator in the verification ask — the finding text and the spec clause it
+  contradicts, both quoted — records it as a follow-up, and the item does not
+  settle `done`. `land` and `unattended` still open the PR and do not merge.
+  The settlement comment quotes both sides; an adjudication with
   no spec citation is a skipped fix round.
 - Scale review depth to the item's risk. Mechanical items (deletions,
   renames, rendering-only, docs, config) get a short prompt: verify the
@@ -369,9 +370,8 @@ manager that never dispatched, whatever it shipped.
 
    The body carries the closing lines below (see *PR body closing lines*).
 
-7. **Post-merge cleanup.** `land` and `unattended` merge with the command in
-   [run-mode.md](run-mode.md) before this step; `gated` waits until the user
-   merges on GitHub. Then pull main,
+7. **Post-merge cleanup.** `land` and `unattended` do not merge. `gated`
+   waits until the user merges on GitHub. Then pull main,
    delete the merged branch, and post a final report (what shipped, per-item
    outcomes). Retiring the worktree is a hand-off, not a manager action:
    `bb environment delete` is refused while any thread in the environment is
@@ -426,10 +426,11 @@ Then run Flow A steps 2–7 with these deltas:
   item's worktree, against the same detected base. Same done check.
   Its body carries the closing lines below (see *PR body closing lines*).
   Merging items into one PR is the Flow A shape.
-- **Merge the wave, then dispatch the next.** Merge each ready PR with the
-  `gh pr merge --match-head-commit` command in [run-mode.md](run-mode.md).
-  Do not use `bb environment pull-request merge`. After the wave is merged,
-  fetch and spawn the items it unblocked. Hand worktree retirement to the
+- **Merge the wave, then dispatch the next.** Only `gated` merges each ready
+  PR, with the `gh pr merge --match-head-commit` command in
+  [run-mode.md](run-mode.md). `land` and `unattended` do not merge and do not
+  dispatch the next wave. Do not use `bb environment pull-request merge`. After a
+  `gated` wave is merged, fetch and spawn the items it unblocked. Hand worktree retirement to the
   user: the manager never archives threads (see *Rules*), and
   `bb environment delete <env-id>` is refused while threads are live.
 
@@ -458,7 +459,7 @@ asks for a status view, regenerate the plan diagram with fresh status colors
 `{ threadId, envId, status, blockedBy, reviewCount, prUrl, reviewedHead }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
-belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` waits until [run-mode.md](run-mode.md)'s merge has happened.
+belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
 
 `reviewCount` counts completed review iterations: the initial review is `1`
 and each re-review adds `1`. Write the ledger as you go, never batched at

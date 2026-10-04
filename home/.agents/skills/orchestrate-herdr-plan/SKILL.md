@@ -1,6 +1,6 @@
 ---
 name: orchestrate-herdr-plan
-description: "Plan a Herdr orchestration run and take one approval before anything is dispatched, then run it as the coordinator of this Herdr pane with /orchestrate-herdr-threads. Use when the user says '/orchestrate-herdr-plan', or gives a `.scratch/` feature directory, a GitHub issue number, `owner/repo#n` or an issue URL to run. Pass --land to skip the commit yes and merge, or --unattended to skip the plan yes as well."
+description: "Plan a Herdr orchestration run and take one approval before anything is dispatched, then run it as the coordinator of this Herdr pane with /orchestrate-herdr-threads. Use when the user says '/orchestrate-herdr-plan', or gives a `.scratch/` feature directory, a GitHub issue number, `owner/repo#n` or an issue URL to run. Pass --land to skip the commit yes, open the PRs, and stop for verification. Pass --unattended to do that without a plan yes. Neither flag merges."
 argument-hint: "@.scratch/<feature>/ | <#issue|owner/repo#issue|issue-url> [--land|--unattended]"
 disable-model-invocation: true
 ---
@@ -117,7 +117,7 @@ excluded issue is named by number in the approval message, under the
    workspace; the operator watches them in the tab bar and the coordinator never
    shares a pane with them. Role models are pi's own: workers and the ponytail
    pass run on pi's configured default and reviews default to
-   `openrouter/anthropic/claude-sonnet-5`, passed as
+   `openrouter/z-ai/glm-5.3`, passed as
    `-- --model <pattern>`. Read pi's default once so the approval states it
    truthfully rather than guessing:
 
@@ -262,4 +262,5 @@ inspection the threads skill's reply table prescribes.
 
 The retro is read-only against the run; it cannot spawn anything, and it does
 not need to. This pane's job ends by reporting the run's outcome and the retro
-tab to the operator.
+tab to the operator. When `mode` is `land` or `unattended`, that report is the verification
+ask in `../orchestrate-bb-threads/run-mode.md`. Do not merge.
