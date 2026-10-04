@@ -210,7 +210,9 @@ rules; every one is a candidate for the *What to fix* section.
   from the live worktree rather than the frozen diff or branch; the manager
   reviewing work it dispatched; a review thread that used `/code-review`
   subagents, whose tokens and verdicts never reached the ledger; a ponytail fix
-  that changed behaviour and shipped without a fresh-eyes review of its delta.
+  that changed behaviour and shipped without a fresh-eyes review of its delta; a
+  review brief that carried no acceptance line, so the reviewer re-derived the
+  criteria from the ticket.
 - **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
   count against the cap; the cap is 3 **findings rounds** (`fixRounds`), not
   three passes. At the cap the item should have been surfaced as blocked. An
@@ -226,7 +228,8 @@ rules; every one is a candidate for the *What to fix* section.
   `reviewedHead` is the same finding. A `land` or `unattended` run that merged,
   or that finished without the verification ask, is a finding.
 - **Verification** — a worker's DONE taken as proof, a PR opened with
-  checks red, an item marked done from a claim rather than a clean review.
+  checks red, a PR body with no intent block, so the merge gate got a diff skim,
+  an item marked done from a claim rather than a clean review.
 - **Ledger drift** — items whose status contradicts their threads, threads
   the ledger never recorded, or a `prUrl` that never arrived.
 

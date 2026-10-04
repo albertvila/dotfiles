@@ -12,7 +12,7 @@ commands is harmless.
 **Settlement is comments only.** The manager never closes an issue, and never
 adds, removes, or repurposes a label at settlement — the claim already dropped
 `ready-for-agent`, and this write does not touch labels again. Closing is the
-PR's job — the PR body carries the closing lines (see *PR body closing lines*
+PR's job — the PR body carries the closing lines (see *PR body*
 in [SKILL.md](SKILL.md)).
 
 An item's issue number comes from its ticket reference in the manifest, never

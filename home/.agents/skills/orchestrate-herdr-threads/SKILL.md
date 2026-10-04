@@ -185,7 +185,10 @@ shell-quoting bug. Every prompt is self-contained: target, change, constraints,
 ownership, observable acceptance — and the report contract. **Paths are spelled
 out absolutely in the prompt file**: a worker tab is a fresh shell with no
 `$RUNDIR` in its environment. Work orders never restate lifecycle mechanics
-(start flags, wait loops); those are this skill's.
+(start flags, wait loops); those are this skill's. Every prompt also quotes the
+item's `acceptance` and `out-of-scope` lines verbatim from the manifest: those
+are the criteria a review checks, and a reviewer never re-derives them from the
+ticket.
 
 **Worker** (`item-<slug>.txt`) — ends with:
 
@@ -202,7 +205,8 @@ out absolutely in the prompt file**: a worker tab is a fresh shell with no
 > Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>.diff`, not the live
 > worktree — another worker may already be changing those files; read worktree
 > files for surrounding context only. Report findings against the item's
-> acceptance criteria. Do not edit files. A test proved non-vacuous by reverting
+> acceptance criteria and within its out-of-scope line, both quoted above. Do
+> not edit files. A test proved non-vacuous by reverting
 > the change is reverted in a **scratch copy** — a `/tmp` copy, or
 > `git worktree add --detach` — never in this worktree, which holds other items'
 > uncommitted work; a gate you run in this worktree measures whatever else is
@@ -231,8 +235,8 @@ agent; a fresh `fix-<slug>-f<n>` agent starts only when the worker's pane is gon
 There is no Tasks panel for this — the coordinator IS the tracker. **Open the
 run first:** create its working directories, record the coordinator's own
 session, and seed the ledger from the manifest — items with `status: todo`,
-`reviewCount: 0`, `startedAt` (UTC), the manifest's plan gate under
-`gates.plan`, and the resolved `models`. Then dispatch, before reading any item's
+`reviewCount: 0`, `criteria` from the item's acceptance line, `startedAt` (UTC),
+the manifest's plan gate under `gates.plan`, and the resolved `models`. Then dispatch, before reading any item's
 files. Keep `$RUNDIR/orchestration.json` true as the run moves, never batched at
 settlement — and stamp the times the pane and the retro both read: `startedAt`
 when you dispatch a worker or a review, `endedAt` when it settles:
@@ -257,7 +261,7 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
   "items": {
     "<id>": {
       "title": "…", "slug": "<slug>", "ticket": "<ref>",
-      "criteria": "…",                     // optional: what the reviewer checks against
+      "criteria": "…",                      // the manifest's acceptance line, verbatim
       "worker": { "agent": "item-<slug>", "pane": "…", "tab": "…", "session": "…" },
       "worktree": null,                      // Flow B: {workspace, path, branch}
       "status": "todo",                      // todo | running | done | failed | blocked
@@ -625,9 +629,17 @@ Dispatch on the manifest's `tracker:` value:
 The coordinator owns these writes and writes to a ticket only once its item has
 settled — a worker's `DONE` alone does not settle an item.
 
-## PR body closing lines
+## PR body
 
-For a `tracker: github` run the PR body carries the closing lines:
+Every run's PR body opens with the run's **intent**, before any
+tracker-specific closing lines: for each item the PR carries (Flow A: every
+item; Flow B: its own), its title, its `acceptance` line and its `out-of-scope`
+line from the manifest, verbatim, followed by that item's review verdict. The
+operator merges on this block plus the verdicts, not on a diff — the diff is
+what the review tabs already read and priced, and an operator handed a diff
+skim has been given back the cost the run existed to remove.
+
+For a `tracker: github` run the body then carries the closing lines:
 
 - `Closes #n` for every issue that maps to an item — each sub-issue that became
   an item, and the parent itself when the parent *is* the item (a parent with no
@@ -638,8 +650,8 @@ For a `tracker: github` run the PR body carries the closing lines:
 - Flow A's single PR lists `Closes` for every item issue; Flow B's per-item PR
   closes only its own item's issue.
 
-Only `tracker: github` adds closing lines: a `.scratch` run keeps the PR body it
-has today.
+Only `tracker: github` adds closing lines: a `.scratch` run's PR body is the
+intent block alone.
 
 ## Failure handling
 

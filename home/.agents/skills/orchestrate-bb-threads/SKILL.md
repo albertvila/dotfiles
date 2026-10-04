@@ -144,10 +144,13 @@ manager that never dispatched, whatever it shipped.
      --prompt "$(cat "$BB_THREAD_STORAGE/prompt-<item-id>.txt")"
    ```
 
-   The file holds: `Work this item only: <self-contained instructions>. You
-   are in the manager's shared worktree — leave your changes uncommitted and
-   do NOT commit or push. When done, your final message must state DONE or
-   BLOCKED and a 3-line summary of what changed / what blocks you.`
+   The file holds: `Work this item only: <self-contained instructions>. The
+   instructions carry the item's acceptance line and its out-of-scope line,
+   verbatim from the manifest, alongside the ticket's spec context — the bar is
+   the manifest's, not the ticket's. You are in the manager's shared worktree —
+   leave your changes uncommitted and do NOT commit or push. When done, your
+   final message must state DONE or BLOCKED and a 3-line summary of what
+   changed / what blocks you.`
 
    Record each returned thread id in the ledger.
 
@@ -215,9 +218,11 @@ manager that never dispatched, whatever it shipped.
    ```
 
    The file holds: `Fresh-eyes code review. Review the frozen diff at
-   $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>)
-   against the item's acceptance criteria and this repo's documented
-   standards — do NOT review the live worktree diff, another worker may
+   $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>;
+   acceptance: <the item's acceptance line>; out-of-scope: <the item's
+   out-of-scope line>) against the acceptance stated above and this repo's
+   documented standards — never a criterion re-derived from the ticket. Do NOT
+   review the live worktree diff, another worker may
    already be changing those files; read worktree files only for surrounding
    context. Do not edit files, and do not spawn your own sub-agents to do any
    of it — report in this thread. This worktree is shared with other items'
@@ -324,7 +329,7 @@ manager that never dispatched, whatever it shipped.
    not dispatch or commit the change it implies until the operator answers with
    a direction; a question read as consent is a gate opened for them.
 
-   The body carries the closing lines below (see *PR body closing lines*).
+   The body carries the closing lines and the intent block below (see *PR body*).
 
 7. **Post-merge cleanup.** `land` and `unattended` do not merge. `gated`
    waits until the user merges on GitHub. Then pull main,
@@ -380,7 +385,7 @@ Then run Flow A steps 2–7 with these deltas:
   pull-request ready <env-id>` — each worktree environment owns its PR).
   After that PR is open, run Flow A step 6's lm status commands in that
   item's worktree, against the same detected base. Same done check.
-  Its body carries the closing lines below (see *PR body closing lines*).
+  Its body carries the closing lines and the intent block below (see *PR body*).
   Merging items into one PR is the Flow A shape.
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in
@@ -476,9 +481,17 @@ The manager owns these writes. The plan thread makes one write of its own —
 the Task's `in_progress` at spawn, only when a Task is in play — and writes
 nothing after that.
 
-## PR body closing lines
+## PR body
 
-For a `tracker: github` run the PR body carries the closing lines:
+Every run's PR body opens with the run's **intent**, before any
+tracker-specific closing lines: for each item the PR carries (Flow A: every
+item; Flow B: its own), its title, its `acceptance` line and its `out-of-scope`
+line from the manifest, verbatim, followed by that item's review verdict. The
+operator merges on this block plus the verdicts, not on a diff — the diff is
+what the review threads already read and priced, and an operator handed a diff
+skim has been given back the cost the run existed to remove.
+
+For a `tracker: github` run the body then carries the closing lines:
 
 - `Closes #n` for every issue that maps to an item — each sub-issue that
   became an item, and the parent itself when the parent *is* the item (a
@@ -489,8 +502,8 @@ For a `tracker: github` run the PR body carries the closing lines:
 - Flow A's single PR lists `Closes` for every item issue; Flow B's per-item PR
   closes only its own item's issue.
 
-Only `tracker: github` adds closing lines: a `.scratch` run keeps the PR body
-it has today, and the Task add-on does not change that.
+Only `tracker: github` adds closing lines: a `.scratch` run's PR body is the
+intent block alone, and the Task add-on does not change that.
 
 ## Failure handling
 

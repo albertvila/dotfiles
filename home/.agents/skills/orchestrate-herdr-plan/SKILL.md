@@ -108,11 +108,19 @@ excluded issue is named by number in the approval message, under the
    merge rather than a PR, or an acceptance criterion no single reviewer can
    cover. Name that exception in the approval message. `mode: unattended` skips
    this reduction: one ticket, one item. Say that in the plan record.
-5. Flag the special handling so the coordinator and its reviewers start with the
+5. **Capture each item's intent — from this session, not from the ticket.** One
+   line of acceptance: what proves the item works, which is exactly what its
+   reviewer checks. One line of out-of-scope: what the item is not claiming and
+   its reviewer must not require. Both come from the discussion that produced
+   this approval. The ticket was written before the work, so it cannot carry a
+   decision made here, and a reviewer that re-derives the criteria from it is
+   checking a document nobody updated. An item whose acceptance one review
+   thread cannot hold is an item to split (step 4).
+6. Flag the special handling so the coordinator and its reviewers start with the
    facts: run-alone resets, items ending in a push or merge, approval gates, and
    any acceptance criterion reaching into another repo or plugin — list that
    path.
-6. Record the **launch reality**. Workers, reviewers and the ponytail pass are
+7. Record the **launch reality**. Workers, reviewers and the ponytail pass are
    all `herdr agent start … --kind pi` agents in their own tabs of this
    workspace; the operator watches them in the tab bar and the coordinator never
    shares a pane with them. Role models are pi's own: workers and the ponytail
@@ -131,7 +139,8 @@ excluded issue is named by number in the approval message, under the
    not work stops the run (see *Models* in `/orchestrate-herdr-threads`).
 
 The plan is ready to render when every ticket has a disposition — its own item or
-merged — and every item has a file scope, a wave, and any exception named.
+merged — and every item has a file scope, an acceptance line, an out-of-scope
+line, a wave, and any exception named.
 
 ## Render the plan
 
@@ -209,9 +218,13 @@ Field list, and nothing else:
 - the plan gate: `plan-gate: requested=<ISO-8601 UTC> approved=<ISO-8601 UTC>`,
   so the ledger opens with real human-wait numbers
 - the items, one per line:
-  `id · short title · ticket · file scope · blockedBy` — the ticket is the
-  item's own reference, `#<issue-number>` for GitHub, so the coordinator fetches
-  exactly the ticket an item names rather than re-deriving it
+  `id · short title · ticket · file scope · blockedBy · acceptance ·
+  out-of-scope` — the ticket is the item's own reference, `#<issue-number>` for
+  GitHub, so the coordinator fetches exactly the ticket an item names rather
+  than re-deriving it. `acceptance` and `out-of-scope` are the item's intent, one
+  line each, verbatim from the plan discussion: the coordinator quotes them in
+  the worker prompt, the review brief and the PR body, and never substitutes the
+  ticket's own wording
 - the waves: which item ids dispatch together
 - run notes the tickets cannot supply: cross-repo paths, run-alone handling,
   approval gates
@@ -220,6 +233,8 @@ Field list, and nothing else:
 The test for inclusion is procedural: **does this line tell the executor how to
 do something its own skill already specifies?** If yes, cut it. Start flags,
 review loops and the ledger mechanics live in `/orchestrate-herdr-threads`.
+Intent is not mechanics: an item's acceptance and out-of-scope lines are data
+about what that item is, and they stay.
 
 ## Execute the run
 
