@@ -173,12 +173,15 @@ def _merge(intervals):
     return out
 
 
-def _human_only_ms(manager, rows):
+def _human_only_ms(managers, rows):
     """Human wait that overlaps no thread's active turn. That is the part a
-    two-day \"yes\" adds to the span, and the part orchestrator time drops."""
-    if not manager:
-        return 0
+    two-day \"yes\" adds to the span, and the part orchestrator time drops.
+
+    Read from every manager in the run's chain, not only the thread that started
+    it: a successor that asked the operator a question waited just as humanly.
+    """
     human = _merge([wait["at"] - wait["ms"], wait["at"]]
+                   for manager in managers
                    for wait in manager["humanWaits"]
                    if wait.get("counted") and wait.get("ms") and wait.get("at"))
     work = _merge(iv for row in rows for iv in (row.get("_intervals") or []))
@@ -657,7 +660,8 @@ def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
         "startedAt": iso(run_start),
         "endedAt": iso(run_end),
         "spanMs": span,
-        "orchestratorMs": max(0, span - (human_only := _human_only_ms(manager, rows))),
+        "orchestratorMs": max(0, span - (human_only := _human_only_ms(
+            [r for r in rows if r["role"] == "manager"], rows))),
         "humanExcludedMs": human_only,
         "workWindowMs": work_window,
         "managerWaitMs": manager["waitMs"] if manager else 0,

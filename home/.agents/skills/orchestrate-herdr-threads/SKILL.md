@@ -493,13 +493,12 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `gh pr checks <n>` names what is still running, and the PR is done when those
    are green — never read absence from merged history. The body carries the
    closing lines below.
-7. **Post-merge cleanup.** `land` and `unattended` do not merge. `gated`
-   waits until the operator merges. Then pull the base branch,
-   delete the merged branch, post the final report (what shipped, per-item
-   outcomes), and release every tab this coordinator created — including the
-   worker tabs kept open through the run. The operator's own panes are theirs.
-   The merge usually lands after `finishedAt`, when this pane's turn is already
-   over, so the operator saying "merged" is the re-entry that runs this step: stamp
+7. **Post-merge cleanup.** The sequence is
+   [run-mode.md](../orchestrate-bb-threads/run-mode.md)'s *After the operator
+   merges* — `gated` runs it when the operator says the PR merged, `land` and
+   `unattended` when the same reply answers the verification ask. Herdr's part:
+   release every tab this coordinator created, including the worker tabs kept
+   open through the run — the operator's own panes are theirs — and stamp
    `pr.mergedAt` and `postMerge` in that turn. A ledger closed with
    `postMerge.pending` ("operator merge of PR …") and `mergedAt: null` is a run
    whose step 7 has not happened yet — nobody should read that as a finished one.
