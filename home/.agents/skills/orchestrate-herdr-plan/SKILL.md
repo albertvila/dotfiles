@@ -202,32 +202,27 @@ Comments are append-only in both trackers — a re-plan appends a versioned reco
 ## The manifest
 
 Write `$RUNDIR/manifest.txt` for the threads skill: data only, no instructions.
-Field list, and nothing else:
+The field list, the item line and wave line formats, and what every header line
+means are [`../orchestrate-bb-threads/manifest-contract.md`](../orchestrate-bb-threads/manifest-contract.md)
+— that file owns the shape, and the shape is the same in both runtimes. What
+goes in it is this skill's:
 
-- the feature name and the run directory `$RUNDIR`
-- the tracker, explicit and never inferred from the shape of a reference:
-  `tracker: scratch <feature>` or `tracker: github <owner/repo>#<parent>`
-- the flow: `A`, `B`, or the cross-repo shape named as itself — and
-  `A+cross-repo` when the items mix an in-repo item with one whose files sit
-  outside every repository (no worktree, no branch, no PR is possible). Never
-  write such a run as plain `A`: the threads skill dispatches on this field, and
-  the ledger and the retro trust it
-- `mode: gated`, `mode: land`, or `mode: unattended` — never omit it. The
-  threads skill treats a missing line as `gated`
-- the base branch for a Flow B or cross-repo run: `base: <ref>`
-- the plan gate: `plan-gate: requested=<ISO-8601 UTC> approved=<ISO-8601 UTC>`,
-  so the ledger opens with real human-wait numbers
-- the items, one per line:
-  `id · short title · ticket · file scope · blockedBy · acceptance ·
-  out-of-scope` — the ticket is the item's own reference, `#<issue-number>` for
-  GitHub, so the coordinator fetches exactly the ticket an item names rather
-  than re-deriving it. `acceptance` and `out-of-scope` are the item's intent, one
-  line each, verbatim from the plan discussion: the coordinator quotes them in
-  the worker prompt, the review brief and the PR body, and never substitutes the
-  ticket's own wording
-- the waves: which item ids dispatch together
-- run notes the tickets cannot supply: cross-repo paths, run-alone handling,
-  approval gates
+- the feature name and the run directory `$RUNDIR`, so the run can be found
+  again
+- the tracker, explicit and never inferred from the shape of a reference
+- the flow — and `A+cross-repo` written as itself when the items mix an in-repo
+  item with one whose files sit outside every repository (no worktree, no
+  branch, no PR is possible). Never write such a run as plain `A`: the threads
+  skill dispatches on this field, and the ledger and the retro trust it
+- the `mode` line, never omitted; the base for a Flow B or cross-repo run; and
+  the plan gate, so the ledger opens with real human-wait numbers
+- the items, each naming its own ticket — `#<issue-number>` for GitHub, so the
+  coordinator fetches exactly the ticket an item names rather than re-deriving
+  it — with its acceptance and out-of-scope lines one line each, verbatim from
+  the plan discussion: the coordinator quotes them in the worker prompt, the
+  review brief and the PR body, and never substitutes the ticket's own wording
+- the waves, and any run note the tickets cannot supply: cross-repo paths,
+  run-alone handling, approval gates
 - a model line only when the operator overrode the role defaults
 
 The test for inclusion is procedural: **does this line tell the executor how to
@@ -235,6 +230,20 @@ do something its own skill already specifies?** If yes, cut it. Start flags,
 review loops and the ledger mechanics live in `/orchestrate-herdr-threads`.
 Intent is not mechanics: an item's acceptance and out-of-scope lines are data
 about what that item is, and they stay.
+
+**Check it before handing it on.** The contract's checker is the machine form of
+the completeness sentence above — the plan is ready to render when every item has
+a scope, an acceptance line, an out-of-scope line and a wave:
+
+```sh
+python3 ~/.agents/skills/orchestrate-bb-threads/scripts/validate-manifest.py "$RUNDIR/manifest.txt"
+```
+
+`FAIL:` names every error with the line it is on; a non-zero exit means the
+manifest is not the plan that was approved. Fix what it names and run it again.
+If a fix changes an item, a file scope, an acceptance line, a wave or the mode,
+the approval no longer covers the run — re-render the plan and take it again
+(`unattended` records it rather than asking) before anything is dispatched.
 
 ## Execute the run
 
