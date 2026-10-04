@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Aggregate timing, tokens, cost and anomalies for one BB run.
 
-A run is a manager thread plus its children (workers, review, ponytail). All
+A run is a manager thread plus its children (workers, review, ponytail). A run
+that outlived one manager's context holds one ledger and more than one manager
+thread: the ledger's `managerChain` names them, oldest first, and every manager
+in it plus every child of each is part of the run. All
 numbers come from `bb thread log --json` events and, when present, the run's
 `orchestration.json` ledger. Read-only against the run: nothing is written
 except the pricing cache and, when `--output-dir` is given, the record.
@@ -11,7 +14,9 @@ except the pricing cache and, when `--output-dir` is given, the record.
     run-metrics.py --self-test
 
 The record is assembled by `assemble_record`, a pure function of the events,
-the ledger and the run's identity; `--self-test` asserts against it.
+the ledger and the run's identity; `--self-test` asserts against it. Pass the
+run's identity — the first manager in `managerChain`, which is where the ledger
+lives — not the last one.
 
 Timing caveat: in a shared-worktree run the phases overlap on purpose, so
 per-role totals sum to more than the run's wall-clock span. Both are reported.
@@ -62,6 +67,11 @@ def role_of(title, is_manager=False):
     if t.startswith("PONYTAIL"):
         return "ponytail"
     return "worker"
+
+
+def manager_ids(manager_id, chain=()):
+    """The run's managers, identity first, without duplicates or blanks."""
+    return [manager_id] + [tid for tid in chain if tid and tid != manager_id]
 
 
 def iso(ms):
@@ -694,6 +704,8 @@ def record_dirname(record):
 
 def self_test():
     """Assert the pure logic: pricing, cost arithmetic, ledger shapes, M1-M5."""
+    assert manager_ids("m1") == ["m1"]
+    assert manager_ids("m1", ["m2", "m1", "", None]) == ["m1", "m2"]
     price = {"prompt": 1e-6, "completion": 1e-5, "input_cache_read": 1e-7}
     tokens = {"inputTokens": 1000, "cacheReadInputTokens": 2000,
               "cacheWriteInputTokens": 0, "outputTokens": 100}
@@ -1006,10 +1018,29 @@ def children_of(manager_id):
     return out
 
 
-def fetch_run(manager_id):
-    manager = bb("thread", "show", manager_id, "--json")["thread"]
-    manager["isManager"] = True
-    return [{"meta": t, "events": thread_events(t["id"])} for t in [manager] + children_of(manager_id)]
+def fetch_run(manager_id, chain=()):
+    """The run's managers and every child of each, as `assemble_record` wants them.
+
+    `manager_id` is the run's identity. `chain` is the ledger's
+    `managerChain`: the managers that held this run, oldest first. Every one of
+    them is the manager role, and the children of all of them are the run's
+    children — a successor's workers hang off the successor, not off the thread
+    that started the run.
+    """
+    ids = manager_ids(manager_id, chain)
+    managers = []
+    for tid in ids:
+        meta = bb("thread", "show", tid, "--json")["thread"]
+        meta["isManager"] = True
+        managers.append(meta)
+    metas = list(managers)
+    known = {m["id"] for m in metas}
+    for tid in ids:
+        for child in children_of(tid):
+            if child["id"] not in known:
+                known.add(child["id"])
+                metas.append(child)
+    return [{"meta": t, "events": thread_events(t["id"])} for t in metas]
 
 
 def project_name(project_id):
@@ -1116,7 +1147,7 @@ def main():
         except json.JSONDecodeError:
             ledger = None
 
-    threads = fetch_run(args.manager)
+    threads = fetch_run(args.manager, (ledger or {}).get("managerChain") or ())
     manager_meta = threads[0]["meta"]
     pricing, pricing_meta = openrouter_pricing(os.path.join(data_dir, "cache", "openrouter-models.json"),
                                                not args.no_pricing)

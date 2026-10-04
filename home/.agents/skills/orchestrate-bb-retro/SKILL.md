@@ -23,7 +23,10 @@ every number it printed, and did it end in an edit someone can make.
    `bb thread list --json` as threads whose children are titled `REVIEW …` or
    `PONYTAIL …`. A run that has not reached its terminal state is a **partial
    retro**: report it as one and read in-flight threads as in flight, not as
-   failures.
+   failures. A run that outlived a manager's context has more than one
+   `ORCHESTRATE …` thread; its ledger's `managerChain` names them, the id to
+   pass is the **first** (that is where the ledger lives), and the metrics
+   script walks the chain so the numbers cover the whole run.
 
 2. **Collect the mechanics.** Run the metrics script, which pages every
    child's log and prints phases, threads, cost and findings:
