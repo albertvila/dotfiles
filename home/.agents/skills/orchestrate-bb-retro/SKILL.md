@@ -174,6 +174,11 @@ documents the shapes.
   it from the context window. In the pi payload
   `totalTokens = inputTokens + cachedInputTokens + outputTokens`, and
   `cachedInputTokens = cacheReadInputTokens + cacheWriteInputTokens`.
+- **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
+  closed set in `../orchestrate-bb-threads/cause-contract.md`, which also gives
+  the operator's move for each code; the findings name it. An item the run
+  stopped on with no cause, or with a code outside the set, is a finding — never
+  repeated as if it were a code.
 - **Cost is an estimate**: tokens multiplied by OpenRouter's advertised
   per-token prices from `https://openrouter.ai/api/v1/models`, cached a day
   in `<dataDir>/cache/openrouter-models.json`. Prices move, and a provider's
@@ -215,9 +220,9 @@ rules; every one is a candidate for the *What to fix* section.
   criteria from the ticket.
 - **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
   count against the cap; the cap is 3 **findings rounds** (`fixRounds`), not
-  three passes. At the cap the item should have been surfaced as blocked. An
-  item that moved on after its fourth findings round is a rule violation,
-  not a success.
+  three passes. At the cap the item should have been surfaced as blocked with
+  `cause.code: cap_exhausted`. An item that moved on after its fourth findings
+  round is a rule violation, not a success.
 - **Dispatch** — a long stretch between the run's start and the first
   dispatch; a wave that went out one thread at a time when the plan called
   for parallel lanes.

@@ -45,6 +45,13 @@ IDLE_FINDING_MS = 10 * 60_000
 INFRA_FINDING_MS = 60_000
 ACTIVE_STATUSES = {"active", "starting", "running", "settling"}
 RUNNING_ITEM_STATUSES = {"running", "in_progress", "in-progress"}
+# The block vocabulary, owned by cause-contract.md and shared with the Herdr
+# runtime. An item the run stopped on carries a code from this set; anything else
+# is a finding, not a code to repeat as if it named a failure.
+CAUSE_CODES = frozenset((
+    "worker_blocked", "turn_stalled", "cap_exhausted", "spec_conflict",
+    "model_unavailable", "dispatch_failed", "unclassified",
+))
 
 
 def sh(*args):
@@ -538,8 +545,15 @@ def build_findings(rows, ledger, manager):
             out.append(f"item {item.get('id')}: {len(failed)} failed attempt(s) — {why}")
         if item.get("reviewCount", 0) >= 3:
             out.append(f"item {item.get('id')}: review hit the cap ({item['reviewCount']})")
-        if item.get("status") == "blocked":
-            out.append(f"item {item.get('id')}: blocked")
+        if item.get("status") in ("blocked", "failed"):
+            cause = item.get("cause") or {}
+            code = cause.get("code")
+            if code in CAUSE_CODES:
+                out.append(f"item {item.get('id')}: {item.get('status')} — {code}: "
+                           f"{cause.get('detail') or 'no detail'}")
+            else:
+                out.append(f"item {item.get('id')}: {item.get('status')} with no cause "
+                           f"({code or 'none'}) — cause-contract.md")
     return out
 
 
@@ -999,6 +1013,22 @@ def self_test():
            "cost": {"reported": None, "estimated": 1.0, "basis": "estimated"}}
     assert any("2 models" in f for f in build_findings([row], None, None)), build_findings([row], None, None)
     assert build_findings([dict(row, models=["m1"])], None, None) == []
+
+    # A stopped item is typed by its cause; an untyped or invented one is a finding
+    stopped = {"items": {
+        "01": {"status": "blocked", "reviewCount": 3,
+               "cause": {"code": "cap_exhausted", "detail": "three findings rounds"}},
+        "02": {"status": "failed", "cause": {"code": "dispatch_failed", "detail": "spawn refused"}},
+        "03": {"status": "blocked"},
+        "04": {"status": "blocked", "cause": {"code": "made_up", "detail": "x"}},
+        "05": {"status": "done"},
+    }}
+    typed = build_findings([], stopped, None)
+    assert any("cap_exhausted: three findings rounds" in f for f in typed), typed
+    assert any("dispatch_failed: spawn refused" in f for f in typed), typed
+    assert sum("with no cause" in f for f in typed) == 2, typed
+    assert any("no cause (made_up)" in f for f in typed), typed
+    assert not any("— made_up:" in f for f in typed), typed
     park = dict(row, models=["m1"], idleMs=20 * 60_000, start=T0, end=T0 + 1_200_000,
                 _intervals=[[T0, T0 + 60_000]])
     assert not any("idle" in f for f in build_findings([park], None, None)), build_findings([park], None, None)

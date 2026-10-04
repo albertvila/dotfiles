@@ -144,8 +144,9 @@ file on disk means the turn died mid-work, not that the agent finished: read the
 pane (`herdr agent read "<name>" --source recent-unwrapped --lines 60`) and, if
 the turn ended without a report, re-prompt **that same agent** once with
 `continue` — never the whole prompt again. A second stall is a blocker: record
-it, notify the operator, and keep the rest of the frontier moving. A turn that
-ended mid-generation is invisible in every status field the run reads, so this
+it with `cause.code: turn_stalled`, notify the operator, and keep the rest of the
+frontier moving. A turn that ended mid-generation is invisible in every status
+field the run reads, so this
 check is the only thing that catches it.
 
 **Reading and releasing.** The report file is the truth; the scrollback tail is
@@ -174,7 +175,8 @@ herdr agent start "item-<slug>" --kind pi --pane "<recorded pane>" \
 `agent read`, then: if the approved manifest answers the question exactly, answer
 it in the pane (`herdr pane send-text "<pane>" "<answer>"`, then
 `herdr pane send-keys "<pane>" Enter`) and confirm the worker resumes working;
-otherwise record the blocker, notify the operator, and end the turn. The
+otherwise record the blocker with `cause.code: worker_blocked`, notify the
+operator, and end the turn. The
 coordinator never guesses an answer and never leaves a blocked worker unwatched.
 
 ## Prompt contracts
@@ -275,6 +277,7 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
       "blockedBy": [], "reviewCount": 0, "prUrl": null,
       "startedAt": "<ISO-8601 UTC>", "endedAt": null,
       "unblock": null,                       // only when a block is not a dependency's to clear
+      "cause": null,                         // {code, detail} when status is blocked or failed — cause-contract.md
       "reviews": [],                         // {pass, agent, session, verdict, report, startedAt, endedAt}
       "fixes": []                            // {pass, agent, session, startedAt, endedAt}
       // Flow B also: "commitGate": {requestedAt, approvedAt} per item
@@ -303,6 +306,15 @@ array is the record. `items[].fixes` counts **review-driven** rounds only: a
 ponytail fix round is recorded under `ponytail[]` (with its agent), because the
 projection pairs each `fixes` entry with a review round and reads an unmatched
 one as a round still in flight — a settled run then reports `E150`.
+**An item the run stops on is typed.** Every `blocked` or `failed` item carries
+`cause: {code, detail}` — the code from the closed set in
+[../orchestrate-bb-threads/cause-contract.md](../orchestrate-bb-threads/cause-contract.md),
+the detail one line of this instance's specifics. An invented code, a cause on
+any other status, and a `blocked`/`failed` item with no cause are all write
+errors, and the projection below exits non-zero on them. The contract's table
+names the path behind every code; `cap_exhausted`, `spec_conflict`,
+`worker_blocked` and `turn_stalled` are the ones a normal run reaches.
+
 `finishedAt` is set once the run is done by the definition below.
 
 **Stamp the times honestly, and assert them.** Every timestamp you write is read
@@ -385,7 +397,8 @@ that treats it as one mapping takes the whole view down with it (and hides a
 both scripts in the same commit. The script also asserts what the ledger can
 prove on its own and exits non-zero when it doesn't hold: an interval that runs
 backwards, a gate approved before it was requested, a terminal `finishedAt`
-standing over an item or ponytail pass that never settled. That is where "stamp
+standing over an item or ponytail pass that never settled, and a stopped item
+with no `cause` or a code outside the contract. That is where "stamp
 the times honestly" gets its teeth — it runs after every write, so the
 coordinator sees the mistake while it still knows what it meant.
 
@@ -589,7 +602,9 @@ minutes for the 535-line high-risk one, in the run this line came from.
 **A model that does not work stops the run.** That covers every failure: the
 pattern missing from `pi --list-models`, a refused start, or the first turn
 dying on a provider routing error (the start succeeds, the turn dies). Stop,
-tell the operator which model failed and how, and ask which to use instead. A
+tell the operator which model failed and how, and ask which to use instead. An
+item that cannot proceed on the failed model is `blocked` with
+`cause.code: model_unavailable`; the run does not continue past it. A
 respawn passes the role's recorded model explicitly — a fresh `agent start`
 inherits nothing from the agent that died.
 
@@ -608,8 +623,8 @@ mechanics.
   that agent with `prompts/fix-<slug>-f<n>.txt`. If the pane is gone, start a
   fresh `fix-<slug>-f<n>` agent in the item's worktree. A ponytail fix runs as a
   fresh worker titled `FIX · <one-line>` on the worker model. A 4th findings
-  round is never started: the item is `blocked`, its findings are surfaced, and
-  the frontier keeps moving.
+  round is never started: the item is `blocked` with `cause.code: cap_exhausted`,
+  its findings are surfaced, and the frontier keeps moving.
 - A non-verdict completion is re-prompted once in the same reviewer — its tab is
   still open — and does not increment `reviewCount`.
 - Record `reviewCount` for every completed pass; the findings rounds are the
@@ -681,7 +696,8 @@ intent block alone.
   its own memory of the run may be stale.
 - An agent reports `BLOCKED`, or `agent get` no longer finds it: read its
   report, `agent read` tail and logs before respawning anything, record the
-  blocker in the ledger, surface it to the operator, and keep working the rest
+  blocker in the ledger (`worker_blocked` for a question, `turn_stalled` when the
+  turn died), surface it to the operator, and keep working the rest
   of the frontier.
 - **Never act on absence.** A failed `agent get`, an `unknown` status and a wait
   timeout are all unverifiable: inspect the pane and its transcript before
@@ -689,8 +705,9 @@ intent block alone.
   reporting no such agent while its pane shows a shell prompt again. Only then
   is a respawn — same pane, same name — the move.
 - A `herdr agent start` that exits non-zero is **not** relaunched blindly: read
-  its error code and surface it. A refused start is a fact about the run, not a
-  retry prompt.
+  its error code and surface it — an item that could not be started is `failed`
+  with `cause.code: dispatch_failed`. A refused start is a fact about the run,
+  not a retry prompt.
 - **A turn that ended mid-run is re-entered from the ledger.** After a context
   exhaustion, a provider error or a suspended host, read `$RUNDIR/orchestration.json`
   and continue from it — never from memory, and never by starting a second

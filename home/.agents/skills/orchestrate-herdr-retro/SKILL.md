@@ -153,6 +153,11 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   and the `coordinator`. Agent names encode the same convention
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
   agent that fits neither means the run went off-script.
+- **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
+  closed set in `../orchestrate-bb-threads/cause-contract.md`, which also gives
+  the operator's move for each code; the script rolls them up under *Blocks by
+  cause*. An item the run stopped on with no cause, or with a code outside the
+  set, is reported under *What to fix* — never repeated as if it were a code.
 - **Overlap is design, not waste**: in a shared-worktree run reviews run beside
   the next worker. `activeSumSec` − `coveredSec` is that overlap — computed over
   **unique sessions**, because a fix round re-prompts the worker's own session and
@@ -181,6 +186,9 @@ every one is a candidate for the *What to fix* section.
 
 - **Preflight** — a run dispatched without `herdr integration status` reading
   `pi: current`; a stalled prompt misread as a running worker.
+- **Blocks** — an item `blocked` or `failed` with no `cause`, a `cause` on an
+  item that settled, or an `unclassified` code: the run stopped on a path
+  neither skill names, and naming it is the fix.
 - **Host suspend** — a multi-hour gap written up as a model, provider or
   orchestrator failure without checking the machine's own sleep log. A closed lid
   drops the network and then freezes everything: every in-flight turn dies on

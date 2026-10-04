@@ -22,6 +22,14 @@ from datetime import datetime, timezone
 
 DEFAULT_RUNDIR = "."
 
+# The block vocabulary, owned by the cause contract and shared with the BB
+# runtime. An item the run stopped on carries a code from this set; anything else
+# is a finding, not a typo to paper over.
+CAUSE_CODES = frozenset((
+    "worker_blocked", "turn_stalled", "cap_exhausted", "spec_conflict",
+    "model_unavailable", "dispatch_failed", "unclassified",
+))
+
 # A session whose messages pause longer than this is not working: it is waiting on
 # another agent, or the machine was suspended under it.
 QUIET_GAP_SEC = 600
@@ -230,6 +238,24 @@ def agents_from_ledger(ledger):
     return agents
 
 
+def cause_rollup(items):
+    """Blocks by code, plus every stopped item the ledger left untyped.
+
+    The codes are the cause contract's; an item stopped without one, or with a
+    code outside the set, is what the retro reports under *What to fix*.
+    """
+    codes, untyped = {}, []
+    for item_id, item in sorted(items.items()):
+        if item.get("status") not in ("blocked", "failed"):
+            continue
+        code = (item.get("cause") or {}).get("code")
+        if code in CAUSE_CODES:
+            codes.setdefault(code, []).append(item_id)
+        else:
+            untyped.append(item_id)
+    return {"codes": codes, "untyped": untyped}
+
+
 def human_wait(gate):
     """Seconds between a gate's request and its approval, or None."""
     if not gate:
@@ -354,8 +380,10 @@ def build_record(rundir):
         },
         "items": {item_id: {"status": item.get("status"),
                             "reviewCount": item.get("reviewCount"),
-                            "prUrl": item.get("prUrl")}
+                            "prUrl": item.get("prUrl"),
+                            "cause": item.get("cause")}
                   for item_id, item in (ledger.get("items") or {}).items()},
+        "causes": cause_rollup(ledger.get("items") or {}),
         "roles": roles,
         "costByModel": models,
         "sessions": sessions,
@@ -407,9 +435,18 @@ def print_human(record):
               % (model, entry["agents"], entry["totalTokens"], entry["costUsd"]))
     print("\nItems:")
     for item_id, item in record["items"].items():
-        print("  %-4s %-8s reviews=%s  %s"
+        print("  %-4s %-8s reviews=%s  %-18s %s"
               % (item_id, item.get("status"), item.get("reviewCount"),
+                 (item.get("cause") or {}).get("code") or "",
                  item.get("prUrl") or ""))
+    blocks = record.get("causes") or {}
+    if blocks.get("codes") or blocks.get("untyped"):
+        print("\nBlocks by cause:")
+        for code, ids in sorted((blocks.get("codes") or {}).items()):
+            print("  %-18s %s" % (code, ", ".join(ids)))
+        if blocks.get("untyped"):
+            print("  %-18s %s   <- a finding: cause-contract.md"
+                  % ("no cause", ", ".join(blocks["untyped"])))
     if record["ledgerDrift"]:
         print("\nLedger drift (ledger interval vs its own transcript):")
         for drift in record["ledgerDrift"]:
@@ -459,6 +496,15 @@ def self_test():
     assert record_dirname({"startedAt": start.isoformat(),
                            "rundir": "/tmp/repo/.herdr-runs/My Feature",
                            "feature": "My Feature"}) == "2026-01-01-repo-my-feature"
+    # Blocks are read by code, and an item the run stopped on without one is a
+    # finding rather than an empty cell.
+    assert cause_rollup({"01": {"status": "blocked", "cause": {"code": "cap_exhausted"}},
+                         "02": {"status": "failed", "cause": {"code": "dispatch_failed"}},
+                         "03": {"status": "blocked"},
+                         "04": {"status": "done"},
+                         "05": {"status": "blocked", "cause": {"code": "made_up"}}}) == \
+        {"codes": {"cap_exhausted": ["01"], "dispatch_failed": ["02"]}, "untyped": ["03", "05"]}
+    assert cause_rollup({}) == {"codes": {}, "untyped": []}
     print("record_dirname:", record_dirname(
         {"startedAt": start.isoformat(), "rundir": "/tmp/repo/.herdr-runs/x",
          "feature": "x"}))
