@@ -15,6 +15,11 @@ immediately: never re-derive the graph and never re-ask what was already
 approved. With no manifest, do not derive one: say the plan is missing and point
 the operator at `/orchestrate-herdr-plan`.
 
+Read [../orchestrate-bb-threads/run-mode.md](../orchestrate-bb-threads/run-mode.md)
+before the first dispatch. It owns `mode`, the CI baseline, the validation exit
+code, Flow B bases, and the merge command. A sentence in this file that
+disagrees with it is wrong.
+
 `$RUNDIR` is the run directory `<worktree>/.herdr-runs/<feature>/`. Entered from
 `/orchestrate-herdr-plan` it is already set; entered directly, resolve it as the
 most recent `.herdr-runs/*/manifest.txt` in this worktree and say which run was
@@ -89,12 +94,13 @@ while :; do
 done
 ```
 
-**A finished pi turn reports `idle`, never `done`.** The pi integration publishes
-only `working`, `blocked` and `idle`; `done` is Herdr's own state and a pi agent
-never reaches it. `--until done --until blocked` therefore waits out its whole
-timeout and the loop can never break — always include `idle` in both the break
-set and the `--until` list. `idle` is a settle **candidate**, not proof: the
-agent's report file on disk is what settles it.
+**A finished pi turn reports `idle` or `done` — treat both alike.** Herdr returns
+`agent_status: "done"` for a pi agent whose turn ended (14 of 14 wait logs in the
+run that produced this line) and `idle` for one caught between turns; a
+coordinator that expected only `idle` would read every settle as an agent exit.
+Break on `idle`, `done`, `blocked` and the empty status alike, and include both
+`idle` and `done` in the `--until` list. Whichever arrives is a settle
+**candidate**, not proof: the agent's report file on disk is what settles it.
 
 A wave dispatches in parallel and settles in parallel — one shell block each:
 
@@ -240,6 +246,8 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
 {
   "feature": "<feature>", "rundir": "<abs>", "startedAt": "<ISO-8601 UTC>",
   "tracker": "scratch <feature>" | "github <owner/repo>#<parent>",
+  "mode": "gated" | "land" | "unattended",
+  "ciBaseline": [], "validationBaseline": {},
   "flow": "A" | "B" | "cross-repo" | "A+cross-repo",
   "coordinator": { "pane": "<HERDR_PANE_ID>", "session": "<pi session path>" },
   "gates": { "plan":  { "requestedAt": null, "approvedAt": null },
@@ -295,6 +303,9 @@ gate's `requestedAt`; gate times belong in `gates` and nowhere else. Before
 writing, check what you are about to record: every agent's `startedAt ≤ endedAt`,
 and both inside that agent's session window. An interval that runs backwards or
 predates the agent's own transcript is a write error, not a rounding artefact.
+The projection below enforces the half of that the ledger can prove on its own
+and exits non-zero on it; containment in the agent's own session window is
+asserted by the retro, which is the only reader holding both sides.
 
 **A reopen clears the terminal marker.** Reopening an item sets `status` back to
 `running`, nulls the item's `endedAt`, records why under the item, and clears
@@ -307,7 +318,9 @@ branch updates the field, or the ledger names a branch it already deleted.
 
 The run is done when every item carries a terminal status (`done`, `failed`, or
 `blocked`), every `done` item's PR is open or merged and handed over, and the
-blocked items are surfaced to the operator. An out-of-repo item
+blocked items are surfaced to the operator. `land` and `unattended` are not done
+on an open PR: `finishedAt` waits until run-mode.md's merge has happened, or the
+run is paused. An out-of-repo item
 (`A+cross-repo`) has no PR to hand over: its named operator gate stands in for
 one, and it is surfaced like a blocked item until that gate is done. Once
 `finishedAt` is written, the run's last act is its retro agent — spawn it exactly
@@ -353,6 +366,17 @@ a fix round is a new attempt whose `cause.sent_back` names the review attempt; a
 item blocked by a dependency renders `waits I01` rather than claiming the
 operator must act; and every terminal outcome is `reported`, never `verified`,
 because nothing in this flow mechanically checks the work.
+
+**The projection reads the shapes this file writes — and checks them.** The
+`ponytail` lane is a **list of passes** here and in the retro's script; a reader
+that treats it as one mapping takes the whole view down with it (and hides a
+`dagr` error it would otherwise have reported). A ledger-shape change lands in
+both scripts in the same commit. The script also asserts what the ledger can
+prove on its own and exits non-zero when it doesn't hold: an interval that runs
+backwards, a gate approved before it was requested, a terminal `finishedAt`
+standing over an item or ponytail pass that never settled. That is where "stamp
+the times honestly" gets its teeth — it runs after every write, so the
+coordinator sees the mistake while it still knows what it meant.
 
 ## Flow A — one shared worktree, one PR
 
@@ -416,12 +440,24 @@ agent, no ledger entry and no reviewer it can honestly claim.
    plus a short completeness check. Both keep the verdict contract.
 5. **One ponytail pass on the combined diff**, once every item's review is
    clean, in its own tab on the full uncommitted diff. The pass reports ponytail
-   findings only; anything else it notices is surfaced to the operator as an
-   out-of-band note — never a fix round, never a re-review. In a multi-repo run
-   there is no combined diff: one ponytail pass per item diff, none optional.
-6. **Commit + open one PR.** Propose the commit message and file list to the
-   operator (per repo conventions; detect the PR base branch), record
-   `gates.commit.requestedAt`, and **end the turn** with the question. This pane
+   findings only; anything else it notices goes in the same report as an
+   out-of-band note. **A note that names a defect — real behaviour, or a named
+   acceptance criterion — is not a preference: it opens a fix round before the
+   commit gate.** The coordinator confirms it against HEAD, the item's files are
+   fixed by the worker model (the item's own agent while its pane is live), and
+   the next ponytail pass re-checks it; an item still inside its review loop gets
+   a normal re-review as well. A preference, a style choice, or an observation
+   with no gate behind it stays out-of-band: not fixed in-run, reported to the
+   operator in the run summary. In a multi-repo run there is no combined diff:
+   one ponytail pass per item diff, none optional.
+6. **Commit + open one PR.** Do not open this gate until
+   [run-mode.md](../orchestrate-bb-threads/run-mode.md) validation exited 0.
+   `land` and `unattended` do not end the turn and do not ask: record the gate
+   with `auto: true` and the conventional message, then create the run branch and
+   commit as the next sentence requires.
+   `gated` proposes the commit message and file list to the
+   operator (per repo conventions; detect the PR base branch), records
+   `gates.commit.requestedAt`, and **ends the turn** with the question. This pane
    is the only one that can answer it, so the reply that arrives here is the
    approval, and nothing is committed before it. On yes: record
    `gates.commit.approvedAt`, **create the run branch first** — this pane's
@@ -444,7 +480,9 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `gh pr checks <n>` names what is still running, and the PR is done when those
    are green — never read absence from merged history. The body carries the
    closing lines below.
-7. **Post-merge cleanup.** After the operator merges: pull the base branch,
+7. **Post-merge cleanup.** `land` and `unattended` merge with the command in
+   [run-mode.md](../orchestrate-bb-threads/run-mode.md) before this step; `gated`
+   waits until the operator merges. Then pull the base branch,
    delete the merged branch, post the final report (what shipped, per-item
    outcomes), and release every tab this coordinator created — including the
    worker tabs kept open through the run. The operator's own panes are theirs.
@@ -457,12 +495,16 @@ agent, no ledger entry and no reviewer it can honestly claim.
 ## Flow B — one worktree and PR per item
 
 Trigger: the manifest's flow is `B`. Every item gets its own worktree and
-branch, so items never clobber each other: no file-overlap gating, all ready
-items start at once, and each reviewed diff is that worktree's own.
+branch. Items with no `blockedBy` start together. An item with blockers stays
+`todo` until those PRs are merged, then its worktree is created from the
+updated target — see [run-mode.md](../orchestrate-bb-threads/run-mode.md). Do
+not review it against a base that lacks its blockers, and do not rebase it
+onto them afterwards.
 
 ```sh
+git fetch origin <target>
 herdr worktree create --cwd <repo-root> --branch "<feature-slug>/<slug>" \
-  --base "<base>" --label "<id> · <short title>" --no-focus
+  --base "origin/<target>" --label "<id> · <short title>" --no-focus
 ```
 
 The reply carries `.result.workspace.workspace_id`, `.result.root_pane.pane_id`
@@ -472,21 +514,19 @@ tab in the same workspace (`tab create --workspace <item-ws> --cwd <wt-path>`).
 
 Then run Flow A steps 2–7 with these deltas:
 
-- **Step 2** — no file-overlap gating. Cross-item dependencies still gate
-  dispatch: an item stays `todo` until its `blockedBy` items are `done`.
+- **Step 2** — no file-overlap gating. An item stays `todo` until its blockers'
+  PRs are merged, not merely `done`.
 - **Steps 4–5** — the review and the ponytail pass read that item's branch
   worktree, and the ponytail pass runs per branch on that branch's uncommitted
   diff.
-- **Step 6** — one PR per item, from that item's worktree, with the same
-  commit-message approval and base detection per item, and the same status
-  commands run from there. Commit the branch from the coordinator with
+- **Step 6** — one PR per item, from that item's worktree. The commit gate is
+  [run-mode.md](../orchestrate-bb-threads/run-mode.md): `gated` asks, `land` and
+  `unattended` do not. Commit the branch from the coordinator with
   `git -C <wt-path>`.
-- **Step 7** — merge in dependency order: the items whose `blockedBy` list is
-  fully settled first, then outward through the graph. Resolve cross-PR
-  conflicts by rebasing the conflicting branch onto the now-merged base and
-  re-running its checks — the branch is the run's to fix; its item already
-  proved the diff. Then delete the merged branches. Retire each item's worktree
-  once its PR is merged and its agents are gone:
+- **Merge the wave, then dispatch the next.** Merge each ready PR with the
+  `gh pr merge --match-head-commit` command in run-mode.md. After the wave is
+  merged, fetch and create worktrees for the items it unblocked. Retire each
+  item's worktree once its PR is merged and its agents are gone:
   `herdr worktree remove --workspace <item-ws>`. Do **not** pass `--force`: a
   dirty worktree refusing to be removed is the signal that work is still in it,
   and that gets surfaced, not discarded. `--trust-repository` is only for a
@@ -558,13 +598,21 @@ inherits nothing from the agent that died.
   failures are findings: they fail CI, so they open a fix round.
 - Findings loop back to the **same worker** while its pane is live: re-prompt
   that agent with `prompts/fix-<slug>-f<n>.txt`. If the pane is gone, start a
-  fresh `fix-<slug>-f<n>` agent in the item's worktree. Re-review. **Cap: 3
-  review passes per item** (`reviewCount` reaching 3). A 4th pass is never
+  fresh `fix-<slug>-f<n>` agent in the item's worktree. Re-review. **A re-review
+  is scoped to the delta**: its brief names what changed and only the pass-1
+  conclusions that change could have invalidated, because a re-check told to
+  re-settle every earlier conclusion is the run's longest and most expensive
+  agent spent re-deriving a report it already wrote. A delta that changes no
+  logic, state or contract surface (stylesheets, docs, renames) does not re-open
+  the acceptance criteria at all. **Cap: 3 review passes per item** (`reviewCount` reaching 3). A 4th pass is never
   started: the item is marked `blocked`, its findings are surfaced to the
   operator, and the rest of the frontier keeps moving.
-- Ponytail fixes are **not** code-reviewed: ponytail findings → a fresh worker
-  (titled `FIX · <one-line>` on the worker model) implements them → the ponytail
-  pass re-checks only. Same cap of 3, same blocked-and-surfaced outcome. That
+- Ponytail fixes are **not** code-reviewed by the item's reviewer: ponytail
+  findings → a fresh worker (titled `FIX · <one-line>` on the worker model)
+  implements them → the ponytail pass re-checks only. The one exception is the
+  defect note step 5 now routes: it is fixed like a finding, re-checked by the
+  next ponytail pass, and re-reviewed when the item's loop is still open. Same
+  cap of 3, same blocked-and-surfaced outcome. That
   fix round is named under `ponytail[]`, never in `items[].fixes` — the ledger's
   `fixes` array is review-scoped, and the projection reads an extra entry there
   as an in-flight review round.
@@ -615,6 +663,20 @@ has today.
 
 ## Failure handling
 
+- **A suspended host ends every live turn, and nothing in the run can say so.**
+  Closing a laptop drops the network first and then freezes the machine: every
+  in-flight turn — the workers' and the coordinator's own — dies on provider
+  timeouts, the ledger stops being written, and the run resumes only when the
+  operator wakes the host and prompts `continue`. In the run that produced this
+  line that was 9h31m of a 13h20m span, and the two dead turns looked exactly
+  like a slow model: `Request timed out.` ×3, `Retry failed after 3 attempts`.
+  For a `land` or `unattended` dispatch, say which it is: keep the host awake
+  (`caffeinate -s` **on AC power**, or the platform's equivalent — clamshell
+  sleep on battery overrides an idle or display assertion), or accept that the
+  run pauses at the lid and tell the operator the run is waiting on the machine.
+  On resume, the first move is the *Waiting* stalled-turn recovery — `agent read`
+  each live agent, then `continue` the same agent — and the timestamps the ledger
+  gains are the resume's, not the sleep's.
 - A coordinator turn that spans the whole run is normal: the coordinator is
   blocked on `herdr agent wait`, not thinking.
 - A resumed coordinator re-reads the ledger and the ticket files before acting —
