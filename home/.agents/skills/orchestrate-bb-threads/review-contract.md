@@ -24,7 +24,7 @@ Depth scales to the item's risk. A **high-risk** item — real state, logic, or 
 
 ## Cap: 3 findings rounds per item
 
-A **findings round** is a pass that returns `VERDICT FINDINGS`. A pass after a `VERDICT CLEAN` — a ponytail re-check, a gate-config change, a post-review change — does not consume the cap. The cap reads off the findings rounds, never off all passes: `fixRounds` in the BB ledger, the review rounds that opened a `fixes[]` entry in the Herdr ledger. A 4th findings round is never spawned: the item is `blocked`, its findings are surfaced to the operator, and the rest of the frontier keeps moving.
+A **findings round** is a pass that returns `VERDICT FINDINGS`. A pass after a `VERDICT CLEAN` — a ponytail re-check, a gate-config change, a post-review change — does not consume the cap. The cap reads off the findings rounds, never off all passes: `fixRounds` in the BB ledger, the review rounds that opened a `fixes[]` entry in the Herdr ledger. A 4th findings round is never spawned: the item is `blocked` with `cause.code: cap_exhausted`, its findings are surfaced to the operator, and the rest of the frontier keeps moving.
 
 **A re-review is scoped to the delta.** Its brief names what changed and only the earlier conclusions that change could have invalidated. A delta that changes no logic, state or contract surface (stylesheets, docs, renames) does not re-open the acceptance criteria at all. A re-check told to re-settle every earlier conclusion is the run's longest and most expensive agent, spent re-deriving a report it already wrote.
 
@@ -34,4 +34,4 @@ A ponytail finding's fix is re-checked by the next ponytail pass. It skips the f
 
 ## A finding that contradicts the spec
 
-When a review or ponytail finding conflicts with the approved manifest or the tracker spec, that is not a fix round. Quote the finding and the spec clause it contradicts, record it as a follow-up, and do not settle the item `done`. `land` and `unattended` still open the PR and do not merge. An adjudication with no spec citation is a skipped fix round.
+When a review or ponytail finding conflicts with the approved manifest or the tracker spec, that is not a fix round. Quote the finding and the spec clause it contradicts, record it as a follow-up, and do not settle the item `done` — it is `blocked` with `cause.code: spec_conflict`, and that block is the operator's to adjudicate. `land` and `unattended` still open the PR and do not merge, so the adjudication arrives after the PR is open. An adjudication with no spec citation is a skipped fix round.

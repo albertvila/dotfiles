@@ -50,6 +50,12 @@ ITEM_STATE = {
 PLAN_GATE = "G-PLAN"
 COMMIT_GATE = "G-COMMIT"
 PONYTAIL = "PON"
+# The closed block vocabulary. Both runtimes write these codes and both retro
+# scripts read them; the contract owns the set and the path behind each code.
+CAUSE_CODES = frozenset((
+    "worker_blocked", "turn_stalled", "cap_exhausted", "spec_conflict",
+    "model_unavailable", "dispatch_failed", "unclassified",
+))
 
 
 def utcnow():
@@ -116,6 +122,22 @@ def ledger_errors(ledger):
         for fix in item.get("fixes") or []:
             backwards(fix.get("startedAt"), fix.get("endedAt"),
                       "%s.fixes[pass %s]" % (where, fix.get("pass")))
+        # An item the run stopped on is typed: a `blocked`/`failed` item carries a
+        # `cause` from the contract's closed set, and nothing else carries one.
+        status, cause = item.get("status"), item.get("cause")
+        if status in ("blocked", "failed"):
+            if not isinstance(cause, dict) or not cause.get("code"):
+                problems.append("%s: status %r with no cause (cause-contract.md)"
+                                % (where, status))
+            else:
+                if cause["code"] not in CAUSE_CODES:
+                    problems.append("%s.cause: code %r is not in the contract"
+                                    % (where, cause["code"]))
+                if not str(cause.get("detail") or "").strip():
+                    problems.append("%s.cause: %s with no detail" % (where, cause["code"]))
+        elif cause:
+            problems.append("%s: cause on a %r item — a cause is for blocked or failed only"
+                            % (where, status))
         if finished and item.get("status") not in ("done", "failed", "blocked"):
             problems.append("%s: status %r under finishedAt %s"
                             % (where, item.get("status"), finished))
@@ -183,10 +205,15 @@ def attempts_for_item(item_id, item):
 
         verdict = (review or {}).get("verdict")
         if verdict is None:
-            # Round in flight: honest state from the ledger's item status.
-            state = ITEM_STATE.get(item.get("status"), "queued")
-            state = state if state in ("working", "queued") else "queued"
-            attempt["state"] = state
+            # Round in flight, or the item the run stopped on: honest state from the
+            # ledger's item status. A `failed` item means a runtime was lost — the
+            # agent never started or died mid-turn — which the contract calls a
+            # `lost` attempt; the cause code reaches the pane through the task note.
+            status = item.get("status")
+            if status == "failed":
+                attempt["state"] = "lost"
+            else:
+                attempt["state"] = "working" if status == "running" else "queued"
         elif str(verdict).upper().startswith("CLEAN"):
             attempt["state"] = "done"
             attempt["outcome"] = {
@@ -238,6 +265,10 @@ def item_task(item_id, item, models, plan_gate_done):
             task["state"] = "queued"
         else:
             task["unblock"] = item.get("unblock") or "operator"
+    cause = item.get("cause") or {}
+    if task["state"] in ("blocked", "failed") and cause.get("code"):
+        # The pane shows why, in the code's own words plus this instance's.
+        task["note"] = "%s: %s" % (cause["code"], (cause.get("detail") or "").strip())
     return {k: v for k, v in task.items() if v is not None}
 
 
@@ -480,13 +511,26 @@ def self_test():
         "items": {
             "01": {"title": "one", "status": "done", "blockedBy": [], "reviewCount": 2,
                    "worker": {"agent": "item-01", "pane": "w1:p2"},
+                   "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:12:00Z",
                    "reviews": [{"pass": 1, "agent": "review-01-r1", "verdict": "FINDINGS", "report": "reports/r1.md",
                                 "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:05:00Z"},
                                {"pass": 2, "agent": "review-01-r2", "verdict": "CLEAN", "report": "reports/r2.md",
                                 "startedAt": "2026-09-27T10:10:00Z", "endedAt": "2026-09-27T10:12:00Z"}],
-                   "fixes": [{"pass": 1, "agent": "fix-01-f1"}]},
+                   "fixes": [{"pass": 1, "agent": "fix-01-f1",
+                              "startedAt": "2026-09-27T10:06:00Z", "endedAt": "2026-09-27T10:09:00Z"}]},
             "02": {"title": "two", "status": "blocked", "blockedBy": ["01"], "reviewCount": 0,
+                   "cause": {"code": "worker_blocked", "detail": "the worker asks which retry budget applies"},
                    "worker": {"agent": "item-02", "pane": "w1:p3"}, "reviews": [], "fixes": []},
+            "03": {"title": "three", "status": "blocked", "blockedBy": [], "reviewCount": 3,
+                   "cause": {"code": "cap_exhausted", "detail": "three findings rounds, a fourth needed"},
+                   "worker": {"agent": "item-03", "pane": "w1:p4"},
+                   "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:02:00Z",
+                   "reviews": [{"pass": 1, "agent": "review-03-r1", "verdict": "FINDINGS",
+                                "startedAt": "2026-09-27T10:01:00Z", "endedAt": "2026-09-27T10:02:00Z"}],
+                   "fixes": []},
+            "04": {"title": "four", "status": "failed", "blockedBy": [], "reviewCount": 0,
+                   "cause": {"code": "dispatch_failed", "detail": "agent start refused: agent_name_taken"},
+                   "worker": {"agent": "item-04", "pane": "w1:p5"}, "reviews": [], "fixes": []},
         },
         "ponytail": {"agent": "ponytail", "verdict": "CLEAN", "report": "reports/p.md",
                      "startedAt": "2026-09-27T10:40:00Z", "endedAt": "2026-09-27T10:41:00Z"},
@@ -515,15 +559,27 @@ def self_test():
 
     blocked = next(t for t in doc["tasks"] if t["id"] == "I02")
     # Blocked by a dependency renders as `waits`; only a dependency-free block
-    # is the operator's to unblock.
+    # is the operator's to unblock, and only that one shows a cause.
     assert blocked["state"] == "queued" and "unblock" not in blocked, blocked
+    assert "note" not in blocked, blocked
+    # A `failed` item means a lost runtime, and dagr projects the task's state over
+    # its latest attempt: a queued attempt under a failed task is E150.
+    failed = next(t for t in doc["tasks"] if t["id"] == "I04")
+    assert failed["state"] == "failed" and failed["attempts"][-1]["state"] == "lost", failed
+    assert failed["note"] == "dispatch_failed: agent start refused: agent_name_taken", failed
+    capped = next(t for t in doc["tasks"] if t["id"] == "I03")
+    assert capped["state"] == "blocked" and capped["unblock"] == "operator", capped
+    assert capped["attempts"][-1]["state"] == "rejected", capped
+    assert capped["note"].startswith("cap_exhausted: "), capped
     import copy
     independent = copy.deepcopy(ledger)
     independent["items"]["02"]["blockedBy"] = []
-    assert next(t for t in project(independent, "2026-09-27T11:00:00Z")["tasks"]
-                if t["id"] == "I02")["unblock"] == "operator"
+    independent_item = next(t for t in project(independent, "2026-09-27T11:00:00Z")["tasks"]
+                            if t["id"] == "I02")
+    assert independent_item["unblock"] == "operator", independent_item
+    assert independent_item["note"].startswith("worker_blocked: "), independent_item
     gate = next(t for t in doc["tasks"] if t["id"] == COMMIT_GATE)
-    assert gate["kind"] == "gate" and gate["inputs"] == ["I01", "I02"] and gate["state"] == "queued"
+    assert gate["kind"] == "gate" and gate["inputs"] == ["I01", "I02", "I03", "I04"] and gate["state"] == "queued"
     assert doc["events"][0]["verb"] == "answer" and doc["events"][0]["by"] == "operator"
     assert project(ledger, "2026-09-27T11:00:00Z") == doc  # deterministic
 
@@ -574,6 +630,20 @@ def self_test():
     assert any("under finishedAt" in p for p in ledger_errors(live))
     live["ponytail"] = {"agent": "ponytail"}  # a pass still in flight
     assert any(p.startswith("ponytail[pass None]: no verdict") for p in ledger_errors(live))
+
+    # The block vocabulary is closed and paired with the status it belongs to.
+    missing_cause = copy.deepcopy(ledger)
+    del missing_cause["items"]["02"]["cause"]
+    assert any("with no cause" in p for p in ledger_errors(missing_cause)), ledger_errors(missing_cause)
+    invented = copy.deepcopy(ledger)
+    invented["items"]["02"]["cause"]["code"] = "made_up"
+    assert any("is not in the contract" in p for p in ledger_errors(invented))
+    no_detail = copy.deepcopy(ledger)
+    no_detail["items"]["02"]["cause"]["detail"] = "  "
+    assert any("with no detail" in p for p in ledger_errors(no_detail))
+    stray = copy.deepcopy(ledger)
+    stray["items"]["01"]["cause"] = {"code": "turn_stalled", "detail": "x"}
+    assert any("blocked or failed only" in p for p in ledger_errors(stray))
 
     dagr = find_dagr()
     if dagr:

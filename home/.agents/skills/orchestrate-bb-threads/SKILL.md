@@ -66,7 +66,9 @@ id is missing from the catalog, the spawn fails, or the first turn dies on a
 provider routing error (e.g. OpenRouter's allowed-providers rejecting every
 upstream serving the model — the spawn succeeds, the turn dies with a 404).
 Stop, tell the user which model failed and how, and ask which model to use
-instead.
+instead. An item that cannot proceed on the failed model is `blocked` with
+`cause.code: model_unavailable`; a spawn refused for any other reason leaves its
+item `failed` with `cause.code: dispatch_failed`.
 
 ## Review loops
 
@@ -424,10 +426,17 @@ There is no Tasks panel for this — the manager IS the tracker. When the user
 asks for a status view, regenerate the plan diagram with fresh status colors
 (done / in review / todo) from the ledger. Keep
 `$BB_THREAD_STORAGE/orchestration.json` mapping each item to
-`{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead }` — `threadId` is
+`{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead, cause }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
 belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
+
+**An item the run stops on is typed.** Every `blocked` or `failed` item carries
+`cause: {code, detail}` — the code from the closed set in
+[cause-contract.md](cause-contract.md), the detail one line of this instance's
+specifics. An invented code, a cause on any other status, and a
+`blocked`/`failed` item with no cause are all write errors, and both retro
+scripts read them as findings.
 
 `managerChain` lists the manager threads that held this run, oldest first. The
 plan thread appends a successor when it replaces a manager whose context ran out
@@ -520,7 +529,8 @@ intent block alone, and the Task add-on does not change that.
 - A resumed manager re-reads the ledger and the ticket files before acting —
   its own memory of the run may be stale.
 - A child reports BLOCKED or its thread dies: read `bb thread log <id>`
-  before respawning anything, record the blocker in the ledger, surface it to
+  before respawning anything, record the blocker in the ledger (`worker_blocked`
+  for a question, `turn_stalled` when the turn died), surface it to
   the user, and keep working the rest of the frontier.
 - **The manager never dies mid-item.** When its context is nearly full it
   writes the ledger and stops — it does not start an item it cannot finish.
