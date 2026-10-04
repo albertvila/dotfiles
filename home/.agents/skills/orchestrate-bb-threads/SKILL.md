@@ -149,8 +149,12 @@ manager that never dispatched, whatever it shipped.
    verbatim from the manifest, alongside the ticket's spec context — the bar is
    the manifest's, not the ticket's. You are in the manager's shared worktree —
    leave your changes uncommitted and do NOT commit or push. When done, your
-   final message must state DONE or BLOCKED and a 3-line summary of what
-   changed / what blocks you.`
+   final message must state DONE or BLOCKED, give a 3-line summary of what
+   changed / what blocks you, then three one-line answers — `HARDEST:` the
+   hardest decision you made, `REJECTED:` the alternatives you rejected and why,
+   `UNSURE:` what you are least confident about. Without them a worker that is
+   unsure of a call reads exactly like one that is certain, so they are not
+   optional.`
 
    Record each returned thread id in the ledger.
 
@@ -220,9 +224,12 @@ manager that never dispatched, whatever it shipped.
    The file holds: `Fresh-eyes code review. Review the frozen diff at
    $BB_THREAD_STORAGE/diffs/<item-id>.diff (item <item-id>: <item scope>;
    acceptance: <the item's acceptance line>; out-of-scope: <the item's
-   out-of-scope line>) against the acceptance stated above and this repo's
-   documented standards — never a criterion re-derived from the ticket. Do NOT
-   review the live worktree diff, another worker may
+   out-of-scope line>; worker's own account: <the worker's HARDEST / REJECTED /
+   UNSURE lines, verbatim from its final message>) against the acceptance stated
+   above and this repo's documented standards — never a criterion re-derived
+   from the ticket. The worker's account is a lead, not a verdict: check it
+   against the frozen diff. Do NOT review the live worktree diff, another worker
+   may
    already be changing those files; read worktree files only for surrounding
    context. Do not edit files, and do not spawn your own sub-agents to do any
    of it — report in this thread. This worktree is shared with other items'

@@ -8,6 +8,8 @@ A **finding** is a defect in behaviour, in a named acceptance criterion, or a fa
 
 **Intent comes from the manifest, and it is the plan's.** The item's `acceptance` and `out-of-scope` lines are quoted into the review brief from the approved manifest; a criterion re-derived from the ticket at review time is off-contract, because the ticket was written before the work. The `out-of-scope` line bounds what a reviewer may require — a finding that the item omitted something it declared out of scope is not a finding. Work performed *beyond* that boundary is still reviewable: scope creep is a defect, not an exemption.
 
+**The worker's account is a lead, not a verdict.** Every worker states its hardest decision, the alternatives it rejected, and what it is least confident about; the review brief quotes those lines. They are how a reviewer tells a deliberate choice from a wrong one — a rejected alternative that was correctly rejected is not a finding, and one that was wrongly rejected is. An item the worker flagged `UNSURE:` is checked harder, not excused: if the concern is real it is a finding like any other, and a `UNSURE:` line the reviewer cannot confirm in the code is reported unverifiable rather than accepted.
+
 ## CLEAN ends the loop
 
 `VERDICT CLEAN` closes the item's review even when it carries non-blocking nits. Nits go to the operator in the run summary: they are not fixed in-run and never open a re-review. Only `VERDICT FINDINGS` opens a fix round.
