@@ -209,7 +209,7 @@ says so rather than passing silence off as certainty.
 
 **Review** (`review-<slug>-r<n>.txt`) — ends with:
 
-> Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>.diff`, not the live
+> Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>-r<n>.diff`, not the live
 > worktree — another worker may already be changing those files; read worktree
 > files for surrounding context only. Report findings against the item's
 > acceptance criteria and within its out-of-scope line, both quoted above, and
@@ -442,19 +442,22 @@ agent, no ledger entry and no reviewer it can honestly claim.
    gate question or at the run's end, never between a dispatch and its settle.
    A turn that ends with agents in flight leaves the run unwatched — nothing
    notices a stalled reviewer, and only a human poke restarts it.
-4. **Freeze the diff before reviewing it.** The next worker may already be
-   changing the same worktree:
+4. **Freeze the diff before reviewing it**, once per pass — the next worker may
+   already be changing the same worktree, and a pass must read bytes that cannot
+   move under it:
 
    ```sh
    mkdir -p "$RUNDIR/diffs"
    { git diff HEAD -- <item files>; printf '\n# worktree status:\n'; \
-     git status --porcelain -- <item files>; } > "$RUNDIR/diffs/<slug>.diff"
+     git status --porcelain -- <item files>; } > "$RUNDIR/diffs/<slug>-r<n>.diff"
    ```
 
+   `<n>` is the review pass the freeze feeds, and the file is never rewritten:
+   pass n+1 writes its own, which is what lets the re-review gate compare the two.
    `git diff HEAD` shows **nothing** for files the worker created new; the
    appended porcelain line is what makes a new file visible. For an item whose
    files are all untracked, copy them into
-   `$RUNDIR/snapshots/post-<slug>/` and point the review at that instead.
+   `$RUNDIR/snapshots/post-<slug>-r<n>/` and point the review at that instead.
 
    Then start a fresh-eyes review agent — same workspace, reviewer model, its
    own tab. Scale its depth to the item's risk, per the review contract: a
@@ -570,7 +573,7 @@ files sit outside every repository (no worktree, no branch, no PR is even
 possible). Record that as `flow: "A+cross-repo"`, never as plain `A`: the flow
 field is what the run's reader trusts, and `A` promises one worktree and one PR.
 The in-repo items keep the shared worktree and the single PR. The out-of-repo
-item gets its touched files copied to `$RUNDIR/snapshots/post-<slug>/` and a
+item gets its touched files copied to `$RUNDIR/snapshots/post-<slug>-r<n>/` and a
 completeness review against those snapshots, and any criterion only the live
 surface can prove becomes a named operator gate — spelled out with the exact
 steps at the gate, not implied. Such an item is `done` at its clean review plus
@@ -625,6 +628,20 @@ mechanics.
   fresh worker titled `FIX · <one-line>` on the worker model. A 4th findings
   round is never started: the item is `blocked` with `cause.code: cap_exhausted`,
   its findings are surfaced, and the frontier keeps moving.
+- **A re-review waits on the artifact, not on the fix's word.** Before spawning
+  `review-<slug>-r<n+1>`, re-freeze to `diffs/<slug>-r<n+1>.diff` (or
+  `snapshots/post-<slug>-r<n+1>/`) and compare it with the diff the previous pass
+  read — `cmp -s` for a diff, `diff -rq` for a snapshot. Identical bytes are not a
+  new round: the item is `blocked` with `cause.code: artifact_unchanged`, its
+  findings are surfaced, and the frontier keeps moving. Changed bytes are the delta
+  the re-review is scoped to, and the brief names it.
+- **Delete the worker's report before a fix round starts:**
+  `rm -f "$RUNDIR/reports/item-<slug>.md"`, whether the round re-prompts the same
+  worker or starts a fresh `fix-<slug>-f<n>` agent in its worktree. That path is
+  reused across rounds, so a fix round that settles without writing leaves the
+  previous round's report on disk — and the settle rule reads that file as this
+  round's evidence. With it removed, a silent fix round has no report at all and
+  the stalled-turn rule catches it.
 - A non-verdict completion is re-prompted once in the same reviewer — its tab is
   still open — and does not increment `reviewCount`.
 - Record `reviewCount` for every completed pass; the findings rounds are the

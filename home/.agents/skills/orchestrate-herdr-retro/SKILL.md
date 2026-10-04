@@ -216,7 +216,10 @@ every one is a candidate for the *What to fix* section.
   that used `/code-review` subagents, pricing them nowhere; a ponytail fix that
   changed behaviour and shipped without a fresh-eyes review of its delta; the
   coordinator reviewing work it dispatched; a review brief that carried no
-  acceptance line, so the reviewer re-derived the criteria from the ticket.
+  acceptance line, so the reviewer re-derived the criteria from the ticket; a
+  re-review spawned against a freeze identical to the one the previous pass read,
+  instead of a `blocked` item with `artifact_unchanged`; a fix round that wrote no
+  report and was read as one.
 - **Release** — a tab closed before its verdict was read; a report that never
   reached disk because the only record was the scrollback; a tab the coordinator
   did not create closed; a dirty worktree removed with `--force`.
