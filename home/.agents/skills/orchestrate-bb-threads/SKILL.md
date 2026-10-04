@@ -326,11 +326,11 @@ manager that never dispatched, whatever it shipped.
 
    The body carries the closing lines below (see *PR body closing lines*).
 
-7. **Post-merge cleanup.** `land` and `unattended` do not merge. `gated`
-   waits until the user merges on GitHub. Then pull main,
-   delete the merged branch, and post a final report (what shipped, per-item
-   outcomes). Retiring the worktree is a hand-off, not a manager action:
-   `bb environment delete` is refused while any thread in the environment is
+7. **Post-merge cleanup.** The sequence is [run-mode.md](run-mode.md)'s *After
+   the operator merges* — `gated` runs it when the user says the PR merged,
+   `land` and `unattended` when the operator replies to the verification ask.
+   The manager's part is only the hand-off: retire nothing itself. `bb environment delete`
+   is refused while any thread in the environment is
    live, and the manager never archives threads (see *Rules*) — tell the
    user the environment id and let them archive the threads and retire it.
 
