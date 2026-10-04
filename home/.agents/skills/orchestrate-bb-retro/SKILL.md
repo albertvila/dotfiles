@@ -212,9 +212,11 @@ rules; every one is a candidate for the *What to fix* section.
 - **Dispatch** — a long stretch between the run's start and the first
   dispatch; a wave that went out one thread at a time when the plan called
   for parallel lanes.
-- **Gates** — human wait where the skill expects none, or none where it
-  expects a plan approval and a commit approval. A run that committed
-  without asking is the expensive version of this finding.
+- **Gates** — human wait where the skill expects none, or none where `mode`
+  requires a plan yes (`gated`, `land`) or a commit yes (`gated` only). A
+  `gated` run that committed without asking is the expensive version of this
+  finding. A `land` or `unattended` run that left the PR unmerged, or merged
+  without `--match-head-commit` of `reviewedHead`, is the same finding.
 - **Verification** — a worker's DONE taken as proof, a PR opened with
   checks red, an item marked done from a claim rather than a clean review.
 - **Ledger drift** — items whose status contradicts their threads, threads
