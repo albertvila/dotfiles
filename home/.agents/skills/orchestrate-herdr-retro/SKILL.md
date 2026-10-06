@@ -109,10 +109,10 @@ number it printed, and did it end in an edit someone can make.
 
 ## Report
 
-- **Execution plan** — the flow, the items in dispatch order with their
-  blocked-by edges, and the wave structure the run actually followed, read from
-  the ledger's item order and gate timestamps. Note every place it diverged from
-  the plan it approved.
+[`retro.md#report`](../orchestrate-core/retro.md#report) owns the shared
+sections (*Execution plan*, *What to fix*, *Changes to the main skill*). This
+runtime's figures:
+
 - **Time per phase** — lead with the span and the active sum, then the covered
   wall clock and the overlap (reviews run beside the next worker by design, so
   the sum exceeds the span; report both and never present the sum as elapsed
@@ -125,10 +125,6 @@ number it printed, and did it end in an edit someone can make.
 - **Cost per model** — tokens and USD per model and per role, from pi's own
   recorded usage. Flag every session whose turns recorded no cost, and say how
   much of the run that leaves unpriced.
-- **What to fix** — one line per finding: what happened, the evidence, and the
-  smallest change that prevents it next time.
-- **Changes to the main skill** — ranked proposals, each naming the section it
-  edits.
 
 ## Reading the numbers
 

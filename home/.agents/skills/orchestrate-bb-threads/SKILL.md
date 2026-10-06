@@ -7,26 +7,13 @@ description: "Execute an approved orchestration plan as the manager thread: disp
 
 Execute an approved plan. This thread is the manager: it dispatches one visible
 child thread per item, keeps the ledger, routes review findings, and lands the
-run. It does not plan.
-
-**A manifest in the prompt is the approved plan.** The manifest carries the
-items with their file scopes and blockers, the flow, the waves, the `mode`
-line, and any run notes or model overrides (see `/orchestrate-bb-plan`, *The manifest*). Start
-from it immediately — never re-derive the graph and never re-ask what was
-already approved. With no manifest, do not derive one: say the plan is missing
-and point the operator at `/orchestrate-bb-plan`.
+run. [`threads.md#the-executors-job`](../orchestrate-core/threads.md#the-executors-job)
+owns the job, the manifest rule and the dispatch-before-touching rule; this file
+owns the BB mechanics.
 
 Read [run-mode.md](../orchestrate-core/run-mode.md) before the first spawn. It owns `mode`, the CI
 baseline, the validation exit code, Flow B bases, and the merge command. A
 sentence in this file that disagrees with it is wrong.
-
-**Read this file and dispatch before touching anything.** A manifest is data,
-not an implementation assignment: a plan thread can dispatch a bare manifest
-with no instruction to run this skill, and this skill still applies. Your first
-turn writes `$BB_THREAD_STORAGE/orchestration.json` and spawns wave 1 **before
-you open any item's file to change it**. The manager never implements items
-itself — a draft you author has no worker thread, no reviewer, and no ledger
-entry it can honestly claim.
 
 ## Spawn flags
 
@@ -36,6 +23,10 @@ auto` and `--project "$BB_PROJECT_ID"`. On the pi provider `auto` is rejected
 `--project`, spawn fails with `missing_required` even inside that project.
 
 ## Models
+
+Role policy — the roles, the override syntax, and what a failed model does — is
+[`threads.md`](../orchestrate-core/threads.md#models). This adapter owns the BB
+ids and how they are checked.
 
 Role defaults, passed via `--model` when spawning:
 
@@ -55,20 +46,6 @@ read absence from a `head`-piped catalog listing — the id can sit past the cut
 An id present in the catalog can still be blocked by an OpenRouter workspace
 guardrail; only a turn reveals that, so "absent from the catalog" and
 "blocked at runtime" are different failures with the same stop-and-ask ending.
-
-Per-run override syntax: "workers on X, reviewers on Y"; ponytail follows the
-worker model unless the line also names one ("ponytail on Z"). The operator
-sets an override at plan time and the manifest carries it — the manager keeps
-the syntax and the spawn-time decisions, not the choice.
-
-**A model that does not work stops the run.** That covers every failure: the
-id is missing from the catalog, the spawn fails, or the first turn dies on a
-provider routing error (e.g. OpenRouter's allowed-providers rejecting every
-upstream serving the model — the spawn succeeds, the turn dies with a 404).
-Stop, tell the user which model failed and how, and ask which model to use
-instead. An item that cannot proceed on the failed model is `blocked` with
-`cause.code: model_unavailable`; a spawn refused for any other reason leaves its
-item `failed` with `cause.code: dispatch_failed`.
 
 ## Review loops
 
@@ -104,12 +81,9 @@ This section carries only the BB mechanics.
 
 ## Flow A — single shared PR
 
-All workers operate in the manager's worktree (`--environment
-"$BB_ENVIRONMENT_ID"` at spawn — nothing to state in the prompt). Workers
-leave their changes **uncommitted** and never commit or push; the manager
-accumulates the combined diff and makes exactly one commit and one PR at the
-end. Workers never talk to each other — all coordination goes through the
-manager.
+Shape `A` is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes).
+In this runtime every worker spawns with `--environment "$BB_ENVIRONMENT_ID"` —
+nothing to state in the prompt.
 
 **Your first turn dispatches.** For `tracker: github <owner/repo>#<parent>`,
 claim the parent and every item issue before spawning. Not an excluded issue:
@@ -167,17 +141,10 @@ manager that never dispatched, whatever it shipped.
 
    Record each returned thread id in the ledger.
 
-2. **Parallel only on disjoint files; reviews overlap with the next
-   worker.** All workers share one worktree, so an item's worker may only
-   run concurrently with workers whose files it does not touch. Judge
-   overlap from the item scopes plus what already changed in the worktree
-   (`git status`, files touched by running workers). Disjoint files → spawn
-   together. Overlapping files → serialize the **workers**, but never the
-   review lane: dispatch worker N+1 the moment worker N reports DONE and its
-   diff is frozen (step 4), and let review N run concurrently. If
-   review N returns findings, let the running worker finish, then run N's
-   fix round and re-review before dispatching anything new (the fix touches
-   the same files the next worker will build on).
+2. **Parallel only on disjoint files; reviews overlap with the next worker.**
+   The rule is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes);
+   apply it from the item scopes plus what already changed in the worktree
+   (`git status`, files touched by running workers).
 
 3. **Wait, then collect.** For each running child:
 
@@ -359,13 +326,10 @@ manager that never dispatched, whatever it shipped.
 
 ## Flow B — PR per item
 
-Trigger: the manifest's flow is `B`. Every worker gets its
-own worktree+**branch**. One PR per item. Same models
-and review loops as the shared sections above (*Models*, *Review loops*).
-Items with no `blockedBy` start together. An item with blockers stays `todo`
-until those PRs are merged, then its worktree is created from the updated
-target — see [run-mode.md](../orchestrate-core/run-mode.md). Do not review it against a base that
-lacks its blockers, and do not rebase it onto them afterwards.
+Trigger: the manifest's flow is `B`. Shape `B` is
+[`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes), and the
+bases are [run-mode.md](../orchestrate-core/run-mode.md); this runtime's
+worktree mechanics are below. Same models and review loops as above.
 
 1. **Spawn every item whose blockers are already merged — one worktree+branch each.** Drop
    `--environment "$BB_ENVIRONMENT_ID"` (sharing is the Flow A move) and pass
@@ -415,19 +379,10 @@ Then run Flow A steps 2–7 with these deltas:
 
 ## Cross-repo runs
 
-When the manifest names the cross-repo shape, the items span more than one
-repo: there is no shared worktree and no single PR. Each item gets its own
-per-item environment and its own per-repo gate, and no single PR closes the
-run. Never treat this shape as `flow: "A"`.
-
-**A tracker repo differing from the code repo is not that shape.** When the
-tracker (and spec) lives in one repo but every item's code lands in a single
-code repo — a BIT-spec → PLS-code move, say — the run is the Flow A shape:
-one shared worktree in the **code repo**, one PR, one combined ponytail pass.
-The only delta is the environment: workers, reviews and ponytail spawn against
-the code repo's worktree, not `$BB_ENVIRONMENT_ID`; the tracker's issues are
-still claimed and commented. A per-item ponytail pass is not required here —
-the combined pass covers the single diff.
+The shapes are [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes).
+This runtime's delta: each item gets its own per-item environment, and a
+tracker-vs-code-repo run's shared worktree is the code repo's environment, not
+`$BB_ENVIRONMENT_ID`.
 
 ## The ledger
 
@@ -440,13 +395,6 @@ always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
 belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](../orchestrate-core/run-mode.md).
 
-**An item the run stops on is typed.** Every `blocked` or `failed` item carries
-`cause: {code, detail}` — the code from the closed set in
-[cause-contract.md](../orchestrate-core/cause-contract.md), the detail one line of this instance's
-specifics. An invented code, a cause on any other status, and a
-`blocked`/`failed` item with no cause are all write errors, and both retro
-scripts read them as findings.
-
 `managerChain` lists the manager threads that held this run, oldest first. The
 plan thread appends a successor when it replaces a manager whose context ran out
 (see `/orchestrate-bb-plan`, *Wait for the run*). The first id is the run's
@@ -454,30 +402,18 @@ identity — where this ledger lives — and the retro walks the chain so a
 successor's children are not lost from the numbers.
 
 `reviewCount` counts every completed pass; `fixRounds` counts the findings
-rounds, and the cap reads off `fixRounds` (see [review-contract.md](../orchestrate-core/review-contract.md)). Write the ledger as you go, never batched at
-settlement — `reviewCount` when the iteration completes, `models` and each
-item's `status` as the run moves — the ledger must read true mid-run. Set
-`reviewThreadId` when a round **completes**; if the spawned round is
-interrupted or re-prompted, point it back at the last completed review thread.
+rounds, and the cap reads off `fixRounds` (see
+[review-contract.md](../orchestrate-core/review-contract.md)). Set
+`reviewThreadId` when a round **completes**; if the spawned round is interrupted
+or re-prompted, point it back at the last completed review thread.
 `reviewThreadId` must never name a thread that produced no verdict, or the
-ledger's primary review pointer reads as a pass that never happened.
-Write an item `done` only when the ledger shows a completed review pass **and**
-a completed ponytail pass for it, each backed by a child thread id — a `done`
-with no review thread behind it is not settlement, however clean the diff
-looks. A diff that changes after a `done` write reopens the item explicitly.
-Before the step 6 commit gate, assert this from the ledger: an item that
-cannot name its review thread and its ponytail thread has not settled. `finishedAt` is set once the run is done by the
-definition below — every item terminal **and** the PR opened after the
-approval gate — and it is an **ISO-8601 UTC timestamp**, not a marker, a
-status word or a sentence: the run corpus reads this field as data. **A turn
-that runs after `finishedAt` reopens the run: clear `finishedAt` and set it
-again only when the run is terminal once more.** An operator-directed change
-after the PR is open is exactly that case. A `finishedAt` earlier than the
-manager's last event is ledger drift, and the retro reads it as such.
+ledger's primary review pointer reads as a pass that never happened. Before the
+step 6 commit gate, assert this from the ledger: an item that cannot name its
+review thread and its ponytail thread has not settled.
 
-The run is done when every item carries a terminal status (`done`, `failed`,
-or `blocked`), every `done` item's PR is open or merged and handed over, and
-the blocked items are surfaced to the user.
+The shared invariants — write-as-you-go, the typed cause, the `done` rule, the
+run's done-definition and `finishedAt` — are
+[`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger).
 
 ## Ticket write-back
 
@@ -508,27 +444,8 @@ nothing after that.
 
 ## PR body
 
-Every run's PR body opens with the run's **intent**, before any
-tracker-specific closing lines: for each item the PR carries (Flow A: every
-item; Flow B: its own), its title, its `acceptance` line and its `out-of-scope`
-line from the manifest, verbatim, followed by that item's review verdict. The
-operator merges on this block plus the verdicts, not on a diff — the diff is
-what the review threads already read and priced, and an operator handed a diff
-skim has been given back the cost the run existed to remove.
-
-For a `tracker: github` run the body then carries the closing lines:
-
-- `Closes #n` for every issue that maps to an item — each sub-issue that
-  became an item, and the parent itself when the parent *is* the item (a
-  parent with no sub-issues).
-- A parent that owns sub-issues gets a non-closing `Part of #<parent>` line
-  instead — the PR points at the spec without closing a spec that is not the
-  work.
-- Flow A's single PR lists `Closes` for every item issue; Flow B's per-item PR
-  closes only its own item's issue.
-
-Only `tracker: github` adds closing lines: a `.scratch` run's PR body is the
-intent block alone, and the Task add-on does not change that.
+[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — the
+intent block and the closing lines are identical in both runtimes.
 
 ## Failure handling
 
@@ -551,10 +468,8 @@ intent block alone, and the Task add-on does not change that.
 
 ## Rules
 
-- One item per thread, one thread per item — no thread works two items.
-- Children (workers, review threads, ponytail) are standard visible threads
-  parented to the manager; the manager never archives them, during the run
-  or after it — the user keeps the manager and its children visible together
-  and archives them themselves.
-- The manager never implements items itself — it dispatches, waits, routes
-  review findings, and unblocks.
+[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
+rules. The BB-specific one: children (workers, review threads, ponytail) are
+standard visible threads parented to the manager; the manager never archives
+them, during the run or after it — the user keeps the manager and its children
+visible together and archives them themselves.

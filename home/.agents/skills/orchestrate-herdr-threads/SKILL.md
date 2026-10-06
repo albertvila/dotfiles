@@ -7,13 +7,9 @@ description: "Execute an approved orchestration plan as the coordinator of this 
 
 Execute an approved plan. **This pane is the coordinator**: it dispatches one pi
 agent per work unit into its own Herdr tab, keeps the ledger, routes review
-findings, and lands the run. It does not plan, and it never implements an item
-itself.
-
-**A manifest at `$RUNDIR/manifest.txt` is the approved plan.** Start from it
-immediately: never re-derive the graph and never re-ask what was already
-approved. With no manifest, do not derive one: say the plan is missing and point
-the operator at `/orchestrate-herdr-plan`.
+findings, and lands the run. [`threads.md#the-executors-job`](../orchestrate-core/threads.md#the-executors-job)
+owns the job, the manifest rule and the dispatch-before-touching rule; this file
+owns the Herdr mechanics.
 
 Read [../orchestrate-core/run-mode.md](../orchestrate-core/run-mode.md)
 before the first dispatch. It owns `mode`, the CI baseline, the validation exit
@@ -293,10 +289,8 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
 
 Record the coordinator's own session once at the start. `reviewCount` counts
 every completed pass; the findings-round cap reads off the review rounds that
-opened a `fixes[]` entry, per the review contract. Write an
-item `done` only when its review is clean **and** the ponytail pass over its
-files has settled; a diff that changes after a `done` write reopens the item
-explicitly. `ponytail` is a list of passes, appended in order like `reviews` —
+opened a `fixes[]` entry, per the review contract. The `done` rule and the reopen rule are
+[`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger). `ponytail` is a list of passes, appended in order like `reviews` —
 a two-pass ponytail (`FINDINGS` → fix round → re-check) keeps both, at `pass: 1`
 and `pass: 2`, because only the last one is the verdict and only the first one
 holds the findings that opened the fix round. Every pass keeps the agent and its
@@ -306,16 +300,12 @@ array is the record. `items[].fixes` counts **review-driven** rounds only: a
 ponytail fix round is recorded under `ponytail[]` (with its agent), because the
 projection pairs each `fixes` entry with a review round and reads an unmatched
 one as a round still in flight — a settled run then reports `E150`.
-**An item the run stops on is typed.** Every `blocked` or `failed` item carries
-`cause: {code, detail}` — the code from the closed set in
-[../orchestrate-core/cause-contract.md](../orchestrate-core/cause-contract.md),
-the detail one line of this instance's specifics. An invented code, a cause on
-any other status, and a `blocked`/`failed` item with no cause are all write
-errors, and the projection below exits non-zero on them. The contract's table
-names the path behind every code; `cap_exhausted`, `spec_conflict`,
-`worker_blocked` and `turn_stalled` are the ones a normal run reaches.
-
-`finishedAt` is set once the run is done by the definition below.
+**An item the run stops on is typed** — the invariant and the codes are
+[`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger) and
+[cause-contract.md](../orchestrate-core/cause-contract.md). The projection below
+exits non-zero on an invented code, a cause on any other status, or a stopped
+item with no cause; `cap_exhausted`, `spec_conflict`, `worker_blocked` and
+`turn_stalled` are the ones a normal run reaches.
 
 **Stamp the times honestly, and assert them.** Every timestamp you write is read
 from `date -u` at the moment of the event — never typed, never rounded to the
@@ -404,11 +394,8 @@ coordinator sees the mistake while it still knows what it meant.
 
 ## Flow A — one shared worktree, one PR
 
-The default. Every worker runs in **this pane's worktree** (`--cwd "$PWD"`),
-leaves its changes **uncommitted**, and never commits or pushes. The coordinator
-accumulates the combined diff and makes exactly one commit and one PR at the
-end. Workers never talk to each other; all coordination goes through the
-coordinator.
+Shape `A` is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes).
+In this runtime every worker runs in **this pane's worktree** (`--cwd "$PWD"`).
 
 For `tracker: github <owner/repo>#<parent>`, claim the parent and every item
 issue before spawning — not an excluded issue:
@@ -426,15 +413,10 @@ agent, no ledger entry and no reviewer it can honestly claim.
 
 1. **Dispatch every ready item's worker** into its own tab, in the manifest's
    wave, and record each returned agent, pane, tab and session in the ledger.
-2. **Parallel only on disjoint files; reviews overlap the next worker.** All
-   workers share one worktree, so an item's worker may only run concurrently
-   with workers whose files it does not touch. Judge overlap from the item
-   scopes plus what already changed in the worktree (`git status`, files touched
-   by running workers). Disjoint files → dispatch together. Overlapping files →
-   serialize the **workers**, but never the review lane: dispatch worker N+1 the
-   moment worker N settles and its diff is frozen (step 4), and let review N run
-   concurrently. If review N returns findings, let the running worker finish,
-   then run N's fix round and re-review before dispatching anything new.
+2. **Parallel only on disjoint files; reviews overlap the next worker.** The
+   rule is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes);
+   apply it from the item scopes plus what already changed in the worktree
+   (`git status`, files touched by running workers).
 3. **Wait, then collect.** Settle every running agent (see *Waiting*), read its
    report and final message, and mark the item `done` or `blocked`/`failed`
    from evidence — the worker's `DONE` is a claim, not proof. This step runs to
@@ -521,12 +503,9 @@ agent, no ledger entry and no reviewer it can honestly claim.
 
 ## Flow B — one worktree and PR per item
 
-Trigger: the manifest's flow is `B`. Every item gets its own worktree and
-branch. Items with no `blockedBy` start together. An item with blockers stays
-`todo` until those PRs are merged, then its worktree is created from the
-updated target — see [run-mode.md](../orchestrate-core/run-mode.md). Do
-not review it against a base that lacks its blockers, and do not rebase it
-onto them afterwards.
+Trigger: the manifest's flow is `B`. Shape `B` is
+[`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes); this
+runtime's worktree mechanics are below.
 
 ```sh
 git fetch origin <target>
@@ -563,23 +542,16 @@ Then run Flow A steps 2–7 with these deltas:
 
 ## Cross-repo runs
 
-When the manifest names the cross-repo shape, the items span more than one repo:
-no single worktree and no single PR covers the run. Each item gets its own
-worktree and its own per-repo gate, and no single PR closes the run. Never treat
-this shape as `flow: "A"`.
-
-**A manifest may carry both shapes at once** — in-repo items plus an item whose
-files sit outside every repository (no worktree, no branch, no PR is even
-possible). Record that as `flow: "A+cross-repo"`, never as plain `A`: the flow
-field is what the run's reader trusts, and `A` promises one worktree and one PR.
-The in-repo items keep the shared worktree and the single PR. The out-of-repo
-item gets its touched files copied to `$RUNDIR/snapshots/post-<slug>-r<n>/` and a
-completeness review against those snapshots, and any criterion only the live
-surface can prove becomes a named operator gate — spelled out with the exact
-steps at the gate, not implied. Such an item is `done` at its clean review plus
-that named gate; it has no `prUrl`, and the run's done-definition exempts it.
+The shapes are [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes).
+This runtime's delta: each item gets its own worktree, and an out-of-repo item's
+touched files are copied to `$RUNDIR/snapshots/post-<slug>-r<n>/` for its
+completeness review.
 
 ## Models
+
+Role policy — the roles, the override syntax, and what a failed model does — is
+[`threads.md`](../orchestrate-core/threads.md#models). This adapter owns the
+Herdr ids and how they are passed and checked.
 
 Role defaults, passed on `herdr agent start` as pi flags after `--`:
 
@@ -589,10 +561,9 @@ Role defaults, passed on `herdr agent start` as pi flags after `--`:
 | code-review | `-- --model openrouter/z-ai/glm-5.3` | GLM 5.3 |
 | ponytail | *(none)* | pi's configured default |
 
-A per-run override is the manifest's model line: "workers on X, reviewers on Y";
-ponytail follows the worker model unless the line also names one. Check every
-named pattern against `pi --list-models` before dispatching, and record the
-effective choice in the ledger's `models` — `pi-default` when no flag was passed.
+Check every named pattern against `pi --list-models` before dispatching, and
+record the effective choice in the ledger's `models` — `pi-default` when no flag
+was passed.
 
 **The reviewer model follows the item's risk, not the role.** The table's reviewer
 is the model for a **high-risk** item; a **mechanical** item — the same ones step 4
@@ -601,15 +572,6 @@ the longest single agent in a run and the run cannot close until the last one
 settles, so the slowest model on a mechanical diff is wall clock and money spent on
 nothing: 39 minutes and $2.76 for a CLEAN verdict on a 63-line diff, against 59
 minutes for the 535-line high-risk one, in the run this line came from.
-
-**A model that does not work stops the run.** That covers every failure: the
-pattern missing from `pi --list-models`, a refused start, or the first turn
-dying on a provider routing error (the start succeeds, the turn dies). Stop,
-tell the operator which model failed and how, and ask which to use instead. An
-item that cannot proceed on the failed model is `blocked` with
-`cause.code: model_unavailable`; the run does not continue past it. A
-respawn passes the role's recorded model explicitly — a fresh `agent start`
-inherits nothing from the agent that died.
 
 ## Review loops
 
@@ -669,27 +631,8 @@ settled — a worker's `DONE` alone does not settle an item.
 
 ## PR body
 
-Every run's PR body opens with the run's **intent**, before any
-tracker-specific closing lines: for each item the PR carries (Flow A: every
-item; Flow B: its own), its title, its `acceptance` line and its `out-of-scope`
-line from the manifest, verbatim, followed by that item's review verdict. The
-operator merges on this block plus the verdicts, not on a diff — the diff is
-what the review tabs already read and priced, and an operator handed a diff
-skim has been given back the cost the run existed to remove.
-
-For a `tracker: github` run the body then carries the closing lines:
-
-- `Closes #n` for every issue that maps to an item — each sub-issue that became
-  an item, and the parent itself when the parent *is* the item (a parent with no
-  sub-issues).
-- A parent that owns sub-issues gets a non-closing `Part of #<parent>` line
-  instead — the PR points at the spec without closing a spec that is not the
-  work.
-- Flow A's single PR lists `Closes` for every item issue; Flow B's per-item PR
-  closes only its own item's issue.
-
-Only `tracker: github` adds closing lines: a `.scratch` run's PR body is the
-intent block alone.
+[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — the
+intent block and the closing lines are identical in both runtimes.
 
 ## Failure handling
 
@@ -735,11 +678,7 @@ intent block alone.
 
 ## Rules
 
-- One item per agent, one agent per item — no agent works two items.
-- The coordinator never implements items itself — it dispatches, waits, routes
-  findings, and unblocks.
-- Workers, reviews, fix rounds and ponytail passes are all normal pi agents in
-  their own tabs; every settled one ends in a release decision (closed), or
-  retention the operator asked for.
-- The run directory `$RUNDIR` is never committed; worker changes are committed
-  only at the approved commit gate.
+[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
+rules. The Herdr-specific one: workers, reviews, fix rounds and ponytail passes
+are all normal pi agents in their own tabs; every settled one ends in a release
+decision (closed), or retention the operator asked for.

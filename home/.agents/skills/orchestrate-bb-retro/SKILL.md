@@ -52,7 +52,7 @@ every number it printed, and did it end in an edit someone can make.
    record the ones that fired, with the event or ledger row as evidence.
 
 5. **Write the report** to `$BB_THREAD_STORAGE/reports/retro-<run>.md`, in
-   the four sections under *Report*, and summarise it in the chat: the
+   the sections under *Report*, and summarise it in the chat: the
    numbers that moved, what broke, and the proposals. The report is done when
    every metrics finding is explained or marked unexplained, and every
    proposal names the section of `/orchestrate-bb-threads` it would change
@@ -138,9 +138,10 @@ every number it printed, and did it end in an edit someone can make.
 
 ## Report
 
-- **Execution plan** — the flow, the items in dispatch order with their
-  blocked-by edges, and the wave structure the run actually followed. Note
-  every place it diverged from the plan it approved.
+[`retro.md#report`](../orchestrate-core/retro.md#report) owns the shared
+sections (*Execution plan*, *What to fix*, *Changes to the main skill*). This
+runtime's figures:
+
 - **Time per phase** — lead with orchestrator time (span minus human wait
   that overlaps no work). Then the span, each phase's summed active time,
   and the overlap between them. Name the phase that dominated. A wait for
@@ -148,10 +149,6 @@ every number it printed, and did it end in an edit someone can make.
 - **Cost per model** — tokens and estimated USD per model and per role.
   Flag every thread the pricing table could not cover, and say how much of
   the run that leaves unpriced.
-- **What to fix** — one line per finding: what happened, the evidence, and
-  the smallest change that prevents it next time.
-- **Changes to the main skill** — ranked proposals, each naming the section
-  it edits.
 
 ## Reading the numbers
 
