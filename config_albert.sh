@@ -3,6 +3,7 @@
 declare -a BREW_APPS=(
   docker-credential-helper-ecr
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
+  herdr # Agent multiplexer that lives in your terminal (https://herdr.dev/)
   mobile-dev-inc/tap/maestro # Mobile UI testing framework (https://github.com/mobile-dev-inc/maestro)
   mas # To install appstore apps that are not yet present on brew cask, see APP_STORE_APPS below (https://github.com/mas-cli/mas)
   opencode # AI coding agent (https://opencode.ai/)

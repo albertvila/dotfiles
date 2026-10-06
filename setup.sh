@@ -110,6 +110,23 @@ function install_twg_cli() {
   ok
 }
 
+# herdr shows which agent is working in a pane by installing a status hook
+# into each agent's own config. Keep those hooks current for the agents this
+# machine has; `herdr integration install` is idempotent, so rerun it.
+function install_herdr_integrations() {
+  if ! command -v herdr &>/dev/null; then
+    warn "herdr not found, skipping herdr integrations"
+    return
+  fi
+  bot "Updating herdr agent integrations ..."
+  local target
+  for target in pi claude opencode; do
+    command -v "$target" &>/dev/null || continue
+    execute "herdr integration install $target" "herdr integration: $target"
+  done
+  ok
+}
+
 # pi itself + its npm: packages on every setup run.
 function update_pi() {
   if ! command -v pi &>/dev/null; then
@@ -153,12 +170,13 @@ if [[ $DOTFILES_USER ]]; then
   _install_app_store_apps
 fi
 
-# Agent tooling (bb, pi) is installed by the user config above, so these run last
+# Agent tooling (bb, pi, herdr) is installed by the user config above, so these run last
 link_bb_cli
 install_bb_cli_skills
 install_bb_plugins
 install_twg_cli
 update_pi
+install_herdr_integrations
 
 cleanup
 
