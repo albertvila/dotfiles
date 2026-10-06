@@ -30,12 +30,30 @@ done
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOTFILES_USER="default"
 
+# The bb app ships its CLI in the bundle; link it so setup and agents can
+# drive the running server. A bb already on PATH (dev checkout) is left alone,
+# and a machine without the app just skips the link.
+function link_bb_cli() {
+  if command -v bb &>/dev/null; then
+    ok "bb CLI already on PATH: $(command -v bb)"
+    return
+  fi
+  local bundle_cli="/Applications/bb.app/Contents/Resources/app.asar.unpacked/node_modules/bb-app/dist/bb.js"
+  if [[ ! -x $bundle_cli ]]; then
+    return
+  fi
+  bot "Linking bb CLI ..."
+  mkdir -p "$HOME/.local/bin"
+  ln -sfn "$bundle_cli" "$HOME/.local/bin/bb"
+  ok
+}
+
 # Derived content (CONTEXT.md): bb CLI skills for external agents live in
 # ~/.agents/skills and ~/.claude/skills, installed not versioned. Idempotent:
 # replaces a previously installed copy, leaves other skills alone.
 function install_bb_cli_skills() {
   if ! command -v bb &>/dev/null; then
-    warn "bb CLI not on PATH (build from get-bb/bb checkout, link apps/cli/bin/bb), skipping bb CLI skills install"
+    warn "bb CLI not on PATH (install the bb cask, or link a get-bb/bb checkout's apps/cli/bin/bb), skipping bb CLI skills install"
     return
   fi
   bot "Installing bb CLI skills for external agents ..."
@@ -47,7 +65,7 @@ function install_bb_cli_skills() {
 # entries relative to this repo. Idempotent: skips sources bb already has.
 function install_bb_plugins() {
   if ! command -v bb &>/dev/null; then
-    warn "bb CLI not on PATH (build from get-bb/bb checkout, link apps/cli/bin/bb), skipping bb plugins install"
+    warn "bb CLI not on PATH (install the bb cask, or link a get-bb/bb checkout's apps/cli/bin/bb), skipping bb plugins install"
     return
   fi
   local manifest="$DOTFILES_DIR/bb-plugins.txt"
@@ -64,7 +82,9 @@ function install_bb_plugins() {
     line="${line%"${line##*[![:space:]]}"}"
     [[ -z $line || $line == \#* ]] && continue
     source=$line
-    [[ $line == path:* ]] && source="path:$DOTFILES_DIR/${line#path:}"
+    # bb records resolved absolute paths, so a relative manifest entry with a
+    # `..` segment would never match without canonicalizing it.
+    [[ $line == path:* ]] && source="path:$(realpath "$DOTFILES_DIR/${line#path:}" 2>/dev/null || echo "$DOTFILES_DIR/${line#path:}")"
     if grep -qxF "$source" <<< "$installed"; then
       ok "bb plugin already installed: $line"
     else
@@ -134,6 +154,7 @@ if [[ $DOTFILES_USER ]]; then
 fi
 
 # Agent tooling (bb, pi) is installed by the user config above, so these run last
+link_bb_cli
 install_bb_cli_skills
 install_bb_plugins
 install_twg_cli
