@@ -28,9 +28,10 @@ Two input shapes:
   `spec.md` and the `NN-*.md` files under `issues/`. The directory must exist in
   this pane's worktree: the run directory, the plan artifact and the ticket
   write-back all live beside it.
-- **A GitHub issue** — a parent whose sub-issues are the tickets, or a direct
-  issue with none of its own. Accepted as `#42` / `42`, resolved against this
-  pane's `origin` repository, as `owner/repo#42`, or as a full issue URL. Issues
+- **A GitHub issue** — a parent whose tickets are its sub-issues or the issues
+  that name it in their `## Parent` section, or a direct issue with none of
+  either. Accepted as `#42` / `42`, resolved against this pane's `origin`
+  repository, as `owner/repo#42`, or as a full issue URL. Issues
   and pull requests share one number space: check which one resolved and refuse
   a pull request by naming the reason.
 

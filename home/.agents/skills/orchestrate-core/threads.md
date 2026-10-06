@@ -128,12 +128,13 @@ the cost the run existed to remove.
 
 For a `tracker: github` run the body then carries the closing lines:
 
-- `Closes #n` for every issue that maps to an item — each sub-issue that became
-  an item, and the parent itself when the parent *is* the item (a parent with no
-  sub-issues).
-- A parent that owns sub-issues gets a non-closing `Part of #<parent>` line
-  instead — the PR points at the spec without closing a spec that is not the
-  work.
+- `Closes #n` for every issue that maps to an item — each ticket that became an
+  item, whether it arrived as a native sub-issue or as a parented ticket (an
+  issue whose body names the parent in its `## Parent` section). The parent
+  itself is `Closes`d only when the parent *is* the item.
+- A parent that owns sub-issues or parented tickets gets a non-closing
+  `Part of #<parent>` line instead — the PR points at the spec without closing a
+  spec that is not the work.
 - Shape `A`'s single PR lists `Closes` for every item issue; shape `B`'s
   per-item PR closes only its own item's issue.
 
