@@ -116,16 +116,18 @@ runtime's figures:
 - **Time per phase** — lead with the span and the active sum, then the covered
   wall clock and the overlap (reviews run beside the next worker by design, so
   the sum exceeds the span; report both and never present the sum as elapsed
-  time). Break it down by role — workers, reviews, fixes, ponytail, retro,
-  coordinator — and name the phase that dominated and the longest single agent
-  span. Gate waits
+  time). Break it down by role — workers, reviews, fixes, ponytail, coordinator —
+  and name the phase that dominated and the longest single agent span. The
+  retro's own session is not one of them: it is the recorder, reported on its own
+  line, outside these totals. Gate waits
   (plan approval, commit approval) are human time, reported separately; any other
   human wait is not separable and is marked **partial**. A host suspend inside the
   span is named separately too — it is environment, not work and not a gate, and
   the run's working wall clock is the span with it removed.
 - **Cost per model** — tokens and USD per model and per role, from pi's own
   recorded usage. Flag every session whose turns recorded no cost, and say how
-  much of the run that leaves unpriced.
+  much of the run that leaves unpriced. The retro's own cost sits on its own
+  line, outside this total.
 
 ## Reading the numbers
 
@@ -146,8 +148,11 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   start with no transcript means the agent was started and never prompted, or
   died first — a finding, not a zero.
 - **Roles come from the ledger's shape** — workers under `items.*.worker`,
-  reviews under `items.*.reviews`, fixes under `items.*.fixes`, plus `ponytail`,
-  `executors` and the run's own `retro`. Agent names encode the same convention
+  reviews under `items.*.reviews`, fixes under `items.*.fixes`, plus `ponytail`
+  and `executors`. The run's own `retro` is not a lane: the ledger's `retro` row
+  names it, and the record reports it on its own line, outside the run's totals —
+  BB spawns its retro as the plan thread's sibling and counts it nowhere.
+  Agent names encode the same convention
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
   agent that fits neither means the run went off-script.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
