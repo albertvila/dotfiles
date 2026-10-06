@@ -50,7 +50,10 @@ herdr agent prompt "item-<slug>" "$(cat "$RUNDIR/prompts/item-<slug>.txt")" \
 **Names.** `[a-z][a-z0-9_-]{0,31}`, unique among live agents — a settled agent
 still holds its name until it exits. `<slug>` is the item id lowercased with `#`
 dropped and everything outside `[a-z0-9_-]` collapsed to `-`, trimmed to 22
-chars: `item-01`, `review-01-r2`, `fix-01-f1`, `ponytail`, `retro-<feature-slug>`.
+chars: `item-01`, `review-01-r2`, `fix-01-f1`, `ponytail`. The retro's name is
+`retro-` + the feature slug **trimmed to 26 characters** — the prefix and the
+32-character limit leave no more room, and an untrimmed 30-character slug is
+refused outright with `invalid_agent_name`.
 A refused start (`agent_name_taken`, `agent_not_ready`, …) is surfaced with its
 error code; the coordinator never renames, stops, or repurposes an agent it did
 not start.
@@ -258,7 +261,13 @@ record BB writes. Herdr fills it like this:
 - `runtime: "herdr"`, plus `feature`, `project`, `rundir`, `tracker`, `flow`,
   `mode`, `startedAt`, `models`, `ciBaseline`, `validationBaseline`, `gates`
 - `executors: [{ "id": "coordinator", "pane": "$HERDR_PANE_ID", "session": … }]`
-  — `executors[0]` is the run's identity
+  — `executors[0]` is the run's identity. Its `endedAt` is stamped in the same
+  write as the verification ask: a coordinator row left `null` has no upper
+  bound, so everything the turn does after `finishedAt` lands in the retro's
+  covered time as if it were run work.
+- `retro: { "id": "retro-<feature-slug>", "session": …, "tab": … }`, written the
+  moment the spawn returns its session — a retro with no row is an agent the
+  record cannot name and the retro prices nowhere.
 - each item's `worker: { "id": "item-<slug>", "pane": …, "tab": …, "session": … }`,
   and in Flow B a `worktree: { workspace, path, branch }`
 - every `reviews`/`fixes`/`ponytail` entry carries `id` (the agent name),
@@ -318,8 +327,10 @@ blocked items are surfaced to the operator. `land` and `unattended` set
 (`A+cross-repo`) has no PR to hand over: its named operator gate stands in for
 one, and it is surfaced like a blocked item until that gate is done. Once
 `finishedAt` is written, the run's last act is its retro agent — spawn it exactly
-as `/orchestrate-herdr-plan` (*Spawn the retro*) does; this skill does not
-restate the spawn.
+as `/orchestrate-herdr-plan` (*Spawn the retro*) does, at that moment and never
+behind the PRs' checks: the retro reads the run while the checks are still
+running, and a spawn parked behind a `gh pr checks --watch` costs the run the
+whole wait. This skill does not restate the spawn.
 
 ### The pane view — derived, never hand-written
 
@@ -440,8 +451,13 @@ agent, no ledger entry and no reviewer it can honestly claim.
    contract surface also gets a fresh-eyes review of its delta, per the review
    contract. A preference, a style choice, or an observation
    with no gate behind it stays out-of-band: not fixed in-run, reported to the
-   operator in the run summary. In a multi-repo run there is no combined diff:
-   one ponytail pass per item diff, none optional.
+   operator in the run summary. **The item's `done` write waits for that pass** —
+   write it when the pass has settled, not when its tab opens or while it runs:
+   the ledger reads `done` as an item whose ponytail pass has settled, and an
+   item marked `done` with a fix round open is the state that rule exists to
+   prevent. Its `endedAt` comes from `date -u` like every other stamp, never
+   typed. In a multi-repo run there is no combined diff: one ponytail pass per
+   item diff, none optional.
 6. **Commit + open one PR.** Do not open this gate until
    [run-mode.md](../orchestrate-core/run-mode.md) validation exited 0.
    `land` and `unattended` do not end the turn and do not ask: record the gate
@@ -470,7 +486,9 @@ agent, no ledger entry and no reviewer it can honestly claim.
    commands to the operator — the PR is then **open, checks not posted**, never
    check-complete. In a repo whose checks come from its own CI workflows,
    `gh pr checks <n>` names what is still running, and the PR is done when those
-   are green — never read absence from merged history. The body carries the
+   are green — never read absence from merged history. Watch them **after**
+   `finishedAt` is stamped and the retro is in its tab, not before: the check
+   wait runs beside the retro and never delays the spawn. The body carries the
    closing lines below.
 7. **Post-merge cleanup.** The sequence is
    [run-mode.md](../orchestrate-core/run-mode.md)'s *After the operator
