@@ -63,63 +63,14 @@ check for that repo's own workflow.
 
 ## Reading a GitHub issue
 
-Preflight has passed, so these are reads. Nothing is written to a sub-issue at
-plan time.
-
-**Ticket set.** Every sub-issue of the parent, one level deep, read the way
-`.scratch/<feature>/issues/` is read. Sub-issues come first; when the sub-issues
-API returns nothing — an empty array, not an error, which is what a repository
-without issue relationships returns — the parent body's task list is the fallback
-ticket set; and only when the body carries no task list either does the parent
-body become the single ticket. Which source produced the set is stated in the
-approval message.
-
-**Graph.** Read once, at plan time, from the native `blockedBy` edges when there
-are any, otherwise from the parent body's `## Blocked by` section. A disagreement
-between the two sources is reported. The graph is never re-polled during the run:
-GitHub calls an issue unblocked only when its blocker is *closed*, which lags a
-run whose blockers are already `done` in the ledger. Sub-issue order is never a
-graph.
-
-**Naming.** The feature name is the parent issue title, slugified — it drives the
-run directory, the plan artifact and the `RETRO <feature>` tab. An item's id is
-`#<issue-number>`, so tab labels, ledger keys and frozen diff filenames need no
-translation layer.
-
-**Exclusions.** Closed sub-issues are read, excluded from the item list, and
-counted as satisfied blockers. Sub-issues in another repository are excluded
-outright — a plan never claims scope the coordinator cannot read code for. Every
-excluded issue is named by number in the approval message, under the
-`tickets in → items out` line.
+[`plan.md#reading-a-github-issue`](../orchestrate-core/plan.md#reading-a-github-issue)
+owns it.
 
 ## Plan the run
 
-1. Read the spec and every ticket: the `NN-*.md` files under the feature
-   directory, or the ticket set resolved from a GitHub parent above.
-2. Build the graph from each ticket's `**Blocked by:**` line — that line is the
-   graph, not an inference. A GitHub input's graph was fixed by the read above.
-3. Assign each item a file scope from what it will build. Disjoint scopes plus
-   settled blockers form a parallel **wave**; overlapping scopes serialize.
-4. **Reduce the item count first — that is the default move, not a flag to
-   raise.** Every item costs a fresh worker tab plus a fresh-eyes review tab, so
-   one item per ticket is the wrong starting point. Items with identical file
-   scopes merge into one item unless the work needs independent verifiability or
-   independent rollback: a reset or history rewrite, an item ending in a push or
-   merge rather than a PR, or an acceptance criterion no single reviewer can
-   cover. Name that exception in the approval message. `mode: unattended` skips
-   this reduction: one ticket, one item. Say that in the plan record.
-5. **Capture each item's intent — from this session, not from the ticket.** One
-   line of acceptance: what proves the item works, which is exactly what its
-   reviewer checks. One line of out-of-scope: what the item is not claiming and
-   its reviewer must not require. Both come from the discussion that produced
-   this approval. The ticket was written before the work, so it cannot carry a
-   decision made here, and a reviewer that re-derives the criteria from it is
-   checking a document nobody updated. An item whose acceptance one review
-   thread cannot hold is an item to split (step 4).
-6. Flag the special handling so the coordinator and its reviewers start with the
-   facts: run-alone resets, items ending in a push or merge, approval gates, and
-   any acceptance criterion reaching into another repo or plugin — list that
-   path.
+Steps 1–6 and the completeness rule are
+[`plan.md#plan-the-run`](../orchestrate-core/plan.md#plan-the-run).
+
 7. Record the **launch reality**. Workers, reviewers and the ponytail pass are
    all `herdr agent start … --kind pi` agents in their own tabs of this
    workspace; the operator watches them in the tab bar and the coordinator never
@@ -137,10 +88,6 @@ excluded issue is named by number in the approval message, under the
    ponytail follows the worker model unless the line also names one. Check every
    named model against `pi --list-models` before approving it; a model that does
    not work stops the run (see *Models* in `/orchestrate-herdr-threads`).
-
-The plan is ready to render when every ticket has a disposition — its own item or
-merged — and every item has a file scope, an acceptance line, an out-of-scope
-line, a wave, and any exception named.
 
 ## Render the plan
 
@@ -160,18 +107,10 @@ the run's end boxes (ponytail pass, then commit+PR or ticket write-back).
 
 ## One approval
 
-Read `mode` from the argument before rendering: `--unattended`, `--land`, or
-neither (`gated`). Both flags is a stop. `land` or `unattended` on a
-cross-repo or `A+cross-repo` plan is a stop — name the shape. The contract is
-`../orchestrate-core/run-mode.md`.
-
-Present in the approval message: the flow (A, B, the cross-repo shape named as
-itself, or `A+cross-repo` when the items mix an in-repo item with one whose files
-sit outside every repository), the mode, the reduction made — **tickets in, items out**,
-with every excluded issue named by number beneath it and, for a GitHub input,
-which source produced the ticket set — the waves, the per-item notes, the launch
-reality above, and the diagram. Timestamp the ask first
-(`date -u +%Y-%m-%dT%H:%M:%SZ`) — that timestamp becomes the plan gate's
+The mode read, the stop conditions and what the message must present are
+[`plan.md#one-approval`](../orchestrate-core/plan.md#one-approval). This runtime
+adds the launch reality and the diagram to the message, and timestamps the ask
+first (`date -u +%Y-%m-%dT%H:%M:%SZ`) — that timestamp becomes the plan gate's
 `requestedAt`.
 
 `gated` and `land` **end the turn** with the question. Nothing is dispatched
@@ -202,38 +141,16 @@ Comments are append-only in both trackers — a re-plan appends a versioned reco
 ## The manifest
 
 Write `$RUNDIR/manifest.txt` for the threads skill: data only, no instructions.
-The field list, the item line and wave line formats, and what every header line
-means are [`../orchestrate-core/manifest-contract.md`](../orchestrate-core/manifest-contract.md)
-— that file owns the shape, and the shape is the same in both runtimes. What
-goes in it is this skill's:
-
-- the feature name and the run directory `$RUNDIR`, so the run can be found
-  again
-- the tracker, explicit and never inferred from the shape of a reference
-- the flow — and `A+cross-repo` written as itself when the items mix an in-repo
-  item with one whose files sit outside every repository (no worktree, no
-  branch, no PR is possible). Never write such a run as plain `A`: the threads
-  skill dispatches on this field, and the ledger and the retro trust it
-- the `mode` line, never omitted; the base for a Flow B or cross-repo run; and
-  the plan gate, so the ledger opens with real human-wait numbers
-- the items, each naming its own ticket — `#<issue-number>` for GitHub, so the
-  coordinator fetches exactly the ticket an item names rather than re-deriving
-  it — with its acceptance and out-of-scope lines one line each, verbatim from
-  the plan discussion: the coordinator quotes them in the worker prompt, the
-  review brief and the PR body, and never substitutes the ticket's own wording
-- the waves, and any run note the tickets cannot supply: cross-repo paths,
-  run-alone handling, approval gates
-- a model line only when the operator overrode the role defaults
-
-The test for inclusion is procedural: **does this line tell the executor how to
-do something its own skill already specifies?** If yes, cut it. Start flags,
-review loops and the ledger mechanics live in `/orchestrate-herdr-threads`.
-Intent is not mechanics: an item's acceptance and out-of-scope lines are data
-about what that item is, and they stay.
+[`../orchestrate-core/manifest-contract.md`](../orchestrate-core/manifest-contract.md)
+owns the shape, and [`plan.md#the-manifest`](../orchestrate-core/plan.md#the-manifest)
+owns what goes in it. This runtime adds the run directory `$RUNDIR`, so the run
+can be found again, and the base and plan gate on the `mode` line, so the ledger
+opens with real human-wait numbers.
 
 **Check it before handing it on.** The contract's checker is the machine form of
-the completeness sentence above — the plan is ready to render when every item has
-a scope, an acceptance line, an out-of-scope line and a wave:
+the completeness rule in [`plan.md`](../orchestrate-core/plan.md#plan-the-run) —
+the plan is ready to render when every item has a scope, an acceptance line, an
+out-of-scope line and a wave:
 
 ```sh
 python3 ~/.agents/skills/orchestrate-core/scripts/validate-manifest.py "$RUNDIR/manifest.txt"
