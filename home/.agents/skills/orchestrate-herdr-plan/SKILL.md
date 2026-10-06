@@ -163,7 +163,7 @@ the run's end boxes (ponytail pass, then commit+PR or ticket write-back).
 Read `mode` from the argument before rendering: `--unattended`, `--land`, or
 neither (`gated`). Both flags is a stop. `land` or `unattended` on a
 cross-repo or `A+cross-repo` plan is a stop — name the shape. The contract is
-`../orchestrate-bb-threads/run-mode.md`.
+`../orchestrate-core/run-mode.md`.
 
 Present in the approval message: the flow (A, B, the cross-repo shape named as
 itself, or `A+cross-repo` when the items mix an in-repo item with one whose files
@@ -203,7 +203,7 @@ Comments are append-only in both trackers — a re-plan appends a versioned reco
 
 Write `$RUNDIR/manifest.txt` for the threads skill: data only, no instructions.
 The field list, the item line and wave line formats, and what every header line
-means are [`../orchestrate-bb-threads/manifest-contract.md`](../orchestrate-bb-threads/manifest-contract.md)
+means are [`../orchestrate-core/manifest-contract.md`](../orchestrate-core/manifest-contract.md)
 — that file owns the shape, and the shape is the same in both runtimes. What
 goes in it is this skill's:
 
@@ -236,7 +236,7 @@ the completeness sentence above — the plan is ready to render when every item 
 a scope, an acceptance line, an out-of-scope line and a wave:
 
 ```sh
-python3 ~/.agents/skills/orchestrate-bb-threads/scripts/validate-manifest.py "$RUNDIR/manifest.txt"
+python3 ~/.agents/skills/orchestrate-core/scripts/validate-manifest.py "$RUNDIR/manifest.txt"
 ```
 
 `FAIL:` names every error with the line it is on; a non-zero exit means the
@@ -292,6 +292,6 @@ inspection the threads skill's reply table prescribes.
 The retro is read-only against the run; it cannot spawn anything, and it does
 not need to. For `gated` this pane's job ends by reporting the run's outcome and
 the retro tab to the operator. For `land` and `unattended` that report is the
-verification ask in `../orchestrate-bb-threads/run-mode.md`, and it is **not**
+verification ask in `../orchestrate-core/run-mode.md`, and it is **not**
 the last act: the operator's reply that the PRs are merged resumes this pane,
 which runs that file's *After the operator merges* steps. Do not merge.

@@ -1,19 +1,20 @@
 # Ticket write-back (GitHub)
 
-Reached from [SKILL.md](SKILL.md) when the manifest's tracker is
+Reached from the threads phase skill (`/orchestrate-bb-threads` or
+`/orchestrate-herdr-threads`) when the manifest's tracker is
 `github <owner/repo>#<parent>`. Claim and settlement are different writes.
 
 **Claim, first turn, before any worker starts.** The parent and every item
-issue. Not an excluded issue. The commands are in [SKILL.md](SKILL.md)
-(*Flow A — one shared worktree, one PR*): assign `@me`, remove
-`ready-for-agent`, replace it with nothing. No other label, no close. Claim once
-per issue; repeating the commands is harmless.
+issue. Not an excluded issue. The commands are in the threads phase skill
+(*Flow A*): assign `@me`, remove `ready-for-agent`, replace it with nothing.
+No other label, no close. Claim once per issue; repeating the commands is
+harmless.
 
-**Settlement is comments only.** The coordinator never closes an issue, and never
+**Settlement is comments only.** The executor never closes an issue, and never
 adds, removes, or repurposes a label at settlement — the claim already dropped
 `ready-for-agent`, and this write does not touch labels again. Closing is the
-PR's job — the PR body carries the closing lines (see *PR body*
-in [SKILL.md](SKILL.md)).
+PR's job — the PR body carries the closing lines (see *PR body* in the threads
+phase skill).
 
 An item's issue number comes from its ticket reference in the manifest, never
 from re-deriving it. The run's **excluded** issues — closed sub-issues,
@@ -22,11 +23,12 @@ are **never written to**: the run never touched them, so they accrue no run
 metadata.
 
 - Item settles `done` (worker DONE + clean review) → post **exactly one**
-  comment on its sub-issue naming the worker agent, the outcome, and the PR URL
-  once it exists. Until the PR exists (Flow A opens it at the end) leave the
-  URL out and edit that same comment to add it — one comment, never a second.
-- Item settles `blocked` → comment the blocker on that item's own issue, so the
-  next triage pass sees it without reading the ledger.
+  comment on its sub-issue naming the item's executor, the outcome, and the PR
+  URL once it exists. Until the PR exists (Flow A opens it at the end) leave
+  the URL out and edit that same comment to add it — one comment, never a
+  second.
+- Item settles `blocked` → comment the blocker on that item's own issue, so
+  the next triage pass sees it without reading the run's record.
 - At the commit-and-PR gate, once every item has settled, post the run-summary
   comment on the **parent** — and nothing else on the parent. No further label
   change, no close, no edit to the plan comment.
