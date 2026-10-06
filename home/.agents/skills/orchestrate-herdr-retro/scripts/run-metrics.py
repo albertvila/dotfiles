@@ -22,13 +22,14 @@ from datetime import datetime, timezone
 
 DEFAULT_RUNDIR = "."
 
-# The block vocabulary, owned by the cause contract and shared with the BB
-# runtime. An item the run stopped on carries a code from this set; anything else
-# is a finding, not a typo to paper over.
-CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
-    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
-))
+# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
+# so the three readers cannot drift from cause-contract.md.
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                 "orchestrate-core", "scripts"),
+)
+from orchestrate_common import CAUSE_CODES  # noqa: E402
 
 # A session whose messages pause longer than this is not working: it is waiting on
 # another agent, or the machine was suspended under it.

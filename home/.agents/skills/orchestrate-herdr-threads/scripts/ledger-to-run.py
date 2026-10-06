@@ -50,12 +50,14 @@ ITEM_STATE = {
 PLAN_GATE = "G-PLAN"
 COMMIT_GATE = "G-COMMIT"
 PONYTAIL = "PON"
-# The closed block vocabulary. Both runtimes write these codes and both retro
-# scripts read them; the contract owns the set and the path behind each code.
-CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
-    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
-))
+# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
+# so the three readers cannot drift from cause-contract.md.
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                 "orchestrate-core", "scripts"),
+)
+from orchestrate_common import CAUSE_CODES  # noqa: E402
 
 
 def utcnow():

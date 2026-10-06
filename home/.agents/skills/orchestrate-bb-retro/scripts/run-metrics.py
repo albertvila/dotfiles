@@ -45,13 +45,14 @@ IDLE_FINDING_MS = 10 * 60_000
 INFRA_FINDING_MS = 60_000
 ACTIVE_STATUSES = {"active", "starting", "running", "settling"}
 RUNNING_ITEM_STATUSES = {"running", "in_progress", "in-progress"}
-# The block vocabulary, owned by cause-contract.md and shared with the Herdr
-# runtime. An item the run stopped on carries a code from this set; anything else
-# is a finding, not a code to repeat as if it named a failure.
-CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
-    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
-))
+# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
+# so the three readers cannot drift from cause-contract.md.
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                 "orchestrate-core", "scripts"),
+)
+from orchestrate_common import CAUSE_CODES  # noqa: E402
 
 
 def sh(*args):
