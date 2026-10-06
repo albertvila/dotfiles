@@ -267,7 +267,9 @@ record BB writes. Herdr fills it like this:
   covered time as if it were run work.
 - `retro: { "id": "retro-<feature-slug>", "session": …, "tab": … }`, written the
   moment the spawn returns its session — a retro with no row is an agent the
-  record cannot name and the retro prices nowhere.
+  record cannot name and nobody can price. It is the run's recorder, not a lane
+  of it: the retro reports its own session on its own line, outside the run's
+  totals, as BB's does.
 - each item's `worker: { "id": "item-<slug>", "pane": …, "tab": …, "session": … }`,
   and in Flow B a `worktree: { workspace, path, branch }`
 - every `reviews`/`fixes`/`ponytail` entry carries `id` (the agent name),

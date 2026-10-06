@@ -9,6 +9,10 @@ telemetry of its own, so this script reads nothing from it.
 
 Read-only, stdlib-only, safe to re-run.
 
+The retro's own session is named by the ledger's `retro` row and reported
+separately, never in the run's totals: the retro is the run's recorder, not a
+lane of it.
+
 Usage:
   run-metrics.py <rundir> [--json] [--output-dir DIR] [--self-test]
 """
@@ -285,6 +289,18 @@ def record_dirname(ledger):
                           ledger.get("feature") or "run")
 
 
+def split_recorder(sessions):
+    """The run's sessions, and the retro's own — which is never a lane of it.
+
+    BB spawns its retro as the plan thread's sibling and counts it nowhere, so
+    the two runtimes' numbers only stay comparable if this one does the same:
+    the ledger's `retro` row names the agent, and the record reports it on its
+    own line instead of folding it into `covered`/`roles`/`costByModel`.
+    """
+    return ([m for m in sessions if m["role"] != "retro"],
+            [m for m in sessions if m["role"] == "retro"])
+
+
 def build_record(rundir):
     ledger_path = os.path.join(rundir, "orchestration.json")
     if not os.path.exists(ledger_path):
@@ -308,6 +324,7 @@ def build_record(rundir):
         metrics["duplicateOf"] = seen_paths.get(path) if path else None
         seen_paths.setdefault(path, metrics["name"])
     unique = unique_by_session(sessions)
+    run_sessions, retro = split_recorder(unique)
     executor = (ledger.get("executors") or [{}])[0]
 
     def window(metrics):
@@ -328,21 +345,21 @@ def build_record(rundir):
         metrics["outsideRunSec"] = (metrics["spanSec"] or 0.0) - metrics["runSec"]
         return clipped
 
-    intervals = [i for i in (window(m) for m in unique) if i[0] and i[1]]
+    intervals = [i for i in (window(m) for m in run_sessions) if i[0] and i[1]]
 
     started = parse_ts(ledger.get("startedAt"))
     finished = parse_ts(ledger.get("finishedAt"))
     run_span = ((finished - started).total_seconds()
                 if started and finished else None)
-    active_sum = sum(m["spanSec"] or 0.0 for m in unique)
-    work_sum = sum(m["activeSec"] or 0.0 for m in unique)
+    active_sum = sum(m["spanSec"] or 0.0 for m in run_sessions)
+    work_sum = sum(m["activeSec"] or 0.0 for m in run_sessions)
     covered = interval_union(intervals)
     rows_per_role = {}
-    for metrics in sessions:
+    for metrics in run_sessions:
         rows_per_role[metrics["role"]] = rows_per_role.get(metrics["role"], 0) + 1
     roles = {}
     models = {}
-    for metrics in unique:
+    for metrics in run_sessions:
         entry = roles.setdefault(metrics["role"], {"agents": rows_per_role.get(metrics["role"], 0),
                                                     "sessions": 0, "spanSec": 0.0,
                                                     "workSec": 0.0, "costUsd": 0.0})
@@ -373,7 +390,7 @@ def build_record(rundir):
         "quietSumSec": active_sum - work_sum,
         "coveredSec": covered,
         "overlapSec": active_sum - covered,
-        "sessionsCounted": len(unique),
+        "sessionsCounted": len(run_sessions),
         "ledgerRows": len(sessions),
         "ledgerDrift": ledger_drift(sessions),
         "models": ledger.get("models") or {},
@@ -393,7 +410,8 @@ def build_record(rundir):
         "causes": cause_rollup(ledger.get("items") or {}),
         "roles": roles,
         "costByModel": models,
-        "sessions": sessions,
+        "sessions": run_sessions,
+        "retro": retro,
     }
 
 
@@ -414,9 +432,10 @@ def print_human(record):
           % (fmt_seconds(record["activeSumSec"]),
              fmt_seconds(record["coveredSec"]),
              fmt_seconds(record["overlapSec"])))
-    print("  work (sum)    %s   quiet %s   (%d sessions, %d ledger rows)"
+    print("  work (sum)    %s   quiet %s   (%d sessions, %d ledger rows%s)"
           % (fmt_seconds(record["workSumSec"]), fmt_seconds(record["quietSumSec"]),
-             record["sessionsCounted"], record["ledgerRows"]))
+             record["sessionsCounted"], record["ledgerRows"],
+             " + retro" if record.get("retro") else ""))
     for metrics in record["sessions"]:
         if metrics.get("outsideRunSec") is not None:
             print("  coordinator   %s of its %s span predates `startedAt` or follows "
@@ -425,17 +444,24 @@ def print_human(record):
     print("  gate waits    plan %s   commit %s"
           % (fmt_seconds((record["gates"]["plan"] or {}).get("waitSec")),
              fmt_seconds((record["gates"]["commit"] or {}).get("waitSec"))))
-    print("\nSessions:")
-    for metrics in record["sessions"]:
+    def row(metrics):
         if not metrics["exists"]:
             print("  %-18s %-13s no transcript" % (metrics["name"], metrics["role"]))
-            continue
+            return
         note = ("   same session as %s" % metrics["duplicateOf"]) if metrics.get("duplicateOf") else ""
         print("  %-18s %-13s %-9s %6d msgs  %10d tok  $%.6f  %s%s"
               % (metrics["name"], metrics["role"],
                  fmt_seconds(metrics["spanSec"]), metrics["messages"],
                  metrics["tokens"]["totalTokens"], metrics["costUsd"],
                  ",".join(metrics["models"]) or "no model recorded", note))
+
+    print("\nSessions:")
+    for metrics in record["sessions"]:
+        row(metrics)
+    if record.get("retro"):
+        print("\nRetro (the run's recorder — outside the totals above):")
+        for metrics in record["retro"]:
+            row(metrics)
     print("\nBy model:")
     for model, entry in sorted(record["costByModel"].items()):
         print("  %-46s %2d agents  %10d tok  $%.6f"
@@ -488,6 +514,12 @@ def self_test():
          "items": {"01": {"reviews": [{"id": "review-01-r1", "session": "/tmp/b.jsonl"}]}},
          "ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl"}]})] == \
         ["coordinator", "retro-x", "review-01-r1", "ponytail"]
+    # The retro is the run's recorder, not a lane of it: it is named in the
+    # ledger and reported outside the run's totals, as BB's is.
+    assert split_recorder([{"name": "item-01", "role": "worker"},
+                           {"name": "retro-x", "role": "retro"}]) == \
+        ([{"name": "item-01", "role": "worker"}],
+         [{"name": "retro-x", "role": "retro"}])
     # A span is not work: a session re-prompted across a suspended host keeps its
     # quiet hours out of `workSec`.
     stamps = [start, datetime(2026, 1, 1, 12, 2, 0, tzinfo=timezone.utc),
