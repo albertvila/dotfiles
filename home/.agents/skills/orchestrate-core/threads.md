@@ -111,7 +111,10 @@ runtimes:
   the run corpus reads it as data. It is set only when the run is done: every
   item terminal, every `done` item's PR open or merged and handed over, and the
   blocked items surfaced. A turn that runs after `finishedAt` reopens the run —
-  clear it, and set it again only when the run is terminal once more.
+  clear it, and set it again only when the run is terminal once more. One
+  exception: the runtime's own handover acts after it — the retro spawn, the
+  verification ask, and the post-merge cleanup the operator's reply resumes — are
+  part of setting the run down, and do not reopen it.
 
 ## PR body
 

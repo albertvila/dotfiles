@@ -190,14 +190,18 @@ coordinator, so it never starts a second one.
 
 Once `finishedAt` is set in the ledger, spawn the retro as the run's own last
 agent, so it is visible in the tab bar instead of being this pane's private
-afterthought:
+afterthought — at that moment, never behind the PRs' checks or the verification
+ask. Record the returned `agent_session.value` under the ledger's `retro` row
+(`{id, session, tab}`) in the same turn:
 
 ```sh
 tab=$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$PWD" \
   --label "RETRO <feature>" --no-focus)
 pane=$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')
-herdr agent start "retro-<feature-slug>" --kind pi --pane "$pane"
-herdr agent prompt "retro-<feature-slug>" "/orchestrate-herdr-retro $RUNDIR" \
+# retro- + the feature slug trimmed to 26 chars: 32 is the hard name limit
+slug=$(printf '%s' "<feature-slug>" | cut -c1-26)
+herdr agent start "retro-$slug" --kind pi --pane "$pane"
+herdr agent prompt "retro-$slug" "/orchestrate-herdr-retro $RUNDIR" \
   --wait --timeout 12000
 herdr notification show "Run settled" --body "RETRO <feature> is running" --sound done
 ```

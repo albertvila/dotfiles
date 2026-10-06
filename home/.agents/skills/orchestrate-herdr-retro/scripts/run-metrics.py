@@ -211,6 +211,12 @@ def agents_from_ledger(ledger):
                        "item": None, "session": executor.get("session"),
                        "startedAt": executor.get("startedAt"),
                        "endedAt": executor.get("endedAt")})
+    retro = ledger.get("retro") or {}
+    if retro.get("id") or retro.get("session"):
+        agents.append({"name": retro.get("id") or "retro", "role": "retro",
+                       "item": None, "session": retro.get("session"),
+                       "startedAt": retro.get("startedAt"),
+                       "endedAt": retro.get("endedAt")})
     for item_id, item in sorted((ledger.get("items") or {}).items()):
         worker = item.get("worker") or {}
         if worker.get("id"):
@@ -219,13 +225,15 @@ def agents_from_ledger(ledger):
                            "startedAt": item.get("startedAt"),
                            "endedAt": worker.get("endedAt")})
         for review in item.get("reviews") or []:
-            agents.append({"name": review.get("agent", "review-%s" % item_id),
+            agents.append({"name": review.get("agent") or review.get("id")
+                           or "review-%s" % item_id,
                            "role": "code-review", "item": item_id,
                            "session": review.get("session"),
                            "startedAt": review.get("startedAt"),
                            "endedAt": review.get("endedAt")})
         for fix in item.get("fixes") or []:
-            agents.append({"name": fix.get("agent", "fix-%s" % item_id),
+            agents.append({"name": fix.get("agent") or fix.get("id")
+                           or "fix-%s" % item_id,
                            "role": "fix", "item": item_id,
                            "session": fix.get("session"),
                            "startedAt": fix.get("startedAt"),
@@ -472,6 +480,14 @@ def self_test():
         ["ponytail-1", "ponytail-2"]
     assert [p["id"] for p in ponytail_passes(
         {"ponytail": {"id": "ponytail"}})] == ["ponytail"]
+    # The retro is an agent of the run: an unrecorded one is unpriced, and a
+    # review row named from the wrong field cannot be matched to its start log.
+    assert [a["name"] for a in agents_from_ledger(
+        {"executors": [{"id": "coordinator", "session": "/tmp/c.jsonl"}],
+         "retro": {"id": "retro-x", "session": "/tmp/r.jsonl"},
+         "items": {"01": {"reviews": [{"id": "review-01-r1", "session": "/tmp/b.jsonl"}]}},
+         "ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl"}]})] == \
+        ["coordinator", "retro-x", "review-01-r1", "ponytail"]
     # A span is not work: a session re-prompted across a suspended host keeps its
     # quiet hours out of `workSec`.
     stamps = [start, datetime(2026, 1, 1, 12, 2, 0, tzinfo=timezone.utc),

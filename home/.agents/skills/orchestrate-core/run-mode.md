@@ -37,6 +37,7 @@ The worker's test report is a claim. Before the commit gate, run the command the
 2. Run it again in a scratch worktree that is that base plus this item's files only. Copy changed and untracked files from the item worktree. Do not copy other items' uncommitted files.
 3. Base exit was 0 and the item exit is non-zero: that is a findings round, not a note. Do not open the commit gate.
 4. Base exit was already non-zero: report it. Do not blame the item for that same command.
+5. Both scratch worktrees are retired once validation finishes — `git worktree remove --force` on the paths this run created. They hold copies, not item work, so the dirty-worktree refusal that guards an item's worktree is not a signal here; left in place they hand the repo a stale registration.
 
 Flow A, once every item has passed: run the command on a scratch copy of the whole dirty tree. Non-zero pauses the run. Do not guess which item.
 
@@ -64,7 +65,7 @@ After a `gated` Flow B merge, if the target's new check-runs add a failure that 
 
 ## Verification
 
-After the PRs are open, spawn the retro. Do not wait for it to finish, and do not merge. Then ask the operator to verify the opened PRs. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
+After the PRs are open, spawn the retro — at that moment, not behind the PRs' checks: a check still running is watched *after* the spawn, and `finishedAt` is stamped when the PRs are open rather than when they are green. Do not wait for the retro to finish, and do not merge. Then ask the operator to verify the opened PRs. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged — and, when an opened PR is not mergeable, its `mergeStateStatus`: an operator told the checks are green on a `BLOCKED` PR has been told half of what decides the merge. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
 
 ## After the operator merges
 

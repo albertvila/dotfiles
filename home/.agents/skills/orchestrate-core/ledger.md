@@ -35,7 +35,8 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   ],
   // Runtime extensions, in this shape, never merged in:
   //   bb: "task" (BB Task key), "pr"
-  //   herdr: "rundir", "pr" {number,url,mergedAt,mergeCommit,base}, "prs" [...],
+  //   herdr: "rundir", "retro" {id,session,tab,startedAt},
+  //          "pr" {number,url,mergedAt,mergeCommit,base}, "prs" [...],
   //          "postMerge" {branchDeleted,tabsReleased,tabsKept,pending}, "reopenRounds" [...]
 }
 ```
