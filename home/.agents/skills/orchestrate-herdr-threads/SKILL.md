@@ -15,7 +15,7 @@ immediately: never re-derive the graph and never re-ask what was already
 approved. With no manifest, do not derive one: say the plan is missing and point
 the operator at `/orchestrate-herdr-plan`.
 
-Read [../orchestrate-bb-threads/run-mode.md](../orchestrate-bb-threads/run-mode.md)
+Read [../orchestrate-core/run-mode.md](../orchestrate-core/run-mode.md)
 before the first dispatch. It owns `mode`, the CI baseline, the validation exit
 code, Flow B bases, and the merge command. A sentence in this file that
 disagrees with it is wrong.
@@ -308,7 +308,7 @@ projection pairs each `fixes` entry with a review round and reads an unmatched
 one as a round still in flight — a settled run then reports `E150`.
 **An item the run stops on is typed.** Every `blocked` or `failed` item carries
 `cause: {code, detail}` — the code from the closed set in
-[../orchestrate-bb-threads/cause-contract.md](../orchestrate-bb-threads/cause-contract.md),
+[../orchestrate-core/cause-contract.md](../orchestrate-core/cause-contract.md),
 the detail one line of this instance's specifics. An invented code, a cause on
 any other status, and a `blocked`/`failed` item with no cause are all write
 errors, and the projection below exits non-zero on them. The contract's table
@@ -480,7 +480,7 @@ agent, no ledger entry and no reviewer it can honestly claim.
    operator in the run summary. In a multi-repo run there is no combined diff:
    one ponytail pass per item diff, none optional.
 6. **Commit + open one PR.** Do not open this gate until
-   [run-mode.md](../orchestrate-bb-threads/run-mode.md) validation exited 0.
+   [run-mode.md](../orchestrate-core/run-mode.md) validation exited 0.
    `land` and `unattended` do not end the turn and do not ask: record the gate
    with `auto: true` and the conventional message, then create the run branch and
    commit as the next sentence requires.
@@ -510,7 +510,7 @@ agent, no ledger entry and no reviewer it can honestly claim.
    are green — never read absence from merged history. The body carries the
    closing lines below.
 7. **Post-merge cleanup.** The sequence is
-   [run-mode.md](../orchestrate-bb-threads/run-mode.md)'s *After the operator
+   [run-mode.md](../orchestrate-core/run-mode.md)'s *After the operator
    merges* — `gated` runs it when the operator says the PR merged, `land` and
    `unattended` when the same reply answers the verification ask. Herdr's part:
    release every tab this coordinator created, including the worker tabs kept
@@ -524,7 +524,7 @@ agent, no ledger entry and no reviewer it can honestly claim.
 Trigger: the manifest's flow is `B`. Every item gets its own worktree and
 branch. Items with no `blockedBy` start together. An item with blockers stays
 `todo` until those PRs are merged, then its worktree is created from the
-updated target — see [run-mode.md](../orchestrate-bb-threads/run-mode.md). Do
+updated target — see [run-mode.md](../orchestrate-core/run-mode.md). Do
 not review it against a base that lacks its blockers, and do not rebase it
 onto them afterwards.
 
@@ -547,7 +547,7 @@ Then run Flow A steps 2–7 with these deltas:
   worktree, and the ponytail pass runs per branch on that branch's uncommitted
   diff.
 - **Step 6** — one PR per item, from that item's worktree. The commit gate is
-  [run-mode.md](../orchestrate-bb-threads/run-mode.md): `gated` asks, `land` and
+  [run-mode.md](../orchestrate-core/run-mode.md): `gated` asks, `land` and
   `unattended` do not. Commit the branch from the coordinator with
   `git -C <wt-path>`.
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
@@ -614,7 +614,7 @@ inherits nothing from the agent that died.
 ## Review loops
 
 What a review is, when it ends, how deep it goes and how a fix round is capped:
-[../orchestrate-bb-threads/review-contract.md](../orchestrate-bb-threads/review-contract.md).
+[../orchestrate-core/review-contract.md](../orchestrate-core/review-contract.md).
 A worker's `DONE` is a claim, not proof. This section carries only the Herdr
 mechanics.
 
@@ -656,13 +656,13 @@ Dispatch on the manifest's `tracker:` value:
 
 - `tracker: scratch <feature>` (work list from `.scratch/<feature>/issues/NN-*.md`)
   — keep those ticket files in sync with the ledger as items settle; see
-  [TICKET-WRITE-BACK.md](TICKET-WRITE-BACK.md).
+  [TICKET-WRITE-BACK.md](../orchestrate-core/TICKET-WRITE-BACK.md).
 - `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
   `ready-for-agent` only); settlement is comments only, never a close, never any
   other label. Post every comment body by file (`gh issue comment <n> --body-file`),
   never an inline heredoc — a quoting error merges one item's body into another
   item's comment, and the wrong text is visible until someone patches it. See
-  [TICKET-WRITE-BACK-GITHUB.md](TICKET-WRITE-BACK-GITHUB.md).
+  [TICKET-WRITE-BACK-GITHUB.md](../orchestrate-core/TICKET-WRITE-BACK-GITHUB.md).
 
 The coordinator owns these writes and writes to a ticket only once its item has
 settled — a worker's `DONE` alone does not settle an item.

@@ -175,7 +175,7 @@ documents the shapes.
   `totalTokens = inputTokens + cachedInputTokens + outputTokens`, and
   `cachedInputTokens = cacheReadInputTokens + cacheWriteInputTokens`.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
-  closed set in `../orchestrate-bb-threads/cause-contract.md`, which also gives
+  closed set in `../orchestrate-core/cause-contract.md`, which also gives
   the operator's move for each code; the findings name it. An item the run
   stopped on with no cause, or with a code outside the set, is a finding — never
   repeated as if it were a code.

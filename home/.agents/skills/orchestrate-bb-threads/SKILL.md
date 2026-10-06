@@ -16,7 +16,7 @@ from it immediately — never re-derive the graph and never re-ask what was
 already approved. With no manifest, do not derive one: say the plan is missing
 and point the operator at `/orchestrate-bb-plan`.
 
-Read [run-mode.md](run-mode.md) before the first spawn. It owns `mode`, the CI
+Read [run-mode.md](../orchestrate-core/run-mode.md) before the first spawn. It owns `mode`, the CI
 baseline, the validation exit code, Flow B bases, and the merge command. A
 sentence in this file that disagrees with it is wrong.
 
@@ -73,7 +73,7 @@ item `failed` with `cause.code: dispatch_failed`.
 ## Review loops
 
 What a review is, when it ends, how deep it goes and how a fix round is capped:
-[review-contract.md](review-contract.md). A worker's DONE is a claim, not proof.
+[review-contract.md](../orchestrate-core/review-contract.md). A worker's DONE is a claim, not proof.
 This section carries only the BB mechanics.
 
 - The review thread is always a **spawned child thread**. An `Agent`/subagent
@@ -293,14 +293,14 @@ manager that never dispatched, whatever it shipped.
    opens a fix round; a preference, a style choice, or an observation with no
    gate behind it stays out-of-band, reported to the operator in the run summary
    and never fixed in-run. The fix path and the cap are in *Review loops* and
-   [review-contract.md](review-contract.md).
+   [review-contract.md](../orchestrate-core/review-contract.md).
 
    In a multi-repo run (see *Cross-repo runs*) there is no combined diff to
    pass: run one ponytail pass per item diff, none optional — the last
    item's pass is not skippable, and a single combined pass is not a
    substitute.
 
-6. **Commit + open one PR.** Do not open this gate until [run-mode.md](run-mode.md)
+6. **Commit + open one PR.** Do not open this gate until [run-mode.md](../orchestrate-core/run-mode.md)
    validation exited 0. `land` and `unattended` skip the question: record the
    gate with `auto: true` and the conventional message, then create the run
    branch before pushing and commit. `gated`
@@ -349,7 +349,7 @@ manager that never dispatched, whatever it shipped.
 
    The body carries the closing lines and the intent block below (see *PR body*).
 
-7. **Post-merge cleanup.** The sequence is [run-mode.md](run-mode.md)'s *After
+7. **Post-merge cleanup.** The sequence is [run-mode.md](../orchestrate-core/run-mode.md)'s *After
    the operator merges* — `gated` runs it when the user says the PR merged,
    `land` and `unattended` when the operator replies to the verification ask.
    The manager's part is only the hand-off: retire nothing itself. `bb environment delete`
@@ -364,7 +364,7 @@ own worktree+**branch**. One PR per item. Same models
 and review loops as the shared sections above (*Models*, *Review loops*).
 Items with no `blockedBy` start together. An item with blockers stays `todo`
 until those PRs are merged, then its worktree is created from the updated
-target — see [run-mode.md](run-mode.md). Do not review it against a base that
+target — see [run-mode.md](../orchestrate-core/run-mode.md). Do not review it against a base that
 lacks its blockers, and do not rebase it onto them afterwards.
 
 1. **Spawn every item whose blockers are already merged — one worktree+branch each.** Drop
@@ -397,7 +397,7 @@ Then run Flow A steps 2–7 with these deltas:
   spawn with `--environment "<worker-env-id>"` in place of
   `"$BB_ENVIRONMENT_ID"`, and the ponytail pass runs per branch on that
   branch's uncommitted diff.
-- **Flow A step 6 — one PR per item.** The commit gate is [run-mode.md](run-mode.md):
+- **Flow A step 6 — one PR per item.** The commit gate is [run-mode.md](../orchestrate-core/run-mode.md):
   `gated` asks, `land` and `unattended` do not. Then commit the branch (`bb environment commit
   <env-id>`) and mark that environment's PR ready (`bb environment
   pull-request ready <env-id>` — each worktree environment owns its PR).
@@ -407,7 +407,7 @@ Then run Flow A steps 2–7 with these deltas:
   Merging items into one PR is the Flow A shape.
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in
-  [run-mode.md](run-mode.md). `land` and `unattended` do not merge and do not
+  [run-mode.md](../orchestrate-core/run-mode.md). `land` and `unattended` do not merge and do not
   dispatch the next wave. Do not use `bb environment pull-request merge`. After a
   `gated` wave is merged, fetch and spawn the items it unblocked. Hand worktree retirement to the
   user: the manager never archives threads (see *Rules*), and
@@ -438,11 +438,11 @@ asks for a status view, regenerate the plan diagram with fresh status colors
 `{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead, cause }` — `threadId` is
 always the item's **worker** thread, and the manager's own thread id never
 appears in `items` (`envId`, the item's worktree environment, and `prUrl`
-belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](run-mode.md).
+belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](../orchestrate-core/run-mode.md).
 
 **An item the run stops on is typed.** Every `blocked` or `failed` item carries
 `cause: {code, detail}` — the code from the closed set in
-[cause-contract.md](cause-contract.md), the detail one line of this instance's
+[cause-contract.md](../orchestrate-core/cause-contract.md), the detail one line of this instance's
 specifics. An invented code, a cause on any other status, and a
 `blocked`/`failed` item with no cause are all write errors, and both retro
 scripts read them as findings.
@@ -454,7 +454,7 @@ identity — where this ledger lives — and the retro walks the chain so a
 successor's children are not lost from the numbers.
 
 `reviewCount` counts every completed pass; `fixRounds` counts the findings
-rounds, and the cap reads off `fixRounds` (see [review-contract.md](review-contract.md)). Write the ledger as you go, never batched at
+rounds, and the cap reads off `fixRounds` (see [review-contract.md](../orchestrate-core/review-contract.md)). Write the ledger as you go, never batched at
 settlement — `reviewCount` when the iteration completes, `models` and each
 item's `status` as the run moves — the ledger must read true mid-run. Set
 `reviewThreadId` when a round **completes**; if the spawned round is
@@ -485,14 +485,14 @@ Dispatch on the manifest's `tracker:` value:
 
 - `tracker: scratch` (work list from `.scratch/<feature>/issues/NN-*.md`) —
   the manager keeps those ticket files in sync with the ledger as items
-  settle; see [TICKET-WRITE-BACK.md](TICKET-WRITE-BACK.md).
+  settle; see [TICKET-WRITE-BACK.md](../orchestrate-core/TICKET-WRITE-BACK.md).
 - `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
   `ready-for-agent` only); settlement is comments only, never a close, never
   any other label. A change after settlement that contradicts a posted comment
   (an operator-directed run-as switch, say) gets a correcting comment as part
   of the landing step — writeback is append-only, so the correction is a new
   comment, never an edit, and it is not optional. See
-  [TICKET-WRITE-BACK-GITHUB.md](TICKET-WRITE-BACK-GITHUB.md).
+  [TICKET-WRITE-BACK-GITHUB.md](../orchestrate-core/TICKET-WRITE-BACK-GITHUB.md).
 
 The task record is orthogonal to the tracker value: when the manifest also
 names a BB Task, the Task identity line adds the task record on top of the

@@ -154,7 +154,7 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
   agent that fits neither means the run went off-script.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
-  closed set in `../orchestrate-bb-threads/cause-contract.md`, which also gives
+  closed set in `../orchestrate-core/cause-contract.md`, which also gives
   the operator's move for each code; the script rolls them up under *Blocks by
   cause*. An item the run stopped on with no cause, or with a code outside the
   set, is reported under *What to fix* — never repeated as if it were a code.

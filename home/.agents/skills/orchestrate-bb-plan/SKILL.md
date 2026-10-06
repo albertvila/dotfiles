@@ -151,7 +151,7 @@ One screen, no scrolling.
 Read `mode` from the argument before rendering: `--unattended`, `--land`, or
 neither (`gated`). Both flags is a stop. `land` or `unattended` on a
 cross-repo or `A+cross-repo` plan is a stop — name the shape. The contract is
-`../orchestrate-bb-threads/run-mode.md`.
+`../orchestrate-core/run-mode.md`.
 
 Present in the approval message: the flow (A, B, or the cross-repo shape named
 as itself), the mode, the reduction made — **tickets in, items out**, with every excluded
@@ -199,7 +199,7 @@ attachments have no replace-in-place, so a re-plan appends a versioned record
 
 The manager's prompt is a **manifest**: data only, no instructions. The field
 list, the item line and wave line formats, and what every header line means are
-[`manifest-contract.md`](manifest-contract.md) — that file owns the shape, and
+[`manifest-contract.md`](../orchestrate-core/manifest-contract.md) — that file owns the shape, and
 the shape is the same in both runtimes. What goes in it is this skill's:
 
 - the feature name, and the Task identity as `task:` when the run has one
@@ -231,7 +231,7 @@ Write it to `$BB_THREAD_STORAGE/manifest.txt` and check it — the contract's
 checker is the machine form of the completeness rule above:
 
 ```sh
-python3 ~/.agents/skills/orchestrate-bb-threads/scripts/validate-manifest.py "$BB_THREAD_STORAGE/manifest.txt"
+python3 ~/.agents/skills/orchestrate-core/scripts/validate-manifest.py "$BB_THREAD_STORAGE/manifest.txt"
 ```
 
 `FAIL:` names every error with the line it is on; a non-zero exit means the
@@ -344,6 +344,6 @@ retro thread to the operator.
 
 For `land` and `unattended` it is **not**. The run is finished with the PRs open
 and the merge happens after it, so post the verification ask from
-`../orchestrate-bb-threads/run-mode.md` and stay the run's owner. The operator's
+`../orchestrate-core/run-mode.md` and stay the run's owner. The operator's
 reply that the PRs are merged resumes this thread, which runs that file's
 *After the operator merges* steps. Do not merge.
