@@ -3,7 +3,7 @@
 
 A run is a manager thread plus its children (workers, review, ponytail). A run
 that outlived one manager's context holds one ledger and more than one manager
-thread: the ledger's `managerChain` names them, oldest first, and every manager
+thread: the ledger's `executors` names them, oldest first, and every manager
 in it plus every child of each is part of the run. All
 numbers come from `bb thread log --json` events and, when present, the run's
 `orchestration.json` ledger. Read-only against the run: nothing is written
@@ -15,7 +15,7 @@ except the pricing cache and, when `--output-dir` is given, the record.
 
 The record is assembled by `assemble_record`, a pure function of the events,
 the ledger and the run's identity; `--self-test` asserts against it. Pass the
-run's identity — the first manager in `managerChain`, which is where the ledger
+run's identity — the first manager in `executors`, which is where the ledger
 lives — not the last one.
 
 Timing caveat: in a shared-worktree run the phases overlap on purpose, so
@@ -52,7 +52,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import CAUSE_CODES  # noqa: E402
+from orchestrate_common import CAUSE_CODES, corpus_dirname  # noqa: E402
 
 
 def sh(*args):
@@ -93,28 +93,15 @@ def minutes(ms):
 
 
 def normalise_items(ledger):
-    """The ledger's `items` is a list in some runs and a dict keyed by item id in
-    others. Return a list of dicts with `id` always set, and never raise on a
-    shape the ledger actually shipped."""
+    """The ledger's `items`, keyed by item id, as a list of dicts with `id` set."""
     if not isinstance(ledger, dict):
         return []
-    items = ledger.get("items") or []
-    if isinstance(items, dict):
-        pairs = list(items.items())
-    elif isinstance(items, list):
-        pairs = [(None, v) for v in items]
-    else:
+    items = ledger.get("items") or {}
+    if not isinstance(items, dict):
         return []
     out = []
-    for key, value in pairs:
-        if isinstance(value, dict):
-            item = dict(value)
-        elif isinstance(value, str):
-            item = {"id": value}
-        elif value is None:
-            item = {}
-        else:
-            item = {"value": value}
+    for key, value in items.items():
+        item = dict(value) if isinstance(value, dict) else {}
         if item.get("id") is None:
             item["id"] = key
         out.append(item)
@@ -538,14 +525,9 @@ def build_findings(rows, ledger, manager):
                    f"0 children and no ledger; dispatch never happened. An item implemented "
                    f"in this thread has no worker, no review thread and no ledger entry")
     for item in normalise_items(ledger):
-        attempts = item.get("attempts") or []
-        failed = [a for a in attempts
-                  if (a.get("result", "") if isinstance(a, dict) else str(a)).startswith("failed")]
-        if failed:
-            why = "; ".join(a.get("result", "") if isinstance(a, dict) else str(a) for a in failed)
-            out.append(f"item {item.get('id')}: {len(failed)} failed attempt(s) — {why}")
-        if item.get("reviewCount", 0) >= 3:
-            out.append(f"item {item.get('id')}: review hit the cap ({item['reviewCount']})")
+        findings_rounds = len(item.get("fixes") or [])
+        if findings_rounds >= 3:
+            out.append(f"item {item.get('id')}: review hit the cap ({findings_rounds})")
         if item.get("status") in ("blocked", "failed"):
             cause = item.get("cause") or {}
             code = cause.get("code")
@@ -565,13 +547,13 @@ def _task_link(ledger, identity):
     task_id = identity.get("taskId")
     resolution = identity.get("taskResolution")
     if key is None and isinstance(ledger, dict):
-        ticket = ledger.get("ticket")
-        if isinstance(ticket, dict) and ticket.get("key"):
-            key = ticket["key"]
-            task_id = task_id if task_id is not None else ticket.get("id")
+        task = ledger.get("task")
+        if isinstance(task, dict) and task.get("key"):
+            key = task["key"]
+            task_id = task_id if task_id is not None else task.get("id")
             resolution = "ledger-key"
-        elif isinstance(ledger.get("run"), str) and TASK_KEY_RE.match(ledger["run"]):
-            key = ledger["run"]
+        elif isinstance(task, str) and TASK_KEY_RE.match(task):
+            key = task
             resolution = "run-name"
     if resolution is None:
         resolution = "resolved" if key else "unresolved"
@@ -665,7 +647,7 @@ def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
 
     run = {
         "managerThreadId": manager_id,
-        "name": identity.get("name") or ledger.get("run"),
+        "name": identity.get("name") or ledger.get("feature"),
         "taskKey": task_key,
         "taskId": task_id,
         "taskResolution": task_resolution,
@@ -712,13 +694,10 @@ def slugify(value):
 
 
 def record_dirname(record):
-    """`<date>-<project>-<slug>-<threadId>`: browsable, unique by thread id, and
-    stable for the same run so a re-run rewrites the record in place."""
+    """The corpus directory name: `<date>-bb-<project>-<feature>`."""
     run = record["run"]
-    date = (run.get("startedAt") or "unknown-date")[:10]
-    project = slugify(run.get("project")) or "unknown-project"
-    slug = slugify(run.get("name")) or slugify(run.get("managerThreadId")) or "run"
-    return f"{date}-{project}-{slug}-{run['managerThreadId']}"
+    return corpus_dirname((run.get("startedAt") or "")[:10], "bb",
+                          run.get("project"), run.get("name") or run.get("managerThreadId"))
 
 
 def self_test():
@@ -738,9 +717,8 @@ def self_test():
     assert price_for("opencode/deepseek-v4-flash", table) is None
 
     assert normalise_items({"items": {"01": {"status": "done"}}}) == [{"status": "done", "id": "01"}]
-    assert normalise_items({"items": [{"id": "a"}]}) == [{"id": "a"}]
     assert normalise_items({}) == []
-    assert normalise_items({"items": [None, "x", {"id": "y"}]}) == [{"id": None}, {"id": "x"}, {"id": "y"}]
+    assert normalise_items({"items": []}) == []
 
     # unavailable cost never renders as $0.00
     assert format_cost({"reported": None, "estimated": None, "basis": "unpriced"}) == "unpriced"
@@ -821,16 +799,16 @@ def self_test():
         thread("thr_cr", "REVIEW 01 · thing", "idle", review_unpriced),
         thread("thr_ct", "02 · worker", "idle", worker_told),
     ]
-    item = {"id": "01", "status": "done", "reviewCount": 1, "blockedBy": []}
-    ledger_list = {"run": "DOT-11", "flow": "A", "items": [item]}
-    ledger_dict = {"run": "DOT-11", "flow": "A", "items": {"01": dict(item)}}
-    ledger_no_task = {"items": [dict(item)]}
+    item = {"id": "01", "status": "done", "reviews": [{"pass": 1, "verdict": "CLEAN"}],
+            "blockedBy": []}
+    ledger_dict = {"feature": "DOT-11", "task": "DOT-11", "flow": "A",
+                   "items": {"01": dict(item)}}
+    ledger_list = ledger_dict
+    ledger_no_task = {"feature": "DOT-11", "items": {"01": dict(item)}}
     identity = {"managerThreadId": "thr_mgr", "project": "bb-plugins"}
     pricing = {"anthropic/claude-sonnet-5": price}
 
     rec = assemble_record(threads, ledger_list, identity, pricing)
-
-    # ledger `items` list vs dict -> the same record, and never a failed write
     assert rec == assemble_record(threads, ledger_dict, identity, pricing)
 
     # a compacted thread resets its counter; epochs are summed, not last-wins
@@ -1005,8 +983,8 @@ def self_test():
     # directory name is the browsable key, stable across invocations
     name = record_dirname(rec)
     assert name == record_dirname(assemble_record(threads, ledger_dict, identity, pricing)), name
-    assert name == "2023-11-14-bb-plugins-dot-11-thr_mgr", name
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}-[a-z0-9-]+-thr_mgr", name)
+    assert name == "2023-11-14-bb-bb-plugins-dot-11", name
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}-bb-[a-z0-9-]+", name)
 
     row = {"role": "worker", "threadId": "thr_x", "title": "01 · thing", "turnsFailed": 0,
            "errors": [], "status": "idle", "wallMs": 60_000, "activeMs": 60_000,
@@ -1017,7 +995,7 @@ def self_test():
 
     # A stopped item is typed by its cause; an untyped or invented one is a finding
     stopped = {"items": {
-        "01": {"status": "blocked", "reviewCount": 3,
+        "01": {"status": "blocked",
                "cause": {"code": "cap_exhausted", "detail": "three findings rounds"}},
         "02": {"status": "failed", "cause": {"code": "dispatch_failed", "detail": "spawn refused"}},
         "03": {"status": "blocked"},
@@ -1030,6 +1008,9 @@ def self_test():
     assert sum("with no cause" in f for f in typed) == 2, typed
     assert any("no cause (made_up)" in f for f in typed), typed
     assert not any("— made_up:" in f for f in typed), typed
+    capped = build_findings([], {"items": {"01": {"status": "done", "fixes": [
+        {"pass": 1}, {"pass": 2}, {"pass": 3}]}}}, None)
+    assert any("hit the cap (3)" in f for f in capped), capped
     park = dict(row, models=["m1"], idleMs=20 * 60_000, start=T0, end=T0 + 1_200_000,
                 _intervals=[[T0, T0 + 60_000]])
     assert not any("idle" in f for f in build_findings([park], None, None)), build_findings([park], None, None)
@@ -1057,7 +1038,7 @@ def fetch_run(manager_id, chain=()):
     """The run's managers and every child of each, as `assemble_record` wants them.
 
     `manager_id` is the run's identity. `chain` is the ledger's
-    `managerChain`: the managers that held this run, oldest first. Every one of
+    `executors`: the managers that held this run, oldest first. Every one of
     them is the manager role, and the children of all of them are the run's
     children — a successor's workers hang off the successor, not off the thread
     that started the run.
@@ -1182,7 +1163,8 @@ def main():
         except json.JSONDecodeError:
             ledger = None
 
-    threads = fetch_run(args.manager, (ledger or {}).get("managerChain") or ())
+    executors = [e.get("id") for e in ((ledger or {}).get("executors") or []) if e.get("id")]
+    threads = fetch_run(args.manager, executors)
     manager_meta = threads[0]["meta"]
     pricing, pricing_meta = openrouter_pricing(os.path.join(data_dir, "cache", "openrouter-models.json"),
                                                not args.no_pricing)

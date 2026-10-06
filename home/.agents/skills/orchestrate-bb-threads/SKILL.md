@@ -75,9 +75,9 @@ This section carries only the BB mechanics.
   delta the re-review is scoped to, and the brief names it.
 - A ponytail fix runs as a **new** child thread on the worker model, titled
   `FIX · <finding>` — a `PONYTAIL …` title is reserved for a ponytail pass.
-- Record `reviewCount` for every completed pass and `fixRounds` for the findings
-  rounds; read the cap off `fixRounds`. A non-verdict completion is re-prompted
-  once in the same thread and does not increment `reviewCount`.
+- Append a `reviews` entry for every completed pass and a `fixes` entry for
+  every findings round; the cap reads off the `fixes` rounds. A non-verdict
+  completion is re-prompted once in the same thread and adds no `reviews` entry.
 
 ## Flow A — single shared PR
 
@@ -389,27 +389,27 @@ tracker-vs-code-repo run's shared worktree is the code repo's environment, not
 There is no Tasks panel for this — the manager IS the tracker. When the user
 asks for a status view, regenerate the plan diagram with fresh status colors
 (done / in review / todo) from the ledger. Keep
-`$BB_THREAD_STORAGE/orchestration.json` mapping each item to
-`{ threadId, envId, status, blockedBy, reviewCount, fixRounds, prUrl, reviewedHead, cause }` — `threadId` is
-always the item's **worker** thread, and the manager's own thread id never
-appears in `items` (`envId`, the item's worktree environment, and `prUrl`
-belong to Flow B) — plus the run's `mode`, `ciBaseline`, `validationBaseline`, `models`, `managerChain` and `finishedAt`. Statuses: `todo`, `running`, `done`, `failed`, `blocked`. `finishedAt` for `land` and `unattended` is set when the PRs are open, per [run-mode.md](../orchestrate-core/run-mode.md).
+`$BB_THREAD_STORAGE/orchestration.json` in the shape of
+[`ledger.md`](../orchestrate-core/ledger.md) — the same record Herdr writes.
+BB fills it like this:
 
-`managerChain` lists the manager threads that held this run, oldest first. The
-plan thread appends a successor when it replaces a manager whose context ran out
-(see `/orchestrate-bb-plan`, *Wait for the run*). The first id is the run's
-identity — where this ledger lives — and the retro walks the chain so a
-successor's children are not lost from the numbers.
-
-`reviewCount` counts every completed pass; `fixRounds` counts the findings
-rounds, and the cap reads off `fixRounds` (see
-[review-contract.md](../orchestrate-core/review-contract.md)). Set
-`reviewThreadId` when a round **completes**; if the spawned round is interrupted
-or re-prompted, point it back at the last completed review thread.
-`reviewThreadId` must never name a thread that produced no verdict, or the
-ledger's primary review pointer reads as a pass that never happened. Before the
-step 6 commit gate, assert this from the ledger: an item that cannot name its
-review thread and its ponytail thread has not settled.
+- `runtime: "bb"`, plus `feature`, `project`, `tracker`, `flow`, `mode`,
+  `startedAt`, `models`, `ciBaseline`, `validationBaseline`, `gates`
+- `executors`: one entry per manager thread that held the run, oldest first —
+  `{ "id": "<manager thread id>", "session": …, "startedAt": …, "endedAt": … }`.
+  `executors[0].id` is the run's identity and where this ledger lives. The plan
+  thread appends a successor when it replaces a manager whose context ran out
+  (see `/orchestrate-bb-plan`, *Wait for the run*), and the retro walks the list
+  so a successor's children are not lost from the numbers.
+- each item's `worker.id` is its **worker thread id** (the manager's own thread
+  id never appears there), and `worker.worktree` is its Flow B `envId`
+- `reviews` gets one entry per completed pass — `{ "pass", "id": "<review thread
+  id>", "verdict", "startedAt", "endedAt" }` — and `fixes` one per findings
+  round. `reviewCount` is `len(reviews)`, and the cap reads off the reviews that
+  opened a `fixes` entry ([review-contract.md](../orchestrate-core/review-contract.md)).
+  An entry's `id` must never name a thread that produced no verdict, and before
+  the step 6 commit gate the ledger must show a `reviews` entry and a `ponytail`
+  pass for every item it calls settled.
 
 The shared invariants — write-as-you-go, the typed cause, the `done` rule, the
 run's done-definition and `finishedAt` — are

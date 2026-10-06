@@ -193,7 +193,7 @@ bb thread spawn --parent-self \
 `auto` is rejected ("Provider pi only supports full permission mode") — pass
 `full` there, matching the plan thread's own ceiling. Record the manager's
 thread id as `<run-manager-id>`: it is the run's identity, where the ledger
-lives, and the first entry in the ledger's `managerChain`.
+lives, and the first entry in the ledger's `executors`.
 
 ## Wait for the run
 
@@ -233,7 +233,7 @@ bb thread spawn --parent-self \
 ```
 
 The successor writes that same ledger file, so this loop keeps reading one
-record. Append its thread id to the ledger's `managerChain` and wait on it, but
+record. Append its thread id to the ledger's `executors` and wait on it, but
 keep `<run-manager-id>` as the run's identity — the ledger stays in the first
 manager's storage, and that is the id the retro is given. A manager that ended
 on a pending gate is not replaced — wait again. A second terminal state without
@@ -254,7 +254,7 @@ bb thread spawn --parent-self \
 
 `<run-manager-id>` is the run's identity — the **first** manager, whose storage
 holds the ledger — never the last successor. The retro reaches a successor's
-children through the ledger's `managerChain`; hand it the successor and the
+children through the ledger's `executors`; hand it the successor and the
 items dispatched before the succession drop out of the numbers.
 
 For `gated` that is the plan thread's last act: report the run's outcome and the

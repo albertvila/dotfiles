@@ -238,66 +238,47 @@ agent; a fresh `fix-<slug>-f<n>` agent starts only when the worker's pane is gon
 ## The run's record
 
 There is no Tasks panel for this — the coordinator IS the tracker. **Open the
-run first:** create its working directories, record the coordinator's own
-session, and seed the ledger from the manifest — items with `status: todo`,
-`reviewCount: 0`, `criteria` from the item's acceptance line, `startedAt` (UTC),
-the manifest's plan gate under `gates.plan`, and the resolved `models`. Then dispatch, before reading any item's
-files. Keep `$RUNDIR/orchestration.json` true as the run moves, never batched at
-settlement — and stamp the times the pane and the retro both read: `startedAt`
-when you dispatch a worker or a review, `endedAt` when it settles:
+run first:** create its working directories, record the coordinator as
+`executors[0]`, and seed the ledger from the manifest — items with
+`status: todo`, `criteria` and `outOfScope` verbatim, `startedAt` (UTC), the
+manifest's plan gate under `gates.plan`, and the resolved `models`. Then
+dispatch, before reading any item's files. Keep `$RUNDIR/orchestration.json`
+true as the run moves, never batched at settlement — and stamp the times the
+pane and the retro both read: `startedAt` when you dispatch a worker or a
+review, `endedAt` when it settles:
 
 ```sh
 mkdir -p "$RUNDIR"/{logs,prompts,reports,diffs,snapshots}
 herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   # coordinator session
 ```
 
-```jsonc
-{
-  "feature": "<feature>", "rundir": "<abs>", "startedAt": "<ISO-8601 UTC>",
-  "tracker": "scratch <feature>" | "github <owner/repo>#<parent>",
-  "mode": "gated" | "land" | "unattended",
-  "ciBaseline": [], "validationBaseline": {},
-  "flow": "A" | "B" | "cross-repo" | "A+cross-repo",
-  "coordinator": { "pane": "<HERDR_PANE_ID>", "session": "<pi session path>" },
-  "gates": { "plan":  { "requestedAt": null, "approvedAt": null },
-             "commit": { "requestedAt": null, "approvedAt": null },
-             "commit-second": null },      // a later gate is appended by name, never merged in
-  "models": { "worker": "<pattern|pi-default>", "code-review": "…", "ponytail": "…" },
-  "items": {
-    "<id>": {
-      "title": "…", "slug": "<slug>", "ticket": "<ref>",
-      "criteria": "…",                      // the manifest's acceptance line, verbatim
-      "worker": { "agent": "item-<slug>", "pane": "…", "tab": "…", "session": "…" },
-      "worktree": null,                      // Flow B: {workspace, path, branch}
-      "status": "todo",                      // todo | running | done | failed | blocked
-      "blockedBy": [], "reviewCount": 0, "prUrl": null,
-      "startedAt": "<ISO-8601 UTC>", "endedAt": null,
-      "unblock": null,                       // only when a block is not a dependency's to clear
-      "cause": null,                         // {code, detail} when status is blocked or failed — cause-contract.md
-      "reviews": [],                         // {pass, agent, session, verdict, report, startedAt, endedAt}
-      "fixes": []                            // {pass, agent, session, startedAt, endedAt}
-      // Flow B also: "commitGate": {requestedAt, approvedAt} per item
-    }
-  },
-  "ponytail": [],                            // passes in order: {pass, agent, session, verdict, report, startedAt, endedAt}
-  "finishedAt": null,                        // ISO-8601 UTC, not a marker or sentence
-  // allowed extensions, in this shape: "retro", "pr" {number, url, mergedAt, mergeCommit, base},
-  // "prs": [{number, url, head, commit, mergedAt, kind}], "postMerge" {branchDeleted, tabsReleased, tabsKept, pending},
-  // "reopenRounds": [{item, at, why, agent, landedAs}]
-}
-```
+The ledger's shape is [`ledger.md`](../orchestrate-core/ledger.md) — the same
+record BB writes. Herdr fills it like this:
 
-Record the coordinator's own session once at the start. `reviewCount` counts
-every completed pass; the findings-round cap reads off the review rounds that
-opened a `fixes[]` entry, per the review contract. The `done` rule and the reopen rule are
+- `runtime: "herdr"`, plus `feature`, `project`, `rundir`, `tracker`, `flow`,
+  `mode`, `startedAt`, `models`, `ciBaseline`, `validationBaseline`, `gates`
+- `executors: [{ "id": "coordinator", "pane": "$HERDR_PANE_ID", "session": … }]`
+  — `executors[0]` is the run's identity
+- each item's `worker: { "id": "item-<slug>", "pane": …, "tab": …, "session": … }`,
+  and in Flow B a `worktree: { workspace, path, branch }`
+- every `reviews`/`fixes`/`ponytail` entry carries `id` (the agent name),
+  `session`, `pass`, and — for a review or ponytail pass — `verdict`
+
+Extensions Herdr adds, in the contract's shape: `pr` {number, url, mergedAt,
+mergeCommit, base}, `prs` [{number, url, head, commit, mergedAt, kind}],
+`postMerge` {branchDeleted, tabsReleased, tabsKept, pending}, `reopenRounds`
+[{item, at, why, agent, landedAs}].
+
+Record the coordinator as `executors[0]` at the start. The findings-round cap
+reads off the review rounds that opened a `fixes` entry, per the review contract. The `done` rule and the reopen rule are
 [`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger). `ponytail` is a list of passes, appended in order like `reviews` —
 a two-pass ponytail (`FINDINGS` → fix round → re-check) keeps both, at `pass: 1`
 and `pass: 2`, because only the last one is the verdict and only the first one
-holds the findings that opened the fix round. Every pass keeps the agent and its
-`session`: a `passes` rewrite that drops the session prices the whole lane at
+holds the findings that opened the fix round. Every pass keeps its `id` and
+`session`: a rewrite that drops the session prices the whole lane at
 zero in the retro. A convenience `verdict`/`report` may name the last pass; the
 array is the record. `items[].fixes` counts **review-driven** rounds only: a
-ponytail fix round is recorded under `ponytail[]` (with its agent), because the
+ponytail fix round is recorded under `ponytail` (with its id), because the
 projection pairs each `fixes` entry with a review round and reads an unmatched
 one as a round still in flight — a settled run then reports `E150`.
 **An item the run stops on is typed** — the invariant and the codes are
@@ -605,10 +586,10 @@ mechanics.
   round's evidence. With it removed, a silent fix round has no report at all and
   the stalled-turn rule catches it.
 - A non-verdict completion is re-prompted once in the same reviewer — its tab is
-  still open — and does not increment `reviewCount`.
-- Record `reviewCount` for every completed pass; the findings rounds are the
-  review rounds that opened a `fixes[]` entry, and the cap reads off those. A
-  ponytail fix round is named under `ponytail[]`, never in `items[].fixes` — the
+  still open — and adds no `reviews` entry.
+- Append a `reviews` entry for every completed pass; the findings rounds are the
+  review rounds that opened a `fixes` entry, and the cap reads off those. A
+  ponytail fix round is named under `ponytail`, never in `items[].fixes` — the
   `fixes` array is review-scoped, and the projection reads an extra entry there
   as an in-flight review round.
 

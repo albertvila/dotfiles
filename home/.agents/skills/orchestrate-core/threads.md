@@ -92,8 +92,9 @@ explicitly — a fresh agent inherits nothing from the one that died.
 
 ## The ledger
 
-The runtime owns the ledger's path, its JSON shape and its field names. These
-invariants hold in both runtimes:
+[ledger.md](ledger.md) owns the ledger's shape; the runtime owns only its path
+(BB's thread storage, Herdr's run directory). These invariants hold in both
+runtimes:
 
 - Write the ledger as the run moves, never batched at settlement — it must read
   true mid-run.

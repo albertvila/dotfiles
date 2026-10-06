@@ -29,7 +29,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import CAUSE_CODES  # noqa: E402
+from orchestrate_common import CAUSE_CODES, corpus_dirname  # noqa: E402
 
 # A session whose messages pause longer than this is not working: it is waiting on
 # another agent, or the machine was suspended under it.
@@ -200,22 +200,21 @@ def ponytail_passes(ledger):
     passes = ledger.get("ponytail") or []
     if isinstance(passes, dict):
         passes = [passes]
-    return [entry for entry in passes if entry.get("agent")]
+    return [entry for entry in passes if entry.get("id")]
 
 
 def agents_from_ledger(ledger):
     """Every dispatched agent in the run, with its role and item."""
     agents = []
-    coordinator = ledger.get("coordinator") or {}
-    if coordinator:
-        agents.append({"name": "coordinator", "role": "coordinator",
-                       "item": None, "session": coordinator.get("session"),
-                       "startedAt": coordinator.get("startedAt"),
-                       "endedAt": coordinator.get("endedAt")})
+    for executor in ledger.get("executors") or []:
+        agents.append({"name": executor.get("id", "coordinator"), "role": "coordinator",
+                       "item": None, "session": executor.get("session"),
+                       "startedAt": executor.get("startedAt"),
+                       "endedAt": executor.get("endedAt")})
     for item_id, item in sorted((ledger.get("items") or {}).items()):
         worker = item.get("worker") or {}
-        if worker.get("agent"):
-            agents.append({"name": worker["agent"], "role": "worker",
+        if worker.get("id"):
+            agents.append({"name": worker["id"], "role": "worker",
                            "item": item_id, "session": worker.get("session"),
                            "startedAt": item.get("startedAt"),
                            "endedAt": worker.get("endedAt")})
@@ -232,7 +231,7 @@ def agents_from_ledger(ledger):
                            "startedAt": fix.get("startedAt"),
                            "endedAt": fix.get("endedAt")})
     for pass_ in ponytail_passes(ledger):
-        agents.append({"name": pass_["agent"], "role": "ponytail",
+        agents.append({"name": pass_["id"], "role": "ponytail",
                        "item": None, "session": pass_.get("session"),
                        "startedAt": pass_.get("startedAt"),
                        "endedAt": pass_.get("endedAt")})
@@ -269,14 +268,13 @@ def human_wait(gate):
 
 
 def record_dirname(ledger):
-    """The corpus directory name for this run: stable for the same ledger."""
+    """The corpus directory name: `<date>-herdr-<project>-<feature>`."""
     started = parse_ts(ledger.get("startedAt")) or datetime.now(timezone.utc)
     rundir = str(ledger.get("rundir") or "")
     root = rundir.split("/.herdr-runs/")[0]
     project = os.path.basename(root.rstrip("/")) or "project"
-    feature = slug(str(ledger.get("feature") or "run"))
-    project = slug(project) or "project"
-    return "%s-%s-%s" % (started.strftime("%Y-%m-%d"), project, feature)
+    return corpus_dirname(started.strftime("%Y-%m-%d"), "herdr", project,
+                          ledger.get("feature") or "run")
 
 
 def build_record(rundir):
@@ -302,7 +300,7 @@ def build_record(rundir):
         metrics["duplicateOf"] = seen_paths.get(path) if path else None
         seen_paths.setdefault(path, metrics["name"])
     unique = unique_by_session(sessions)
-    coordinator = ledger.get("coordinator") or {}
+    executor = (ledger.get("executors") or [{}])[0]
 
     def window(metrics):
         """A session's interval as *this run* owns it.
@@ -315,8 +313,8 @@ def build_record(rundir):
         start, end = parse_ts(metrics["firstTs"]), parse_ts(metrics["lastTs"])
         if metrics["role"] != "coordinator" or not (start and end):
             return (start, end)
-        begun = parse_ts(coordinator.get("startedAt")) or start
-        done = parse_ts(coordinator.get("endedAt")) or end
+        begun = parse_ts(executor.get("startedAt")) or start
+        done = parse_ts(executor.get("endedAt")) or end
         clipped = (max(start, min(begun, end)), min(end, max(done, start)))
         metrics["runSec"] = (clipped[1] - clipped[0]).total_seconds()
         metrics["outsideRunSec"] = (metrics["spanSec"] or 0.0) - metrics["runSec"]
@@ -380,7 +378,7 @@ def build_record(rundir):
                        "waitSec": human_wait(gates.get("commit"))},
         },
         "items": {item_id: {"status": item.get("status"),
-                            "reviewCount": item.get("reviewCount"),
+                            "reviewCount": len(item.get("reviews") or []),
                             "prUrl": item.get("prUrl"),
                             "cause": item.get("cause")}
                   for item_id, item in (ledger.get("items") or {}).items()},
@@ -469,11 +467,11 @@ def self_test():
     assert slug("#42: Fix Cache!") == "42-fix-cache"
     assert ponytail_passes({"ponytail": []}) == []
     assert ponytail_passes({}) == []
-    assert [p["agent"] for p in ponytail_passes(
-        {"ponytail": [{"agent": "ponytail-1"}, {"agent": "ponytail-2"}]})] == \
+    assert [p["id"] for p in ponytail_passes(
+        {"ponytail": [{"id": "ponytail-1"}, {"id": "ponytail-2"}]})] == \
         ["ponytail-1", "ponytail-2"]
-    assert [p["agent"] for p in ponytail_passes(
-        {"ponytail": {"agent": "ponytail"}})] == ["ponytail"]
+    assert [p["id"] for p in ponytail_passes(
+        {"ponytail": {"id": "ponytail"}})] == ["ponytail"]
     # A span is not work: a session re-prompted across a suspended host keeps its
     # quiet hours out of `workSec`.
     stamps = [start, datetime(2026, 1, 1, 12, 2, 0, tzinfo=timezone.utc),
@@ -496,7 +494,7 @@ def self_test():
                           "lastTs": end.isoformat()}]) == []
     assert record_dirname({"startedAt": start.isoformat(),
                            "rundir": "/tmp/repo/.herdr-runs/My Feature",
-                           "feature": "My Feature"}) == "2026-01-01-repo-my-feature"
+                           "feature": "My Feature"}) == "2026-01-01-herdr-repo-my-feature"
     # Blocks are read by code, and an item the run stopped on without one is a
     # finding rather than an empty cell.
     assert cause_rollup({"01": {"status": "blocked", "cause": {"code": "cap_exhausted"}},
