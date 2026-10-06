@@ -92,7 +92,7 @@ def ponytail_passes(ledger):
     passes = ledger.get("ponytail") or []
     if isinstance(passes, dict):
         passes = [passes]
-    return [entry for entry in passes if isinstance(entry, dict) and entry.get("agent")]
+    return [entry for entry in passes if isinstance(entry, dict) and entry.get("id")]
 
 
 def ledger_errors(ledger):
@@ -178,12 +178,12 @@ def attempts_for_item(item_id, item):
         attempt = {
             "id": "%s\u00b7a%d" % (task_id, round_n),
             "n": round_n,
-            "actor": (item.get("worker") or {}).get("agent"),
+            "actor": (item.get("worker") or {}).get("id"),
             "model": None,
         }
         locator = (item.get("worker") or {}).get("pane")
         if locator and round_n == len(fixes) + 1:
-            attempt["locator"] = {"pane": locator, "agent": (item.get("worker") or {}).get("agent")}
+            attempt["locator"] = {"pane": locator, "agent": (item.get("worker") or {}).get("id")}
 
         if round_n == 1:
             attempt["cause"] = {"type": "initial"}
@@ -192,7 +192,7 @@ def attempts_for_item(item_id, item):
             sent_it_back = bool(previous_review) and not str(
                 (previous_review or {}).get("verdict") or "").upper().startswith("CLEAN")
             if sent_it_back:
-                attempt["cause"]["by"] = previous_review.get("agent")
+                attempt["cause"]["by"] = previous_review.get("id")
                 attempt["cause"]["ref"] = "R%s\u00b7a%s" % (item_id, previous_review.get("pass"))
                 # Why it came back: the report is where the findings are.
                 if previous_review.get("report"):
@@ -221,14 +221,14 @@ def attempts_for_item(item_id, item):
             attempt["outcome"] = {
                 "result": "done",
                 "evidence": "reported",
-                "receipt": "worker DONE; review %s: VERDICT CLEAN" % (review.get("agent") or "review"),
+                "receipt": "worker DONE; review %s: VERDICT CLEAN" % (review.get("id") or "review"),
             }
         else:
             attempt["state"] = "rejected"
             attempt["outcome"] = {
                 "result": "rejected",
                 "evidence": "reported",
-                "receipt": "review %s: VERDICT FINDINGS" % (review.get("agent") or "review"),
+                "receipt": "review %s: VERDICT FINDINGS" % (review.get("id") or "review"),
             }
             if review.get("report"):
                 attempt["outcome"]["reason"] = str(review["report"])
@@ -246,7 +246,7 @@ def item_task(item_id, item, models, plan_gate_done):
         "id": "I" + item_id,
         "title": item.get("title") or ("item " + item_id),
         "kind": "impl",
-        "owner": (item.get("worker") or {}).get("agent"),
+        "owner": (item.get("worker") or {}).get("id"),
         "state": ITEM_STATE.get(item.get("status"), "queued"),
     }
     deps = ["I" + str(dep) for dep in item.get("blockedBy") or []]
@@ -286,7 +286,7 @@ def review_task(item_id, item):
             "n": review.get("pass"),
             "cause": {"type": "initial"} if review.get("pass") == 1 else {"type": "followup",
                                                                         "ref": "I%s\u00b7a%s" % (item_id, review.get("pass"))},
-            "actor": review.get("agent"),
+            "actor": review.get("id"),
             "state": "done",
             "outcome": {
                 "result": "done",
@@ -306,7 +306,7 @@ def review_task(item_id, item):
         "id": "R" + item_id,
         "title": "review: %s" % (item.get("title") or item_id),
         "kind": "review",
-        "owner": reviews[-1].get("agent"),
+        "owner": reviews[-1].get("id"),
         "state": "done",
         "deps": ["I" + item_id],
         "attempts": attempts,
@@ -333,7 +333,7 @@ def ponytail_task(item_ids, passes):
             "id": "%s\u00b7a%d" % (PONYTAIL, len(attempts) + 1),
             "n": len(attempts) + 1,
             "cause": cause,
-            "actor": pass_.get("agent") or "ponytail",
+            "actor": pass_.get("id") or "ponytail",
             "state": "done" if settled else "working",
         }
         if settled:
@@ -352,9 +352,9 @@ def ponytail_task(item_ids, passes):
             attempt = {
                 "id": "%s\u00b7a%d" % (PONYTAIL, len(attempts) + 1),
                 "n": len(attempts) + 1,
-                "cause": {"type": "sent_back", "by": pass_.get("agent") or "ponytail",
+                "cause": {"type": "sent_back", "by": pass_.get("id") or "ponytail",
                           "ref": attempts[-1]["id"]},
-                "actor": fix.get("agent") or "fix",
+                "actor": fix.get("id") or "fix",
                 "state": "done",
                 "outcome": {"result": "done", "evidence": "reported",
                             "receipt": "fix round applied; the next pass re-checks"},
@@ -373,7 +373,7 @@ def ponytail_task(item_ids, passes):
         "title": "ponytail review: whole-run diff (%d pass%s)"
                  % (len(passes), "" if len(passes) == 1 else "es"),
         "kind": "review",
-        "owner": passes[-1].get("agent") or "ponytail",
+        "owner": passes[-1].get("id") or "ponytail",
         "state": "done" if settled else "working",
         "deps": ["I" + i for i in item_ids],
         "attempts": attempts,
@@ -431,8 +431,9 @@ def project(ledger, now):
     run = {"id": run_id(feature, started_at), "title": str(feature)}
     if started_at:
         run["started_at"] = started_at
-    coordinator = ledger.get("coordinator") or {}
-    orchestrator = {k: coordinator[k] for k in ("pane", "agent") if coordinator.get(k)}
+    executor = (ledger.get("executors") or [{}])[0]
+    orchestrator = {k: v for k, v in (("pane", executor.get("pane")),
+                                        ("agent", executor.get("id"))) if v}
     if orchestrator:
         run["orchestrator"] = orchestrator
 
@@ -507,34 +508,34 @@ def load_ledger(target):
 def self_test():
     ledger = {
         "feature": "demo", "startedAt": "2026-09-27T10:00:00Z", "flow": "A",
-        "coordinator": {"pane": "w1:p1"}, "models": {"worker": "pi-default"},
+        "executors": [{"id": "coordinator", "pane": "w1:p1"}], "models": {"worker": "pi-default"},
         "gates": {"plan": {"requestedAt": "2026-09-27T09:59:00Z", "approvedAt": "2026-09-27T10:00:00Z"},
                   "commit": {"requestedAt": None, "approvedAt": None}},
         "items": {
-            "01": {"title": "one", "status": "done", "blockedBy": [], "reviewCount": 2,
-                   "worker": {"agent": "item-01", "pane": "w1:p2"},
+            "01": {"title": "one", "status": "done", "blockedBy": [],
+                   "worker": {"id": "item-01", "pane": "w1:p2"},
                    "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:12:00Z",
-                   "reviews": [{"pass": 1, "agent": "review-01-r1", "verdict": "FINDINGS", "report": "reports/r1.md",
+                   "reviews": [{"pass": 1, "id": "review-01-r1", "verdict": "FINDINGS", "report": "reports/r1.md",
                                 "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:05:00Z"},
-                               {"pass": 2, "agent": "review-01-r2", "verdict": "CLEAN", "report": "reports/r2.md",
+                               {"pass": 2, "id": "review-01-r2", "verdict": "CLEAN", "report": "reports/r2.md",
                                 "startedAt": "2026-09-27T10:10:00Z", "endedAt": "2026-09-27T10:12:00Z"}],
-                   "fixes": [{"pass": 1, "agent": "fix-01-f1",
+                   "fixes": [{"pass": 1, "id": "fix-01-f1",
                               "startedAt": "2026-09-27T10:06:00Z", "endedAt": "2026-09-27T10:09:00Z"}]},
-            "02": {"title": "two", "status": "blocked", "blockedBy": ["01"], "reviewCount": 0,
+            "02": {"title": "two", "status": "blocked", "blockedBy": ["01"],
                    "cause": {"code": "worker_blocked", "detail": "the worker asks which retry budget applies"},
-                   "worker": {"agent": "item-02", "pane": "w1:p3"}, "reviews": [], "fixes": []},
-            "03": {"title": "three", "status": "blocked", "blockedBy": [], "reviewCount": 3,
+                   "worker": {"id": "item-02", "pane": "w1:p3"}, "reviews": [], "fixes": []},
+            "03": {"title": "three", "status": "blocked", "blockedBy": [],
                    "cause": {"code": "cap_exhausted", "detail": "three findings rounds, a fourth needed"},
-                   "worker": {"agent": "item-03", "pane": "w1:p4"},
+                   "worker": {"id": "item-03", "pane": "w1:p4"},
                    "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:02:00Z",
-                   "reviews": [{"pass": 1, "agent": "review-03-r1", "verdict": "FINDINGS",
+                   "reviews": [{"pass": 1, "id": "review-03-r1", "verdict": "FINDINGS",
                                 "startedAt": "2026-09-27T10:01:00Z", "endedAt": "2026-09-27T10:02:00Z"}],
                    "fixes": []},
-            "04": {"title": "four", "status": "failed", "blockedBy": [], "reviewCount": 0,
+            "04": {"title": "four", "status": "failed", "blockedBy": [],
                    "cause": {"code": "dispatch_failed", "detail": "agent start refused: agent_name_taken"},
-                   "worker": {"agent": "item-04", "pane": "w1:p5"}, "reviews": [], "fixes": []},
+                   "worker": {"id": "item-04", "pane": "w1:p5"}, "reviews": [], "fixes": []},
         },
-        "ponytail": {"agent": "ponytail", "verdict": "CLEAN", "report": "reports/p.md",
+        "ponytail": {"id": "ponytail", "verdict": "CLEAN", "report": "reports/p.md",
                      "startedAt": "2026-09-27T10:40:00Z", "endedAt": "2026-09-27T10:41:00Z"},
     }
     doc = project(ledger, "2026-09-27T11:00:00Z")
@@ -589,12 +590,12 @@ def self_test():
     # project as findings → fix → re-check instead of crashing the pane view.
     two_pass = copy.deepcopy(ledger)
     two_pass["ponytail"] = [
-        {"pass": 1, "agent": "ponytail", "verdict": "FINDINGS", "report": "reports/p1.md",
+        {"pass": 1, "id": "ponytail", "verdict": "FINDINGS", "report": "reports/p1.md",
          "startedAt": "2026-09-27T10:20:00Z", "endedAt": "2026-09-27T10:21:00Z",
-         "fix": {"pass": 1, "agent": "item-01", "startedAt": "2026-09-27T10:22:00Z",
+         "fix": {"pass": 1, "id": "item-01", "startedAt": "2026-09-27T10:22:00Z",
                  "endedAt": "2026-09-27T10:25:00Z",
                  "findings": "two overrides that override nothing"}},
-        {"pass": 2, "agent": "ponytail-2", "verdict": "CLEAN", "report": "reports/p2.md",
+        {"pass": 2, "id": "ponytail-2", "verdict": "CLEAN", "report": "reports/p2.md",
          "startedAt": "2026-09-27T10:26:00Z", "endedAt": "2026-09-27T10:33:00Z"},
     ]
     doc_two = project(two_pass, "2026-09-27T11:00:00Z")
@@ -630,7 +631,7 @@ def self_test():
     live["finishedAt"] = "2026-09-27T11:00:00Z"
     live["items"]["02"]["status"] = "running"
     assert any("under finishedAt" in p for p in ledger_errors(live))
-    live["ponytail"] = {"agent": "ponytail"}  # a pass still in flight
+    live["ponytail"] = {"id": "ponytail"}  # a pass still in flight
     assert any(p.startswith("ponytail[pass None]: no verdict") for p in ledger_errors(live))
 
     # The block vocabulary is closed and paired with the status it belongs to.

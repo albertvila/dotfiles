@@ -24,7 +24,7 @@ every number it printed, and did it end in an edit someone can make.
    `PONYTAIL …`. A run that has not reached its terminal state is a **partial
    retro**: report it as one and read in-flight threads as in flight, not as
    failures. A run that outlived a manager's context has more than one
-   `ORCHESTRATE …` thread; its ledger's `managerChain` names them, the id to
+   `ORCHESTRATE …` thread; its ledger's `executors` names them, the id to
    pass is the **first** (that is where the ledger lives), and the metrics
    script walks the chain so the numbers cover the whole run.
 
@@ -37,7 +37,7 @@ every number it printed, and did it end in an edit someone can make.
    ```
 
    Then read the ledger for the plan the run was executing — item ids,
-   `blockedBy`, `reviewCount`, `attempts`, PR URLs. *Reading the numbers*
+   `blockedBy`, `reviews`, `fixes`, PR URLs. *Reading the numbers*
    below owns where each figure comes from and what it cannot tell you.
 
 3. **Explain every finding.** For each line the script prints, open the
@@ -71,7 +71,7 @@ every number it printed, and did it end in an edit someone can make.
    accepted, rejected or left unanswered — the record must not depend on that
    answer.
 
-   The **corpus** is `~/personal_workspace/bb-runs/`, its own git repository,
+   The **corpus** is `~/personal_workspace/orchestrate-runs/`, its own git repository,
    one directory per run:
 
    ```
@@ -98,8 +98,8 @@ every number it printed, and did it end in an edit someone can make.
    print(metrics.record_dirname(json.load(open("/tmp/run.json"))))
    PY
    )
-   mkdir -p ~/personal_workspace/bb-runs/runs/$name
-   cp /tmp/run.json ~/personal_workspace/bb-runs/runs/$name/run.json
+   mkdir -p ~/personal_workspace/orchestrate-runs/runs/$name
+   cp /tmp/run.json ~/personal_workspace/orchestrate-runs/runs/$name/run.json
    ```
 
    Add `--ledger PATH` if the run's ledger is not at the default
@@ -116,8 +116,8 @@ every number it printed, and did it end in an edit someone can make.
    pushed** by the retro:
 
    ```sh
-   git -C ~/personal_workspace/bb-runs add runs/$name
-   git -C ~/personal_workspace/bb-runs commit -m "record: runs/$name"
+   git -C ~/personal_workspace/orchestrate-runs add runs/$name
+   git -C ~/personal_workspace/orchestrate-runs commit -m "record: runs/$name"
    ```
 
    That repository's own commits are exempt from the ask-first convention,
@@ -218,7 +218,7 @@ rules; every one is a candidate for the *What to fix* section.
   one the previous pass read, instead of a `blocked` item with
   `artifact_unchanged`.
 - **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
-  count against the cap; the cap is 3 **findings rounds** (`fixRounds`), not
+  count against the cap; the cap is 3 **findings rounds** (the `fixes` entries), not
   three passes. At the cap the item should have been surfaced as blocked with
   `cause.code: cap_exhausted`. An item that moved on after its fourth findings
   round is a rule violation, not a success.
@@ -248,4 +248,4 @@ re-run it after a partial retro finishes to get the closing numbers.
 cost arithmetic, ledger shapes) without touching the CLI.
 
 The corpus the archived records live in, and the vocabulary around it, are
-defined in `~/personal_workspace/bb-runs/CONTEXT.md`.
+defined in `~/personal_workspace/orchestrate-runs/CONTEXT.md`.

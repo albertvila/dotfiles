@@ -34,7 +34,7 @@ number it printed, and did it end in an edit someone can make.
    ```
 
    Then read the ledger itself for what the script does not judge — item
-   `blockedBy` edges, `reviewCount`, `prUrl`, gate timestamps, the `models` the
+   `blockedBy` edges, `reviews`/`fixes`, `prUrl`, gate timestamps, the `models` the
    run claimed. *Reading the numbers* below owns where each figure comes from and
    what it cannot tell you.
 
@@ -68,7 +68,7 @@ number it printed, and did it end in an edit someone can make.
    Archive before you return, whether the proposals in step 6 were accepted,
    rejected or left unanswered.
 
-   The **corpus** is `~/personal_workspace/herdr-runs/`, its own git repository,
+   The **corpus** is `~/personal_workspace/orchestrate-runs/`, its own git repository,
    one directory per run:
 
    ```
@@ -83,25 +83,25 @@ number it printed, and did it end in an edit someone can make.
    ```sh
    python3 scripts/run-metrics.py <rundir> --json > /tmp/herdr-run.json
    name=$(python3 -c "import json;print(json.load(open('/tmp/herdr-run.json'))['record_dirname'])")
-   mkdir -p ~/personal_workspace/herdr-runs/runs/$name
-   cp /tmp/herdr-run.json ~/personal_workspace/herdr-runs/runs/$name/run.json
+   mkdir -p ~/personal_workspace/orchestrate-runs/runs/$name
+   cp /tmp/herdr-run.json ~/personal_workspace/orchestrate-runs/runs/$name/run.json
    ```
 
-   `record_dirname` is `<date>-<project>-<feature>`, derived from the ledger's
+   `record_dirname` is `<date>-herdr-<project>-<feature>`, derived from the ledger's
    own `startedAt` — the primary key of the run — so a re-run rewrites this exact
    directory in place rather than adding a second one. Copy the step-5 report in
    as `report.md`.
 
-   Commit the record as **one commit** when `~/personal_workspace/herdr-runs/.git`
+   Commit the record as **one commit** when `~/personal_workspace/orchestrate-runs/.git`
    already exists — that corpus is exempt from the ask-first convention, scoped to
-   it alone, the way `bb-runs` and `orca-runs` are. If the directory does not
+   it alone, the way the old `bb-runs` and `herdr-runs` were. If the directory does not
    exist yet, create it, write the record, tell the operator it is uninitialised,
    and ask before running `git init` or committing — a brand-new repository is not
    covered by the exemption. The retro **never pushes** it:
 
    ```sh
-   git -C ~/personal_workspace/herdr-runs add runs/$name
-   git -C ~/personal_workspace/herdr-runs commit -m "record: runs/$name"
+   git -C ~/personal_workspace/orchestrate-runs add runs/$name
+   git -C ~/personal_workspace/orchestrate-runs commit -m "record: runs/$name"
    ```
 
    **Pointer.** When the run came from `.scratch/<feature>/`, leave a one-line
@@ -146,7 +146,7 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   died first — a finding, not a zero.
 - **Roles come from the ledger's shape** — workers under `items.*.worker`,
   reviews under `items.*.reviews`, fixes under `items.*.fixes`, plus `ponytail`
-  and the `coordinator`. Agent names encode the same convention
+  and `executors`. Agent names encode the same convention
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
   agent that fits neither means the run went off-script.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the

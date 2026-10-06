@@ -32,10 +32,22 @@ def contract_codes(path=CONTRACT):
     return frozenset(codes)
 
 
+def slug(text):
+    return re.sub(r"[^a-z0-9]+", "-", str(text or "").lower()).strip("-")
+
+
+def corpus_dirname(date, runtime, project, feature):
+    """`<date>-<runtime>-<project>-<feature>`: the one corpus directory name."""
+    parts = [slug(date), slug(runtime), slug(project), slug(feature)]
+    return "-".join(p for p in parts if p) or "run"
+
+
 def self_test():
     codes = contract_codes()
     assert codes, "no codes read from %s" % CONTRACT
     assert codes == CAUSE_CODES, "contract and CAUSE_CODES disagree: %s" % sorted(codes ^ CAUSE_CODES)
+    assert corpus_dirname("2026-01-01", "bb", "P", "F") == "2026-01-01-bb-p-f"
+    assert corpus_dirname(None, None, None, None) == "run"
 
 
 if __name__ == "__main__":
