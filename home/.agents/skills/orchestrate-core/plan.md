@@ -7,34 +7,40 @@ artifact format, tracker record, and spawn/execute mechanics.
 
 ## Reading a GitHub issue
 
-Preflight has passed, so these are reads. Nothing is written to a sub-issue at
+Preflight has passed, so these are reads. Nothing is written to a ticket at
 plan time.
 
 **Ticket set.** Every sub-issue of the parent, one level deep, read the way
 `.scratch/<feature>/issues/` is read. Sub-issues come first; when the sub-issues
 API returns nothing — an empty array, not an error, which is what a repository
-without issue relationships returns — the parent body's task list is the fallback
-ticket set; and only when the body carries no task list either does the parent
-body become the single ticket. Which source produced the set is stated in the
-approval message.
+without issue relationships returns — the **parented tickets** take their place:
+the repo's own issues whose body names this issue in a `## Parent` section, which
+is how `/to-tickets` publishes its tickets (one issue per ticket; the parent is a
+body reference, not necessarily a native sub-issue edge). The parent body's task
+list is the next fallback, and only when none of those produced a ticket does the
+parent body become the single ticket — a spec body is a spec, not the work, so a
+parent that has published tickets is never itself an item; its PR carries
+`Part of #<parent>` instead (*PR body* in `threads.md`). Which source produced
+the set is stated in the approval message.
 
 **Graph.** Read once, at plan time, from the native `blockedBy` edges when there
-are any, otherwise from the parent body's `## Blocked by` section. A disagreement
-between the two sources is reported. The graph is never re-polled during the run:
-GitHub calls an issue unblocked only when its blocker is *closed*, which lags a
-run whose blockers are already `done` in the ledger. Sub-issue order is never a
-graph.
+are any; otherwise from each ticket's own `## Blocked by` section — for
+sub-issues and parented tickets alike — and only from the parent body's when the
+ticket bodies carry none. A disagreement between the sources is reported. The
+graph is never re-polled during the run: GitHub calls an issue unblocked only
+when its blocker is *closed*, which lags a run whose blockers are already `done`
+in the ledger. Ticket order is never a graph.
 
 **Naming.** The feature name is the parent issue title, slugified — it drives the
 plan artifact, the run's identity and the retro's label. An item's id is
 `#<issue-number>`, so labels, ledger keys and frozen diff filenames need no
 translation layer.
 
-**Exclusions.** Closed sub-issues are read, excluded from the item list, and
-counted as satisfied blockers. Sub-issues in another repository are excluded
-outright — a plan never claims scope the executor cannot read code for. Every
-excluded issue is named by number in the approval message, under the
-`tickets in → items out` line.
+**Exclusions.** Closed tickets are read, excluded from the item list, and counted
+as satisfied blockers. A ticket in another repository is excluded outright — a
+plan never claims scope the executor cannot read code for. Every excluded issue
+is named by number in the approval message, under the `tickets in → items out`
+line.
 
 ## Plan the run
 

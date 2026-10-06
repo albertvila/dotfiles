@@ -28,8 +28,9 @@ Three input shapes:
 - **A `.scratch/<feature>/` directory reference** (`@.scratch/<feature>/`).
   A bare feature directory with no Task stops here: tell the operator there is
   no Task for it and offer to create one. Create nothing without their yes.
-- **A GitHub issue** — a parent whose sub-issues are the tickets, or a direct
-  issue with none of its own. Accepted as `#42` / `42`, resolved against the
+- **A GitHub issue** — a parent whose tickets are its sub-issues or the issues
+  that name it in their `## Parent` section, or a direct issue with none of
+  either. Accepted as `#42` / `42`, resolved against the
   plan thread's checkout repository, as `owner/repo#42`, or as a full issue
   URL. Issues and pull requests share one number space, so the resolution step
   must check which it resolved: a pull request number is refused, with the
