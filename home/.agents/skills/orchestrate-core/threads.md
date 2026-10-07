@@ -118,15 +118,25 @@ runtimes:
 
 ## PR body
 
-Every run's PR body opens with the run's **intent**, before any tracker-specific
-closing lines: for each item the PR carries (shape `A`: every item; shape `B`:
-its own), its title, its `acceptance` line and its `out-of-scope` line from the
+Read and follow the `pr` skill before opening each PR — shape `A`'s one PR and
+each of shape `B`'s per-item PRs. The body is that template. Set it at create
+(`gh pr create --body-file`); when the environment already opened the PR, `gh
+pr edit --body-file` before marking it ready. A PR opened without the skill is
+not done.
+
+Summary opens with the run's **intent**, then the diagram the skill calls for.
+Intent, for each item the PR carries (shape `A`: every item; shape `B`: its
+own): its title, its `acceptance` line and its `out-of-scope` line from the
 manifest, verbatim, followed by that item's review verdict. The operator merges
 on this block plus the verdicts, not on a diff — the diff is what the reviews
 already read and priced, and an operator handed a diff skim has been given back
 the cost the run existed to remove.
 
-For a `tracker: github` run the body then carries the closing lines:
+Evidence is the skill's before/after: the validation command that exited 0, and
+that verdict. Merge Danger is the skill's door and blast radius, from the diff.
+
+For a `tracker: github` run the body then carries the closing lines, after the
+skill's sections so GitHub still links them:
 
 - `Closes #n` for every issue that maps to an item — each ticket that became an
   item, whether it arrived as a native sub-issue or as a parented ticket (an
@@ -138,8 +148,8 @@ For a `tracker: github` run the body then carries the closing lines:
 - Shape `A`'s single PR lists `Closes` for every item issue; shape `B`'s
   per-item PR closes only its own item's issue.
 
-Only `tracker: github` adds closing lines: a scratch run's PR body is the intent
-block alone.
+Only `tracker: github` adds closing lines: a scratch run's body is the skill's
+sections with the intent block, and nothing after them.
 
 ## Rules
 

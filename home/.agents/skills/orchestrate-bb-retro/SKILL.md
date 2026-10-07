@@ -232,7 +232,7 @@ rules; every one is a candidate for the *What to fix* section.
   `reviewedHead` is the same finding. A `land` or `unattended` run that merged,
   or that finished without the verification ask, is a finding.
 - **Verification** — a worker's DONE taken as proof, a PR opened with
-  checks red, a PR body with no intent block, so the merge gate got a diff skim,
+  checks red, a PR body that skipped the `pr` skill (no Summary, Evidence, or Merge Danger) or has no intent block, so the merge gate got a diff skim,
   a worker report with no `HARDEST:`/`REJECTED:`/`UNSURE:` lines, an item marked
   done from a claim rather than a clean review.
 - **Ledger drift** — items whose status contradicts their threads, threads
