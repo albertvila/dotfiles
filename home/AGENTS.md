@@ -56,10 +56,6 @@ Open the PR against that branch, not the assumed default.
 
 If `git push` fails with `AWS credentials: Missing suitable credentials`, stop and ask the user to connect their **Leapp** app to refresh AWS credentials before retrying.
 
-## Spec & Tickets — Main Checkout Only
-
-Run /to-spec and /to-tickets from the master/main checkout, never inside a worktree — .scratch output stranded in a worktree is orphaned when the worktree is retired.
-
 ## Grill Sessions
 
 When running /grill-with-docs or /grilling: interview only. Never implement code, skill, or config edits during the session — capturing CONTEXT.md / ADR docs inline is allowed. When the frontier empties, summarize the settled decisions and hand off to /to-spec or /to-tickets. Never implement directly.
