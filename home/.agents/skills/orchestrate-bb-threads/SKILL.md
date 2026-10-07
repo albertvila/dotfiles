@@ -314,7 +314,7 @@ manager that never dispatched, whatever it shipped.
    not dispatch or commit the change it implies until the operator answers with
    a direction; a question read as consent is a gate opened for them.
 
-   The body carries the closing lines and the intent block below (see *PR body*).
+   Write the body with the `pr` skill (see *PR body*).
 
 7. **Post-merge cleanup.** The sequence is [run-mode.md](../orchestrate-core/run-mode.md)'s *After
    the operator merges* — `gated` runs it when the user says the PR merged,
@@ -367,7 +367,7 @@ Then run Flow A steps 2–7 with these deltas:
   pull-request ready <env-id>` — each worktree environment owns its PR).
   After that PR is open, run Flow A step 6's lm status commands in that
   item's worktree, against the same detected base. Same done check.
-  Its body carries the closing lines and the intent block below (see *PR body*).
+  Write that body with the `pr` skill before marking the PR ready (see *PR body*).
   Merging items into one PR is the Flow A shape.
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in
@@ -444,8 +444,8 @@ nothing after that.
 
 ## PR body
 
-[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — the
-intent block and the closing lines are identical in both runtimes.
+[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — read
+and follow the `pr` skill there. The body is identical in both runtimes.
 
 ## Failure handling
 

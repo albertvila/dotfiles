@@ -490,8 +490,8 @@ agent, no ledger entry and no reviewer it can honestly claim.
    `gh pr checks <n>` names what is still running, and the PR is done when those
    are green — never read absence from merged history. Watch them **after**
    `finishedAt` is stamped and the retro is in its tab, not before: the check
-   wait runs beside the retro and never delays the spawn. The body carries the
-   closing lines below.
+   wait runs beside the retro and never delays the spawn. Write the body with the
+   `pr` skill (see *PR body*).
 7. **Post-merge cleanup.** The sequence is
    [run-mode.md](../orchestrate-core/run-mode.md)'s *After the operator
    merges* — `gated` runs it when the operator says the PR merged, `land` and
@@ -529,7 +529,7 @@ Then run Flow A steps 2–7 with these deltas:
 - **Step 6** — one PR per item, from that item's worktree. The commit gate is
   [run-mode.md](../orchestrate-core/run-mode.md): `gated` asks, `land` and
   `unattended` do not. Commit the branch from the coordinator with
-  `git -C <wt-path>`.
+  `git -C <wt-path>`. Same body: the `pr` skill (see *PR body*).
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in run-mode.md.
   `land` and `unattended` do not merge and do not dispatch the next wave. After a
@@ -632,8 +632,8 @@ settled — a worker's `DONE` alone does not settle an item.
 
 ## PR body
 
-[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — the
-intent block and the closing lines are identical in both runtimes.
+[`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — read
+and follow the `pr` skill there. The body is identical in both runtimes.
 
 ## Failure handling
 

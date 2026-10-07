@@ -40,9 +40,11 @@ RBT-778: move exception classes to shared/
 refactor: RBT-778 move exception classes to shared/
 ```
 
-### Pull Requests — Detect the Base Branch
+### Pull Requests
 
-The `Main branch` field in gitStatus defaults to `master`/`main` and is wrong for repos that integrate via `develop`. Before `gh pr create`, check which branch shows only your feature commits ahead:
+When asked to open a pull request, read and follow the `pr` skill before writing the body.
+
+**Detect the base branch.** The `Main branch` field in gitStatus defaults to `master`/`main` and is wrong for repos that integrate via `develop`. Before `gh pr create`, check which branch shows only your feature commits ahead:
 
 ```bash
 git log --oneline develop..HEAD   # also master..HEAD / main..HEAD
