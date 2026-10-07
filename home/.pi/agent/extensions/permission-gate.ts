@@ -62,6 +62,15 @@ const allowedPatterns: Pattern[] = [
 		description: "Read-only Databricks SQL (SELECT/WITH/SHOW/DESC/EXPLAIN, single statement)",
 		enabled: true,
 	},
+	{
+		// SQL-shape enforcement lives in the script (one read statement, no ';'), which is more
+		// reliable than a regex. Ceiling: this rule can't see the statement — ~/bin/dbsql is the
+		// only thing that may be allowlisted here, so keep it that way.
+		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*dbsql\\b[^;&|`$\\n\\r]*$",
+		regex: true,
+		description: "Read-only Databricks SQL via ~/bin/dbsql (single SELECT/WITH/SHOW/DESC/EXPLAIN)",
+		enabled: true,
+	},
 ];
 
 // Always blocked without prompting: any aws/databricks command outside the
