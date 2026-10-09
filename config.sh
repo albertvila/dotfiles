@@ -34,7 +34,6 @@ declare -a BREW_CASK_APPS=(
   google-chrome
   leapp
   orbstack # Docker https://orbstack.dev/
-  postman
   rectangle
   slack
   spotify
