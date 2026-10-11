@@ -1,0 +1,32 @@
+# Herdr daemon config, symlinked to ~/.config/herdr/config.toml by setup.sh.
+# The GPUI app reads config-gpui.local.toml beside this file.
+onboarding = false
+
+[update]
+# herdr is installed with Homebrew, so its self-updater would fetch its own
+# build into ~/.local/bin and shadow the brew binary on PATH. Upgrade with
+# `brew upgrade herdr` instead of `herdr update`.
+version_check = false
+
+[ui]
+# Current spelling; agent_panel_scope was the legacy alias.
+agent_panel_sort = "spaces"
+status_indicators = "dots"
+show_agent_labels_on_pane_borders = false
+
+# The GPUI window already marks state changes, so no desktop notifications.
+[ui.toast]
+delivery = "off"
+
+[ui.sound]
+enabled = false
+
+# Read by the GPUI sidebar only while [usage] inline = true; with inline = false
+# the GUI draws its own layouts and ignores this.
+#
+# No `machine` token: it prints "Local" on every row, and no row here is remote.
+[ui.sidebar.agents]
+rows = [["state_icon", "workspace", "tab"], ["agent"], ["state_text"]]
+
+[experimental]
+pane_history = true

@@ -1,0 +1,35 @@
+# Herdr GPUI overrides, symlinked to ~/.config/herdr/config-gpui.local.toml by
+# setup.sh. Unset keys inherit config-gpui.toml, which is managed and
+# regenerated on startup; tables merge key by key. Saved changes reload.
+#
+# This holds the settings that differ from the defaults. The commented list of
+# every knob is in config-gpui.toml beside it.
+
+# Match Ghostty's default palette. The built-in "Default" theme is the classic
+# VGA 16-colour set, so fish/starship/bat colours look nothing like Ghostty.
+theme = "Ghostty Default Style Dark"
+
+# Agents section below Spaces.
+show_agents = true
+
+[layout]
+mode = "normal-rounded"
+sidebar_gap = 1.0
+
+[keybindings]
+# Browser-style tab cycling. The cmd-shift pair stays bound too, so the
+# defaults remain available.
+next_tab = ["cmd-shift-]", "ctrl-tab"]
+previous_tab = ["cmd-shift-[", "ctrl-shift-tab"]
+
+[terminal]
+# Menlo has no PUA glyphs and neither "Menlo" nor "MesloLGS NF" carries the
+# "nerd font" marker Herdr auto-detects, so name the symbol face explicitly.
+fallback = ["Symbols Nerd Font Mono"]
+
+[usage]
+show = true
+# false: the GUI draws its own sidebar layouts (comfortable-rounded, orca,
+# superset, devices) with its own pull-request badges and diff counts, instead
+# of honouring the daemon's [ui.sidebar] rows and plugin tokens.
+inline = false
