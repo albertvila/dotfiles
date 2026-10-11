@@ -25,7 +25,7 @@ The field lives in each runtime's ledger, on the item:
 
 | code | the path that ends the item | the operator's move |
 |---|---|---|
-| `worker_blocked` | the worker reported `BLOCKED`, or sits at a dialog the coordinator will not answer out of the approved manifest | answer it |
+| `worker_blocked` | the worker reported `BLOCKED`, or sits at a dialog the coordinator will not answer out of the approved manifest, or escalates a question the run cannot answer (`land`/`unattended`, or the operator declines) | answer it |
 | `turn_stalled` | a turn ended with no report and the same agent stalled again when re-prompted | inspect the pane and the transcript |
 | `artifact_unchanged` | the fix round settled without moving the frozen diff, so the re-review was not spawned | inspect why the fix produced nothing |
 | `cap_exhausted` | the item's findings rounds reached the cap — three — and a fourth would have been needed | adjudicate the disagreement |

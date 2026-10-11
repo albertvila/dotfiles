@@ -90,6 +90,48 @@ dispatch refused for any other reason leaves its item `failed` with
 `cause.code: dispatch_failed`. A respawn passes the role's recorded model
 explicitly — a fresh agent inherits nothing from the one that died.
 
+## Liveness
+
+A dispatched lane has a heartbeat: the pi session transcript on Herdr, the
+thread record on BB. The executor reads that lane's last-activity signal and
+compares it with now.
+
+`STALE_GAP_SEC` is **900** seconds. An open turn — the lane's status still
+working — whose activity has not moved for longer than that is a **stale
+candidate, never a verdict**: the executor reads the agent (Herdr `agent read`,
+BB `thread log`/`output`) before acting. A single tool call writes nothing until
+it returns, so a test suite longer than the gap is the expected false positive;
+that is why the check confirms and does not kill.
+
+A confirmed stall — a turn that ended with no report — is the runtime's
+stalled-turn recovery: re-prompt that same agent once, then record `turn_stalled`
+on the second stall ([cause-contract.md](cause-contract.md)). Liveness never
+restarts an agent the executor did not start, and never reads a quiet transcript
+as proof of death.
+
+## Escalation
+
+A worker that cannot proceed and cannot find the answer in the manifest
+escalates: it stops its turn and reports `ESCALATE:` with **exactly one
+question**, the options it sees, and the one it recommends. Never guess, never
+wait. This is a decision handed up, not a failure.
+
+The executor answers from the approved manifest when the manifest answers; the
+answer is routed back into the **same worker** (BB: `bb thread queue create` then
+`queue send`; Herdr: prompt the same agent), and the item stays `running`. Only
+when the manifest does not answer it does the item become `blocked` with
+`cause.code: worker_blocked`, whose `detail` is that one question.
+
+- `gated` puts that single question to the operator, with the worker's options,
+  and routes the reply back to the same worker; the item returns to `running`
+  and its `cause` is cleared.
+- `land` and `unattended` have no human in the loop: the question is surfaced
+  and the frontier keeps moving, exactly as a `worker_blocked` item does today.
+
+A worker's context is preserved across this exchange — the answer resumes the
+same agent, it does not respawn one. An unanswered escalation is a block, and a
+block is not a settle.
+
 ## The ledger
 
 [ledger.md](ledger.md) owns the ledger's shape; the runtime owns only its path
