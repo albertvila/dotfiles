@@ -84,14 +84,34 @@ worker that settled while nobody was looking is invisible to it. Check first,
 then wait — and treat every wait timeout as a checkpoint, not a failure:
 
 ```sh
+# the lane's heartbeat: the pi session transcript recorded when the agent started
+sess_of() { jq -r --arg id "$1" \
+  '[.items[].worker, .items[].reviews[], .items[].fixes[], .ponytail[], .ponytail[].fix,
+    .ponytail[].fix.review] | .[]? | select(.id == $id) | .session' \
+  "$RUNDIR/orchestration.json" | head -1; }
+
 # settle <agent-name>: loop until the turn is over, or until the agent is unreadable
 while :; do
   st=$(herdr agent get "<name>" 2>/dev/null | jq -r '.result.agent.agent_status // empty')
   case "$st" in idle|done|blocked|"") break;; esac   # "" = no agent left: inspect, never assume
+  # liveness: an open turn that has written nothing for STALE_GAP_SEC is a candidate, not a verdict
+  sess=$(sess_of "<name>")
+  age=$(( $(date +%s) - $(python3 -c 'import os,sys;print(int(os.stat(sys.argv[1]).st_mtime))' \
+    "${sess:-/dev/null}" 2>/dev/null || date +%s) ))
+  [ -n "$sess" ] && [ "$age" -gt 900 ] && \
+    herdr agent read "<name>" --source recent-unwrapped --lines 60   # confirm before acting
   herdr agent wait "<name>" --until idle --until done --until blocked --timeout 600000 \
     > "$RUNDIR/logs/wait-<name>.json" 2>&1 || true
 done
 ```
+
+The transcript's mtime is the lane's heartbeat: an open turn that has written
+nothing for longer than `STALE_GAP_SEC` (900s) is a **stale candidate**. Confirm
+it with `agent read` — a tool call longer than the gap writes nothing until it
+returns, so a long test run is the expected false positive — and only then apply
+the stalled-turn recovery below. This is
+[`threads.md#liveness`](../orchestrate-core/threads.md#liveness)'s rule, not a
+second one.
 
 **A finished pi turn reports `idle` or `done` — treat both alike.** Herdr returns
 `agent_status: "done"` for a pi agent whose turn ended (14 of 14 wait logs in the
@@ -114,6 +134,11 @@ for id in <id1> <id2>; do
   ( while :; do
       st=$(herdr agent get "item-$id" 2>/dev/null | jq -r '.result.agent.agent_status // empty')
       case "$st" in idle|done|blocked|"") break;; esac
+      sess=$(sess_of "item-$id")
+      age=$(( $(date +%s) - $(python3 -c 'import os,sys;print(int(os.stat(sys.argv[1]).st_mtime))' \
+        "${sess:-/dev/null}" 2>/dev/null || date +%s) ))
+      [ -n "$sess" ] && [ "$age" -gt 900 ] && \
+        herdr agent read "item-$id" --source recent-unwrapped --lines 60
       herdr agent wait "item-$id" --until idle --until done --until blocked --timeout 600000 >/dev/null 2>&1 || true
     done ) &
 done
@@ -178,6 +203,18 @@ otherwise record the blocker with `cause.code: worker_blocked`, notify the
 operator, and end the turn. The
 coordinator never guesses an answer and never leaves a blocked worker unwatched.
 
+**Escalation round-trip.** A worker that reports `ESCALATE:` has stopped on one
+question ([`threads.md#escalation`](../orchestrate-core/threads.md#escalation)).
+Answer it from the approved manifest when the manifest answers — prompt the
+**same** agent with the answer (`herdr agent prompt "<name>" "<answer>"`) and the
+item stays `running`. When it does not: in `gated`, put that one question to the
+operator with `AskUserQuestion`, the worker's options as its choices, and on the
+reply prompt that same agent; the
+item returns to `running` and its `cause` is cleared. In `land` and `unattended`
+there is no human, so record `cause.code: worker_blocked` (its `detail` is the
+question), surface it, and keep the frontier moving. Never respawn a worker to
+answer a question its own context already holds.
+
 ## Prompt contracts
 
 The coordinator writes every prompt to `$RUNDIR/prompts/<name>.txt` and passes it
@@ -197,14 +234,16 @@ says so rather than passing silence off as certainty.
 
 > You are in this run's worktree: leave your changes uncommitted and do
 > NOT commit or push. Touch nothing outside the file scope above. Never wait for
-> human input — if something blocks you, stop and report. Run the item's tests
+> human input: if something blocks you, stop and report — `BLOCKED` with what
+> remains, or `ESCALATE:` when a single decision would unblock you — one
+> question, the options you see, the one you recommend. Run the item's tests
 > and name the command in your report. Write your report to
 > `$RUNDIR/reports/item-<slug>.md`: what changed, the acceptance evidence, the
 > exact test command and result, then three one-line answers — `HARDEST:` the
 > hardest decision you made, `REJECTED:` the alternatives you rejected and why,
 > `UNSURE:` what you are least confident about. Your final message is three
-> lines — `DONE` or `BLOCKED`, one line of what changed, one line of what
-> remains.
+> lines — `DONE`, `BLOCKED` or `ESCALATE`, one line of what changed, one line of
+> what remains (for `ESCALATE`, the question).
 
 **Review** (`review-<slug>-r<n>.txt`) — ends with:
 

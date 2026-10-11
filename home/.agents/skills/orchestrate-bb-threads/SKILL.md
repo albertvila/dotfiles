@@ -131,8 +131,10 @@ manager that never dispatched, whatever it shipped.
    instructions carry the item's acceptance line and its out-of-scope line,
    verbatim from the manifest, alongside the ticket's spec context — the bar is
    the manifest's, not the ticket's. You are in the manager's shared worktree —
-   leave your changes uncommitted and do NOT commit or push. When done, your
-   final message must state DONE or BLOCKED, give a 3-line summary of what
+   leave your changes uncommitted and do NOT commit or push. Never wait for
+   human input: if something blocks you, stop. When done, your final message
+   must state DONE, BLOCKED or ESCALATE — ESCALATE carries one question, the
+   options you see and the one you recommend — give a 3-line summary of what
    changed / what blocks you, then three one-line answers — `HARDEST:` the
    hardest decision you made, `REJECTED:` the alternatives you rejected and why,
    `UNSURE:` what you are least confident about. Without them a worker that is
@@ -162,6 +164,17 @@ manager that never dispatched, whatever it shipped.
    log shows `provider/error` with `willRetry` is surfaced to the operator,
    not silently re-waited. Collect the final output and mark the item `done`
    or `blocked`/`failed` from the worker's DONE/BLOCKED report.
+
+   **A working child is not always a progressing one.** At each status line,
+   read the child's last activity — `bb thread show <id> --json | jq -r
+   '.thread.updatedAt'` (ms) — and when it is older than `STALE_GAP_SEC`
+   (900s) treat the child as a **stale candidate**, not a verdict: read
+   `bb thread log <id> --json` and `bb thread output <id>` before acting. A
+   tool call longer than the gap writes nothing until it returns, so a long
+   test run is the expected false positive. A confirmed stall — a turn that
+   ended with no report — is re-prompted once in the same thread, then recorded
+   `turn_stalled`. The rule is
+   [`threads.md#liveness`](../orchestrate-core/threads.md#liveness).
 
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
    reports DONE, first freeze the item's diff so the review is immune to
@@ -466,6 +479,17 @@ and follow the `pr` skill there. The body is identical in both runtimes.
   before respawning anything, record the blocker in the ledger (`worker_blocked`
   for a question, `turn_stalled` when the turn died), surface it to
   the user, and keep working the rest of the frontier.
+- A child that reports `ESCALATE:` has stopped on one question
+  ([`threads.md#escalation`](../orchestrate-core/threads.md#escalation)). Answer
+  it from the approved manifest when the manifest answers — queue the answer back
+  into the **same** child (`bb thread queue create <id> "<answer>"`, then
+  `bb thread queue send`) and the item stays `running`. When it does not:
+  in `gated`, put that one question to the user with `AskUserQuestion`, the
+  worker's options as its choices, and queue the reply back into the same child;
+  the item returns to `running` and its `cause` is cleared. In `land` and `unattended` there is no human, so record
+  `cause.code: worker_blocked` (its `detail` is the question), surface it, and
+  keep the frontier moving. Never respawn a worker to answer a question its own
+  thread already holds.
 - **The manager never dies mid-item.** When its context is nearly full it
   writes the ledger and stops — it does not start an item it cannot finish.
   A manager that stopped with items still `running` or `todo` is replaced by a
