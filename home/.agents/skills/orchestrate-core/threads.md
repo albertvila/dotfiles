@@ -144,7 +144,9 @@ skill's sections so GitHub still links them:
   itself is `Closes`d only when the parent *is* the item.
 - A parent that owns sub-issues or parented tickets gets a non-closing
   `Part of #<parent>` line instead — the PR points at the spec without closing a
-  spec that is not the work.
+  spec that is not the work. Nothing else closes it either, so the run does:
+  [run-mode.md](run-mode.md)'s *After the operator merges*, step 5, closes the
+  parent once nothing naming it is still open.
 - Shape `A`'s single PR lists `Closes` for every item issue; shape `B`'s
   per-item PR closes only its own item's issue.
 

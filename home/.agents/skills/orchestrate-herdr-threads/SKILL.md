@@ -633,8 +633,10 @@ Dispatch on the manifest's `tracker:` value:
   — keep those ticket files in sync with the ledger as items settle; see
   [TICKET-WRITE-BACK.md](../orchestrate-core/TICKET-WRITE-BACK.md).
 - `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
-  `ready-for-agent` only); settlement is comments only, never a close, never any
-  other label. Post every comment body by file (`gh issue comment <n> --body-file`),
+  `ready-for-agent` only); item settlement is comments only, never a close, never any
+  other label. The parent spec is closed by the run after the merge, not here
+  ([run-mode.md](../orchestrate-core/run-mode.md), *After the operator merges*,
+  step 5). Post every comment body by file (`gh issue comment <n> --body-file`),
   never an inline heredoc — a quoting error merges one item's body into another
   item's comment, and the wrong text is visible until someone patches it. See
   [TICKET-WRITE-BACK-GITHUB.md](../orchestrate-core/TICKET-WRITE-BACK-GITHUB.md).

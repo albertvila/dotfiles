@@ -10,11 +10,14 @@ issue. Not an excluded issue. The commands are in the threads phase skill
 No other label, no close. Claim once per issue; repeating the commands is
 harmless.
 
-**Settlement is comments only.** The executor never closes an issue, and never
-adds, removes, or repurposes a label at settlement — the claim already dropped
-`ready-for-agent`, and this write does not touch labels again. Closing is the
-PR's job — the PR body carries the closing lines (see *PR body* in the threads
-phase skill).
+**Settlement is comments only.** The executor never closes an *item* issue, and
+never adds, removes, or repurposes a label at settlement — the claim already
+dropped `ready-for-agent`, and this write does not touch labels again. Closing
+an item is the PR's job — the PR body carries the closing lines (see *PR body*
+in the threads phase skill). The **parent** is a different write, made once and
+by the run itself: the PR only names it (`Part of #<parent>`), so
+[run-mode.md](run-mode.md)'s *After the operator merges*, step 5, closes it —
+but only once nothing naming it is still open.
 
 An item's issue number comes from its ticket reference in the manifest, never
 from re-deriving it. The run's **excluded** issues — closed tickets, tickets in
@@ -30,7 +33,7 @@ written to**: the run never touched them, so they accrue no run metadata.
   the next triage pass sees it without reading the run's record.
 - At the commit-and-PR gate, once every item has settled, post the run-summary
   comment on the **parent** — and nothing else on the parent. No further label
-  change, no close, no edit to the plan comment.
+  change, no close at this gate, no edit to the plan comment.
 - The parent is never given a per-item comment. When the parent *is* the item
   (a parent with no sub-issues and no parented tickets), its outcome rides the
   run summary; the PR body closes it with `Closes #n`.

@@ -87,6 +87,19 @@ that reply runs the cleanup the merge path would have run.
    archives threads. Herdr: release the tabs this run created and remove each
    item worktree with `herdr worktree remove --workspace <item-ws>`, never
    `--force`.
+5. **Close the spec, when the spec is done.** A
+   `tracker: github <owner>/<repo>#<n>` PR names its parent with `Part of #<n>`
+   by design, so nothing closes it: a run that skips this step leaves a finished
+   spec open. Ask the parent's own set before closing — the ticket set
+   [plan.md](plan.md)'s *Reading a GitHub issue* resolves: every item ticket the
+   plan named reads `CLOSED` (`gh issue view <ticket> --json state`), and no open
+   issue still names the parent, neither a sub-issue nor a ticket whose body
+   points at it. Then close it with the run as its closing comment, the body
+   written to a file first (`gh issue close <n> --comment "$(cat <body-file>)"`,
+   the same rule against inline heredocs as every other tracker write). Anything
+   naming the parent still open: leave the parent open, and name that issue in
+   the final report — the spec is done when its last ticket is, not when a run
+   ends. A `scratch` tracker has no parent issue and skips this step.
 
 A run whose verification ask never gets a "merged" reply is finished but not
 cleaned up. Say so rather than guess which branches are safe to delete.
