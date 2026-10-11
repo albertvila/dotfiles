@@ -410,6 +410,12 @@ BB fills it like this:
   An entry's `id` must never name a thread that produced no verdict, and before
   the step 6 commit gate the ledger must show a `reviews` entry and a `ponytail`
   pass for every item it calls settled.
+- A ponytail fix round and the fresh-eyes review of its delta are not `fixes`
+  entries: they go under the pass that opened them — `ponytail[<pass>].fix` and
+  `ponytail[<pass>].fix.review`, the shape in
+  [ledger.md](../orchestrate-core/ledger.md). A runtime-agnostic reader prices
+  what the ledger names and nothing else, so a round kept out of these fields is
+  a round no retro can see.
 
 The shared invariants — write-as-you-go, the typed cause, the `done` rule, the
 run's done-definition and `finishedAt` — are

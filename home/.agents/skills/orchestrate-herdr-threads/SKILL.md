@@ -289,9 +289,16 @@ holds the findings that opened the fix round. Every pass keeps its `id` and
 `session`: a rewrite that drops the session prices the whole lane at
 zero in the retro. A convenience `verdict`/`report` may name the last pass; the
 array is the record. `items[].fixes` counts **review-driven** rounds only: a
-ponytail fix round is recorded under `ponytail` (with its id), because the
+ponytail fix round is recorded under the pass that opened it —
+`ponytail[<pass>].fix` `{id, session, startedAt, endedAt}`, and
+`ponytail[<pass>].fix.review` for the fresh-eyes review of its delta when the fix
+changed behaviour ([review-contract.md](../orchestrate-core/review-contract.md)) —
+never in `items[].fixes`, because the
 projection pairs each `fixes` entry with a review round and reads an unmatched
-one as a round still in flight — a settled run then reports `E150`.
+one as a round still in flight — a settled run then reports `E150`. Both
+sessions are named there or they are not priced: prose is not a session path.
+Write the item's `risk` (`high` | `mechanical`) when its first review is
+dispatched, so the depth and model call below is readable instead of inferred.
 **An item the run stops on is typed** — the invariant and the codes are
 [`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger) and
 [cause-contract.md](../orchestrate-core/cause-contract.md). The projection below
@@ -381,7 +388,7 @@ that treats it as one mapping takes the whole view down with it (and hides a
 both scripts in the same commit. The script also asserts what the ledger can
 prove on its own and exits non-zero when it doesn't hold: an interval that runs
 backwards, a gate approved before it was requested, a terminal `finishedAt`
-standing over an item or ponytail pass that never settled, and a stopped item
+standing over an item, a ponytail pass or a fix review that never settled, and a stopped item
 with no `cause` or a code outside the contract. That is where "stamp
 the times honestly" gets its teeth — it runs after every write, so the
 coordinator sees the mistake while it still knows what it meant.
@@ -573,6 +580,11 @@ the longest single agent in a run and the run cannot close until the last one
 settles, so the slowest model on a mechanical diff is wall clock and money spent on
 nothing: 39 minutes and $2.76 for a CLEAN verdict on a 63-line diff, against 59
 minutes for the 535-line high-risk one, in the run this line came from.
+
+The call is not a private one: record it as the item's
+`risk` in the ledger when the review is dispatched ([ledger.md](../orchestrate-core/ledger.md)),
+because a retro that finds no `risk` cannot tell this rule applied from a flag
+someone forgot.
 
 ## Review loops
 

@@ -152,6 +152,11 @@ def ledger_errors(ledger):
             problems.append("%s: no verdict under finishedAt %s" % (where, finished))
         fix = pass_.get("fix") or {}
         backwards(fix.get("startedAt"), fix.get("endedAt"), where + ".fix")
+        review = fix.get("review") or {}
+        backwards(review.get("startedAt"), review.get("endedAt"), where + ".fix.review")
+        if finished and (review.get("id") or review.get("session")) and not review.get("verdict"):
+            problems.append("%s.fix.review: a review with no verdict under finishedAt %s"
+                            % (where, finished))
     for name, gate in (ledger.get("gates") or {}).items():
         if isinstance(gate, dict):
             backwards(gate.get("requestedAt"), gate.get("approvedAt"), "gates.%s" % name)
@@ -362,6 +367,30 @@ def ponytail_task(item_ids, passes):
             if fix.get("findings"):
                 attempt["cause"]["reason"] = str(fix["findings"])
             started, ended = stamp(fix.get("startedAt")), stamp(fix.get("endedAt"))
+            if started:
+                attempt["started_at"] = started
+            if ended:
+                attempt["ended_at"] = ended
+            attempts.append(attempt)
+        review = fix.get("review") or {}
+        if review:
+            # The fresh-eyes review a behaviour-changing fix gets: an agent the run
+            # dispatched, so the pane shows it instead of leaving it invisible.
+            reviewed = str(review.get("verdict") or "").upper() in ("CLEAN", "FINDINGS")
+            attempt = {
+                "id": "%s\u00b7a%d" % (PONYTAIL, len(attempts) + 1),
+                "n": len(attempts) + 1,
+                "cause": {"type": "followup", "by": fix.get("id") or "coordinator",
+                          "ref": attempts[-1]["id"]},
+                "actor": review.get("id") or "review",
+                "state": "done" if reviewed else "working",
+            }
+            if reviewed:
+                attempt["outcome"] = {"result": "done", "evidence": "reported",
+                                     "receipt": "VERDICT %s" % str(review["verdict"]).upper()}
+                if review.get("report"):
+                    attempt["outcome"]["reason"] = str(review["report"])
+            started, ended = stamp(review.get("startedAt")), stamp(review.get("endedAt"))
             if started:
                 attempt["started_at"] = started
             if ended:
@@ -594,18 +623,29 @@ def self_test():
          "startedAt": "2026-09-27T10:20:00Z", "endedAt": "2026-09-27T10:21:00Z",
          "fix": {"pass": 1, "id": "item-01", "startedAt": "2026-09-27T10:22:00Z",
                  "endedAt": "2026-09-27T10:25:00Z",
-                 "findings": "two overrides that override nothing"}},
+                 "findings": "two overrides that override nothing",
+                 "review": {"id": "review-ponytail-r1", "verdict": "CLEAN",
+                            "report": "reports/rv1.md",
+                            "startedAt": "2026-09-27T10:25:30Z",
+                            "endedAt": "2026-09-27T10:26:00Z"}}},
         {"pass": 2, "id": "ponytail-2", "verdict": "CLEAN", "report": "reports/p2.md",
          "startedAt": "2026-09-27T10:26:00Z", "endedAt": "2026-09-27T10:33:00Z"},
     ]
     doc_two = project(two_pass, "2026-09-27T11:00:00Z")
     pon = next(t for t in doc_two["tasks"] if t["id"] == PONYTAIL)
     assert pon["state"] == "done" and "2 passes" in pon["title"], pon
-    assert [a["state"] for a in pon["attempts"]] == ["done", "done", "done"], pon["attempts"]
-    assert [a["cause"]["type"] for a in pon["attempts"]] == ["initial", "sent_back", "followup"]
-    assert [a["id"] for a in pon["attempts"]] == ["PON\u00b7a1", "PON\u00b7a2", "PON\u00b7a3"]
-    assert pon["attempts"][2]["cause"]["ref"] == "PON\u00b7a2"
+    assert [a["state"] for a in pon["attempts"]] == ["done", "done", "done", "done"], pon["attempts"]
+    assert [a["cause"]["type"] for a in pon["attempts"]] == \
+        ["initial", "sent_back", "followup", "followup"]
+    assert [a["id"] for a in pon["attempts"]] == ["PON\u00b7a1", "PON\u00b7a2", "PON\u00b7a3", "PON\u00b7a4"]
     assert pon["attempts"][1]["cause"]["reason"] == "two overrides that override nothing"
+    # The review of the fix delta is its own attempt, between the fix and the
+    # pass that re-checks it — not a footnote on the fix.
+    assert pon["attempts"][2]["actor"] == "review-ponytail-r1"
+    assert pon["attempts"][2]["cause"]["by"] == "item-01"
+    assert pon["attempts"][2]["cause"]["ref"] == "PON\u00b7a2"
+    assert pon["attempts"][2]["outcome"]["receipt"] == "VERDICT CLEAN"
+    assert pon["attempts"][3]["cause"]["ref"] == "PON\u00b7a3"
     assert project(two_pass, "2026-09-27T11:00:00Z") == doc_two
 
     # A fix no review sent back (a ponytail note the coordinator judged a defect)

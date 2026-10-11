@@ -20,7 +20,7 @@ Every review and ponytail report ends with `VERDICT CLEAN` or `VERDICT FINDINGS`
 
 The review runs in the review thread, from its own context. Do not invoke the two-axis `/code-review` skill: its mandatory Standards and Spec subagents report their tokens nowhere the run can see, so the review goes unpriced and the verdict is not the reviewer's own. The review thread spawns no subagents at all.
 
-Depth scales to the item's risk. A **high-risk** item — real state, logic, or contract surface (RPC schemas, fetch lifecycles, data scoping) — gets the full adversarial prompt in that one thread: every acceptance criterion verified in code, edge cases probed, test fixtures judged for genuine pinning. A **mechanical** item — deletions, renames, rendering-only, docs, config — gets a short pass over the frozen diff. A uniformly maximal checklist wastes 10–30 min per low-risk item; a uniformly minimal one misses the bug only a deep pass catches. An item whose criteria exceed what one thread can hold should have been split at plan time.
+Depth scales to the item's risk. A **high-risk** item — real state, logic, or contract surface (RPC schemas, fetch lifecycles, data scoping) — gets the full adversarial prompt in that one thread: every acceptance criterion verified in code, edge cases probed, test fixtures judged for genuine pinning. A **mechanical** item — deletions, renames, rendering-only, docs, config — gets a short pass over the frozen diff. A uniformly maximal checklist wastes 10–30 min per low-risk item; a uniformly minimal one misses the bug only a deep pass catches. An item whose criteria exceed what one thread can hold should have been split at plan time. The call itself is recorded as the item's `risk` ([ledger.md](ledger.md)) when its first review is dispatched, so a reader can tell a deliberate depth and model choice from a forgotten flag instead of inferring one.
 
 ## Cap: 3 findings rounds per item
 
@@ -32,7 +32,7 @@ A **findings round** is a pass that returns `VERDICT FINDINGS`. A pass after a `
 
 ## Ponytail fixes
 
-A ponytail finding's fix is re-checked by the next ponytail pass. It skips the fresh-eyes review only when its diff adds no executable behaviour — a pure deletion, a comment, a formatting change. A fix that adds or changes behaviour, state or a contract surface gets a fresh-eyes review of the fix delta before the item settles, and that pass does not consume the findings cap. A ponytail note that names a defect is a finding, not a preference.
+A ponytail finding's fix is re-checked by the next ponytail pass. It skips the fresh-eyes review only when its diff adds no executable behaviour — a pure deletion, a comment, a formatting change. A fix that adds or changes behaviour, state or a contract surface gets a fresh-eyes review of the fix delta before the item settles, and that pass does not consume the findings cap. That review, and the fix round it reads, are recorded under the pass that opened them — `ponytail[].fix` and `ponytail[].fix.review` ([ledger.md](ledger.md)) — because a pass that keeps them only in prose is work no retro can price. A ponytail note that names a defect is a finding, not a preference.
 
 ## A finding that contradicts the spec
 
