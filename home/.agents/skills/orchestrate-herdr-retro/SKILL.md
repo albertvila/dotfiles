@@ -149,11 +149,15 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   died first — a finding, not a zero.
 - **Roles come from the ledger's shape** — workers under `items.*.worker`,
   reviews under `items.*.reviews`, fixes under `items.*.fixes`, plus `ponytail`
-  and `executors`. The run's own `retro` is not a lane: the ledger's `retro` row
+  and `executors`. The ponytail lane carries its own two: the round a pass opened,
+  `ponytail[].fix`, and the fresh-eyes review of that round's delta,
+  `ponytail[].fix.review` — a reader that stops at the pass prices both at zero.
+  The run's own `retro` is not a lane: the ledger's `retro` row
   names it, and the record reports it on its own line, outside the run's totals —
   BB spawns its retro as the plan thread's sibling and counts it nowhere.
   Agent names encode the same convention
-  (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`), so an
+  (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`, the
+  ponytail fix's own handle), so an
   agent that fits neither means the run went off-script.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
   closed set in `../orchestrate-core/cause-contract.md`, which also gives

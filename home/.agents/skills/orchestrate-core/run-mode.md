@@ -41,6 +41,8 @@ The worker's test report is a claim. Before the commit gate, run the command the
 
 Flow A, once every item has passed: run the command on a scratch copy of the whole dirty tree. Non-zero pauses the run. Do not guess which item.
 
+**The whole-tree run is the gate's evidence, so it is the last thing that happens to the tree.** A fix round that writes a byte after it — a findings fix, a ponytail fix, a reopen — re-runs it and re-stamps the `wholeTree` entry (`at` and `suites`); the gate reads an entry stamped after the last change to the tree, never one from before it. A suite run a worker or a reviewer did on its own is that agent's evidence, not the run's: the answer the gate needs is the coordinator's own whole-tree command, on the tree it is about to commit.
+
 ## Flow B bases
 
 An item with `blockedBy` stays `todo` until those items' PRs are merged to the target. Fetch, then create its worktree from that updated target (`--base-branch origin/<target>` on BB, `--base <target>` on Herdr). Do not branch it from the pre-merge target and rebase later. Items with no blockers start together from the target.

@@ -31,7 +31,13 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   "items": { "<id>": { /* item, below */ } },
   "ponytail": [
     { "pass": 1, "id": "<handle>", "session": null, "verdict": "CLEAN|FINDINGS",
-      "report": null, "startedAt": null, "endedAt": null }
+      "report": null, "startedAt": null, "endedAt": null,
+      // the round this pass's findings opened, and the fresh-eyes review of its
+      // delta when the fix changed behaviour (review-contract.md)
+      "fix": { "id": "<handle>", "session": null, "startedAt": null, "endedAt": null,
+               "review": { "id": "<handle>", "session": null,
+                           "verdict": "CLEAN|FINDINGS", "report": null,
+                           "startedAt": null, "endedAt": null } } }
   ],
   // Runtime extensions, in this shape, never merged in:
   //   bb: "task" (BB Task key), "pr"
@@ -54,6 +60,7 @@ one, the coordinator. This is the `executors` field BB used to call
   "title": "…", "slug": "…", "ticket": "<ref>",
   "criteria": "…",                     // the manifest's acceptance line, verbatim
   "outOfScope": "…",                   // the manifest's out-of-scope line, verbatim
+  "risk": "high" | "mechanical",       // the review's depth class — see the bullets
   "worker": { "id": "<handle>", "session": null, "worktree": null,
               "startedAt": null, "endedAt": null },
   "status": "todo" | "running" | "done" | "failed" | "blocked",
@@ -82,5 +89,16 @@ The field name does not: everything around it is identical.
   rounds that opened a `fixes` entry ([review-contract.md](review-contract.md)).
   BB's old `reviewCount`/`reviewThreadId`/`fixRounds` fields are gone.
 - `criteria` and `outOfScope` are quoted verbatim; they are what a review checks.
+- `risk` is the class the review's depth is scaled to
+  ([review-contract.md](review-contract.md)) and — in a runtime whose skill carries
+  the rule — which reviewer model the item's passes get. It is written when the
+  item's first review is dispatched. A run that never wrote it leaves it out; the
+  retro then reports the model choice as unexplained rather than guessing one.
+- A ponytail pass records the round its own findings opened under the pass —
+  `ponytail[].fix`, and `ponytail[].fix.review` for the fresh-eyes review a
+  behaviour-changing fix gets ([review-contract.md](review-contract.md)). Neither
+  belongs in `items[].fixes`: that array is review-scoped. Both are sessions like
+  any other, and a lane whose sessions are not written here is a lane no retro can
+  price.
 - `attempts` is **not** stored — the dagr projection derives it from
   `reviews`/`fixes`.

@@ -247,6 +247,19 @@ def agents_from_ledger(ledger):
                        "item": None, "session": pass_.get("session"),
                        "startedAt": pass_.get("startedAt"),
                        "endedAt": pass_.get("endedAt")})
+        fix = pass_.get("fix") or {}
+        if fix.get("id") or fix.get("session"):
+            agents.append({"name": fix.get("id") or "fix-ponytail", "role": "fix",
+                           "item": None, "session": fix.get("session"),
+                           "startedAt": fix.get("startedAt"),
+                           "endedAt": fix.get("endedAt")})
+        review = fix.get("review") or {}
+        if review.get("id") or review.get("session"):
+            agents.append({"name": review.get("id") or "review-ponytail",
+                           "role": "code-review", "item": None,
+                           "session": review.get("session"),
+                           "startedAt": review.get("startedAt"),
+                           "endedAt": review.get("endedAt")})
     return agents
 
 
@@ -514,6 +527,20 @@ def self_test():
          "items": {"01": {"reviews": [{"id": "review-01-r1", "session": "/tmp/b.jsonl"}]}},
          "ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl"}]})] == \
         ["coordinator", "retro-x", "review-01-r1", "ponytail"]
+    # A ponytail pass carries the round it opened and the review of that round's
+    # delta; a reader that stops at the pass prices neither.
+    assert [(a["name"], a["role"]) for a in agents_from_ledger(
+        {"ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl",
+                       "fix": {"id": "fix-ponytail-f1", "session": "/tmp/f.jsonl",
+                               "review": {"id": "review-ponytail-r1",
+                                          "session": "/tmp/v.jsonl"}}}]})] == \
+        [("ponytail", "ponytail"), ("fix-ponytail-f1", "fix"),
+         ("review-ponytail-r1", "code-review")]
+    # A fix that skipped the fresh-eyes review is a pass and a fix, nothing more.
+    assert [a["role"] for a in agents_from_ledger(
+        {"ponytail": [{"id": "ponytail",
+                       "fix": {"id": "f", "session": "/tmp/f.jsonl"}}]})] == \
+        ["ponytail", "fix"]
     # The retro is the run's recorder, not a lane of it: it is named in the
     # ledger and reported outside the run's totals, as BB's is.
     assert split_recorder([{"name": "item-01", "role": "worker"},
