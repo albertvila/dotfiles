@@ -51,6 +51,8 @@ An item with `blockedBy` stays `todo` until those items' PRs are merged to the t
 
 `gated` asks for the commit message and waits. `land` and `unattended` do not ask. The message is a conventional commit built from the item titles, written into the ledger. Then commit and push. Flow A creates the run branch before anything is pushed: a bare push of `HEAD` lands the commit on the base.
 
+**`land` and `unattended` open their PRs as drafts titled `[AI-DRAFT] <subject>`; `gated` does neither.** A draft cannot be merged, so nothing lands before the operator's verification. Each runtime's create step carries it — `gh pr create --draft --title "[AI-DRAFT] …"`, and on an environment whose PR BB opened itself, `gh pr edit <url> --title "[AI-DRAFT] …"`. A PR that came out ready is put back in draft — `bb environment pull-request draft <env-id>` on BB, otherwise the `convertPullRequestToDraft` mutation through `gh api graphql`, with the node id from `gh pr view <url> --json id -q .id`. Read the pair back (`gh pr view <url> --json isDraft,title`): `isDraft: false`, or a title without the prefix, is a write error to fix before that PR counts as open.
+
 Record `reviewedHead` as the sha just pushed. Only `gated` Flow B merges, and only when `gh pr view --json headRefOid` equals that sha, checks are green net of `ciBaseline`, and the PR is not a draft (`gh pr ready` if it is).
 
 ```sh
@@ -67,7 +69,7 @@ After a `gated` Flow B merge, if the target's new check-runs add a failure that 
 
 ## Verification
 
-After the PRs are open, spawn the retro — at that moment, not behind the PRs' checks: a check still running is watched *after* the spawn, and `finishedAt` is stamped when the PRs are open rather than when they are green. Do not wait for the retro to finish, and do not merge. Then ask the operator to verify the opened PRs. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged — and, when an opened PR is not mergeable, its `mergeStateStatus`: an operator told the checks are green on a `BLOCKED` PR has been told half of what decides the merge. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
+After the PRs are open, spawn the retro — at that moment, not behind the PRs' checks: a check still running is watched *after* the spawn, and `finishedAt` is stamped when the PRs are open rather than when they are green. Do not wait for the retro to finish, and do not merge. Then ask the operator to verify the opened PRs — each one a draft carrying the `[AI-DRAFT]` prefix, so the ask says that marking a PR ready and dropping the prefix is what makes it mergeable, and that this is the operator's move, never the run's. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged — and, when an opened PR is not mergeable for anything but its draft state, its `mergeStateStatus`: an operator told the checks are green on a `BLOCKED` PR has been told half of what decides the merge. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
 
 ## After the operator merges
 
