@@ -33,6 +33,12 @@ Store that list as `ciBaseline`. An empty list means every later red is caused. 
 
 The worker's test report is a claim. Before the commit gate, run the command the worker named.
 
+Steps 1 and 2 are per item, and the pair is what makes a failure attributable:
+base exit 0 with the item exit non-zero is a findings round against that item,
+and nothing else can tell you which item the red suite belongs to. A run that
+reaches the whole-tree run with no item pair behind it has skipped the
+attribution, not saved work.
+
 1. The first time that command string appears, run it in a detached worktree at the run's base sha. Record the exit code under `validationBaseline`.
 2. Run it again in a scratch worktree that is that base plus this item's files only. Copy changed and untracked files from the item worktree. Do not copy other items' uncommitted files.
 3. Base exit was 0 and the item exit is non-zero: that is a findings round, not a note. Do not open the commit gate.
@@ -69,7 +75,7 @@ After a `gated` Flow B merge, if the target's new check-runs add a failure that 
 
 ## Verification
 
-After the PRs are open, spawn the retro — at that moment, not behind the PRs' checks: a check still running is watched *after* the spawn, and `finishedAt` is stamped when the PRs are open rather than when they are green. Do not wait for the retro to finish, and do not merge. Then ask the operator to verify the opened PRs — each one a draft carrying the `[AI-DRAFT]` prefix, so the ask says that marking a PR ready and dropping the prefix is what makes it mergeable, and that this is the operator's move, never the run's. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged — and, when an opened PR is not mergeable for anything but its draft state, its `mergeStateStatus`: an operator told the checks are green on a `BLOCKED` PR has been told half of what decides the merge. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
+After the PRs are open, spawn the retro — at that moment, not behind the PRs' checks: a check still running is watched *after* the spawn, and `finishedAt` is stamped when the PRs are open rather than when they are green. Do not wait for the retro to finish, and do not merge. **The manager spawns it, and once.** The run's ledger `retro.id` is this run's retro: if that thread has not finished, resume it — a second spawn on the same manager thread rewrites the same corpus record, pays for the analysis twice, and can disagree with the first report about the same run. Then ask the operator to verify the opened PRs — each one a draft carrying the `[AI-DRAFT]` prefix, so the ask says that marking a PR ready and dropping the prefix is what makes it mergeable, and that this is the operator's move, never the run's. The ask lists each PR URL and `reviewedHead`, any spec-conflict quote beside the spec clause it contradicts, and any item still `todo` because its blocker PR is unmerged — and, when an opened PR is not mergeable for anything but its draft state, its `mergeStateStatus`: an operator told the checks are green on a `BLOCKED` PR has been told half of what decides the merge. When a worktree still holds a blocked or failed item's uncommitted files, the ask says so too: those files are excluded from the commit, and the branch is not reusable for another item until they are gone. A spec-conflict does not settle `done` and does not block opening the PR. The operator's answer is the verification, not a merge instruction. This ask is for `land` and `unattended`. `gated` has no such ask.
 
 ## After the operator merges
 

@@ -20,6 +20,18 @@ lives — not the last one.
 
 Timing caveat: in a shared-worktree run the phases overlap on purpose, so
 per-role totals sum to more than the run's wall-clock span. Both are reported.
+
+Token caveat: pi emits one `thread/tokenUsage/updated` per turn and it is that
+request's usage, not the turn's or the thread's (`total` equals `last`, and it
+equals the `contextWindowUsage.usedTokens` of the same moment). A turn with 160
+model requests therefore reports one of them, and every cost here is a **floor**
+whose distance from the truth is the requests-per-turn ratio. `toolItems`
+counts tool items per thread as a floor on that denominator; it is deliberately
+not turned into a dollar figure, because the multiplier is not measurable.
+
+Retro caveat: the retro thread a run spawns at its end is the run's recorder,
+not the run. It keeps its own phase and its cost, and it never stretches the
+span or makes a terminal run read as partial.
 """
 
 import argparse
@@ -74,6 +86,8 @@ def role_of(title, is_manager=False):
         return "review"
     if t.startswith("PONYTAIL"):
         return "ponytail"
+    if t.startswith("RETRO"):
+        return "retro"
     return "worker"
 
 
@@ -250,6 +264,7 @@ def analyse_thread(thread, events):
         "turns": 0, "turnsFailed": 0,
         "models": [], "model": None,
         "tokens": None, "tokenEventSeen": False, "tokenEpochs": 0, "costReported": None,
+        "toolItems": 0, "tokensSource": None, "retroInFlight": False,
         "start": None, "end": None,
         "wallMs": 0, "activeMs": 0, "workMs": 0, "idleMs": 0,
         "humanMs": 0, "waitMs": 0, "waitedOn": [], "waitingOn": None,
@@ -367,6 +382,11 @@ def analyse_thread(thread, events):
             row["_infra_open"] = ts
         elif kind == "item/started":
             item = data.get("item") or {}
+            # A tool result is one model request to consume it, so tool items are
+            # a floor on how many requests a turn made — the denominator a
+            # snapshot-based token figure is short by (see the module docstring).
+            if (item.get("type") or "") not in ("reasoning", "agentMessage"):
+                row["toolItems"] += 1
             match = WAIT_CMD_RE.search(str(item.get("command") or ""))
             if match:
                 row["_wait_open"] = row.get("_wait_open") or {}
@@ -387,7 +407,13 @@ def analyse_thread(thread, events):
             row["activeMs"] += events[-1]["createdAt"] - open_turn
             row["turns"] += 1
             intervals.append([open_turn, events[-1]["createdAt"]])
-            errors["turn/open"] += 1
+            if row["role"] == "retro":
+                # The retro is spawned after `finishedAt` and nobody waits for
+                # it, so an in-flight retro is normal, not an open turn of the
+                # run. Flagged on the row, kept out of the findings (F5).
+                row["retroInFlight"] = True
+            else:
+                errors["turn/open"] += 1
     if pending is not None:
         # A gate still pending when the log ends is real human wait so far, not
         # zero (a partial run captured mid-approval) (M2).
@@ -423,6 +449,8 @@ def analyse_thread(thread, events):
                 if isinstance(value, (int, float)) and not isinstance(value, bool) and key != "cost":
                     summed[key] += value
         row["tokens"] = dict(summed) or None
+    if row["tokens"]:
+        row["tokensSource"] = "snapshot"
     row["_intervals"] = intervals
     if row.get("_infra_open") is not None:
         infra.append([row["_infra_open"], events[-1]["createdAt"]])
@@ -475,7 +503,7 @@ def build_findings(rows, ledger, manager):
             out.append(f"{where}: {row['turnsFailed']} failed turn(s) — {row['errors']}")
         elif row["errors"]:
             out.append(f"{where}: {row['errors']}")
-        if row["status"] == "error":
+        if row["status"] == "error" and row["role"] != "retro":
             out.append(f"{where}: thread ended in error")
         if len(row["models"]) > 1:
             out.append(f"{where}: ran {len(row['models'])} models ({', '.join(row['models'])}); "
@@ -483,7 +511,7 @@ def build_findings(rows, ledger, manager):
         if row["cost"]["basis"] == "unpriced":
             model = row["pricingModel"] or (row["models"][0] if row["models"] else "unknown model")
             out.append(f"{where}: unpriced — tokens present but no price for {model}")
-        elif row["cost"]["basis"] == "unmeasured":
+        elif row["cost"]["basis"] == "unmeasured" and row["role"] != "retro":
             out.append(f"{where}: unmeasured — no token usage event recorded")
     for row in rows:
         infra = _infra_intervals(row)
@@ -584,14 +612,18 @@ def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
 
     manager_id = identity.get("managerThreadId")
     manager = next((r for r in rows if r["threadId"] == manager_id), rows[0] if rows else None)
-    children = [r for r in rows if r is not manager]
+    # The retro is the run's recorder, not the run: `run-mode.md` spawns it after
+    # `finishedAt` and nobody waits for it, so it must not stretch the span or
+    # make a terminal run read as partial. It keeps its own phase and its cost.
+    work_rows = [r for r in rows if r["role"] != "retro"]
+    children = [r for r in work_rows if r is not manager]
 
-    starts = [r["start"] for r in rows if r["start"]]
-    ends = [r["end"] for r in rows if r["end"]]
+    starts = [r["start"] for r in work_rows if r["start"]]
+    ends = [r["end"] for r in work_rows if r["end"]]
     run_start = min(starts) if starts else None
     run_end = max(ends) if ends else None
     span = (run_end - run_start) if starts and ends else 0
-    child_ends = [r["end"] for r in children if r["end"]]
+    child_ends = [r["end"] for r in work_rows if r is not manager and r["end"]]
     # M1: the work window is the first event to the last child settle (the end
     # of the manager's turn during which that settle landed), not the run's span
     # — a long idle tail must not read as work.
@@ -642,7 +674,7 @@ def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
     }
 
     task_key, task_id, task_resolution = _task_link(ledger, identity)
-    partial = (any(r["status"] in ACTIVE_STATUSES or r["openTurn"] for r in rows)
+    partial = (any(r["status"] in ACTIVE_STATUSES or r["openTurn"] for r in work_rows)
                or any(item.get("status") in RUNNING_ITEM_STATUSES for item in items))
 
     run = {
@@ -830,6 +862,29 @@ def self_test():
     assert cc["tokens"]["totalTokens"] == 9260, cc["tokens"]
     assert cc["tokens"]["inputTokens"] == 2010, cc["tokens"]
 
+    # F1: a report turn is many requests but pi reports one usage snapshot, so
+    # the tool-item count is the floor on the request count, and it is reported
+    # rather than converted into a dollar figure
+    heavy = [thread("thr_hv", "01 · worker", "idle", [
+        ev("client/turn/requested", 0, dict(sonnet)),
+        ev("turn/started", 0),
+        ev("item/started", 1_000, {"item": {"id": "r1", "type": "reasoning"}}),
+        ev("item/started", 1_100, {"item": {"id": "c1", "type": "commandExecution",
+                                             "command": "ls"}}),
+        ev("item/completed", 1_200, {"item": {"id": "c1", "type": "commandExecution",
+                                                "command": "ls"}}),
+        ev("item/started", 1_300, {"item": {"id": "c2", "type": "commandExecution",
+                                             "command": "ls"}}),
+        ev("item/started", 1_400, {"item": {"id": "m1", "type": "agentMessage"}}),
+        ev("thread/tokenUsage/updated", 2_000, {"tokenUsage": {"total": {
+            "inputTokens": 100, "cachedInputTokens": 70_000, "cacheReadInputTokens": 70_000,
+            "cacheWriteInputTokens": 0, "outputTokens": 50, "totalTokens": 70_150}}}),
+        ev("turn/completed", 3_000, {"status": "completed"}),
+    ])]
+    hrow = analyse_thread(heavy[0]["meta"], heavy[0]["events"])
+    assert hrow["toolItems"] == 2, hrow["toolItems"]         # the two tool items, not the reasoning
+    assert hrow["tokensSource"] == "snapshot" and hrow["tokens"]["totalTokens"] == 70_150, hrow["tokens"]
+
     # pricing provenance is carried verbatim into the record
     meta = {"source": "cache", "fetchedAt": iso(1_700_000_000_000)}
     assert assemble_record(threads, ledger_list, identity, pricing, meta)["run"]["pricing"] == meta
@@ -980,6 +1035,23 @@ def self_test():
                            ledger_list, identity, pricing)
     assert live["partial"] is True
 
+    # F5: a RETRO child is the recorder — it is spawned after the run ends and
+    # must not make a terminal run partial or stretch its span
+    retro = thread("thr_retro", "RETRO · thr_mgr", "active", [
+        ev("client/turn/requested", 1_800_000, dict(sonnet)),
+        ev("turn/started", 1_800_000),
+        ev("item/started", 1_810_000, {"item": {"id": "c9", "type": "commandExecution",
+                                                 "command": "ls"}}),
+    ])
+    retro_rec = assemble_record(threads + [retro], ledger_list, identity, pricing)
+    assert retro_rec["partial"] is False, retro_rec["partial"]
+    assert retro_rec["run"]["spanMs"] == rec["run"]["spanMs"], retro_rec["run"]["spanMs"]
+    rr = next(t for t in retro_rec["threads"] if t["threadId"] == "thr_retro")
+    assert rr["role"] == "retro" and rr["toolItems"] == 1 and rr["retroInFlight"] is True, rr
+    assert not any(("turn/open" in f) or ("unmeasured" in f and "thr_retro" in f)
+                   for f in retro_rec["findings"]), retro_rec["findings"]
+    assert any(p["role"] == "retro" for p in retro_rec["phases"]), retro_rec["phases"]
+
     # directory name is the browsable key, stable across invocations
     name = record_dirname(rec)
     assert name == record_dirname(assemble_record(threads, ledger_dict, identity, pricing)), name
@@ -1125,14 +1197,18 @@ def print_table(record, no_pricing):
     print("\nTHREADS  (at = dispatch offset from the run's first event)")
     starts = [t["start"] for t in record["threads"] if t["start"]]
     run_start = min(starts) if starts else 0
-    print(f"    {'thread':<16}{'role':<10}{'model':<40}{'turns':>6}{'at':>8}{'wall':>8}"
+    print(f"    {'thread':<16}{'role':<10}{'model':<40}{'turns':>6}{'tools':>6}{'at':>8}{'wall':>8}"
           f"{'active':>8}{'wait':>7}{'idle':>8}{'cost':>10}  errors")
     for row in sorted(record["threads"], key=lambda r: r["start"] or 0):
         at = "+" + minutes((row["start"] or run_start) - run_start)
         print(f"    {row['threadId']:<16}{row['role']:<10}{(row['model'] or '-'):<40}{row['turns']:>6}"
+              f"{row['toolItems']:>6}"
               f"{at:>8}{minutes(row['wallMs']):>8}{minutes(row['activeMs']):>8}"
               f"{minutes(row['waitMs']):>7}{minutes(row['idleMs']):>8}{format_cost(row['cost']):>10}  "
               f"{','.join(row['errors']) or ''}")
+    if any(r.get("tokensSource") == "snapshot" for r in record["threads"]):
+        print("    tokens: pi's token event is one request per turn, not a turn total —"
+              " the cost above is a floor (see the tools column)")
     print("\nFINDINGS")
     print("\n".join(f"    - {f}" for f in record["findings"]) or "    (none)")
 
