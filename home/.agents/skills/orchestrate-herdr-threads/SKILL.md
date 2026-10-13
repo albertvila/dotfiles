@@ -510,7 +510,9 @@ agent, no ledger entry and no reviewer it can honestly claim.
    [run-mode.md](../orchestrate-core/run-mode.md) validation exited 0.
    `land` and `unattended` do not end the turn and do not ask: record the gate
    with `auto: true` and the conventional message, then create the run branch and
-   commit as the next sentence requires.
+   commit as the next sentence requires — and open the PR as a draft titled
+   `[AI-DRAFT] <the commit's subject>` (`--draft --title …` on the `gh pr create`
+   below), per [run-mode.md](../orchestrate-core/run-mode.md).
    `gated` proposes the commit message and file list to the
    operator (per repo conventions; detect the PR base branch), records
    `gates.commit.requestedAt`, and **ends the turn** with the question. This pane
@@ -575,7 +577,9 @@ Then run Flow A steps 2–7 with these deltas:
 - **Step 6** — one PR per item, from that item's worktree. The commit gate is
   [run-mode.md](../orchestrate-core/run-mode.md): `gated` asks, `land` and
   `unattended` do not. Commit the branch from the coordinator with
-  `git -C <wt-path>`. Same body: the `pr` skill (see *PR body*).
+  `git -C <wt-path>`, and in `land` and `unattended` open it a draft titled
+  `[AI-DRAFT] <the item's subject>` (`--draft --title …`). Same body: the `pr`
+  skill (see *PR body*).
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in run-mode.md.
   `land` and `unattended` do not merge and do not dispatch the next wave. After a

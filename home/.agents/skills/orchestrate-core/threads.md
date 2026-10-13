@@ -163,7 +163,7 @@ runtimes:
 Read and follow the `pr` skill before opening each PR — shape `A`'s one PR and
 each of shape `B`'s per-item PRs. The body is that template. Set it at create
 (`gh pr create --body-file`); when the environment already opened the PR, `gh
-pr edit --body-file` before marking it ready. A PR opened without the skill is
+pr edit --body-file` before the PR counts as open. A PR opened without the skill is
 not done.
 
 Summary opens with the run's **intent**, then the diagram the skill calls for.

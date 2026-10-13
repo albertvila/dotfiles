@@ -283,7 +283,9 @@ manager that never dispatched, whatever it shipped.
 6. **Commit + open one PR.** Do not open this gate until [run-mode.md](../orchestrate-core/run-mode.md)
    validation exited 0. `land` and `unattended` skip the question: record the
    gate with `auto: true` and the conventional message, then create the run
-   branch before pushing and commit. `gated`
+   branch before pushing and commit — and open the PR as a draft titled
+   `[AI-DRAFT] <the commit's subject>` (`--draft --title …` on the `gh pr create`
+   below), per [run-mode.md](../orchestrate-core/run-mode.md). `gated`
    proposes the commit message and file list to the
    user (per repo conventions; detect the PR base branch), and waits for an
    explicit yes. Ask the gate with a pending interaction (`AskUserQuestion`),
@@ -376,11 +378,15 @@ Then run Flow A steps 2–7 with these deltas:
   branch's uncommitted diff.
 - **Flow A step 6 — one PR per item.** The commit gate is [run-mode.md](../orchestrate-core/run-mode.md):
   `gated` asks, `land` and `unattended` do not. Then commit the branch (`bb environment commit
-  <env-id>`) and mark that environment's PR ready (`bb environment
-  pull-request ready <env-id>` — each worktree environment owns its PR).
+  <env-id>`). `gated` marks that environment's PR ready (`bb environment
+  pull-request ready <env-id>` — each worktree environment owns its PR);
+  `land` and `unattended` leave it a draft titled `[AI-DRAFT] <the item's
+  subject>`: `gh pr edit <url> --title "[AI-DRAFT] …"` (URL and state from `bb
+  environment pull-request show <env-id> --json`), `bb environment pull-request
+  draft <env-id>` if it came out ready, then read `isDraft` and the title back.
   After that PR is open, run Flow A step 6's lm status commands in that
   item's worktree, against the same detected base. Same done check.
-  Write that body with the `pr` skill before marking the PR ready (see *PR body*).
+  Write that body with the `pr` skill before the PR counts as open (see *PR body*).
   Merging items into one PR is the Flow A shape.
 - **Merge the wave, then dispatch the next.** Only `gated` merges each ready
   PR, with the `gh pr merge --match-head-commit` command in
