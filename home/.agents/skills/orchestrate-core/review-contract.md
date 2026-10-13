@@ -14,6 +14,8 @@ A **finding** is a defect in behaviour, in a named acceptance criterion, or a fa
 
 `VERDICT CLEAN` closes the item's review even when it carries non-blocking nits. Nits go to the operator in the run summary: they are not fixed in-run and never open a re-review. Only `VERDICT FINDINGS` opens a fix round.
 
+The same holds for a ponytail pass whose notes are all out-of-band — a preference, a style choice, an observation with no gate behind it. It returns `VERDICT CLEAN` and lists them as nits. A `VERDICT FINDINGS` with no fix round behind it is a verdict that says a round happened when none did.
+
 Every review and ponytail report ends with `VERDICT CLEAN` or `VERDICT FINDINGS` as its first line, and findings are reported there — never recorded as follow-ups instead.
 
 ## The review thread does the pass itself
@@ -36,4 +38,4 @@ A ponytail finding's fix is re-checked by the next ponytail pass. It skips the f
 
 ## A finding that contradicts the spec
 
-When a review or ponytail finding conflicts with the approved manifest or the tracker spec, that is not a fix round. Quote the finding and the spec clause it contradicts, record it as a follow-up, and do not settle the item `done` — it is `blocked` with `cause.code: spec_conflict`, and that block is the operator's to adjudicate. `land` and `unattended` still open the PR and do not merge, so the adjudication arrives after the PR is open. An adjudication with no spec citation is a skipped fix round.
+When a review or ponytail finding conflicts with the approved manifest or the tracker spec, that is not a fix round. Quote the finding and the spec clause it contradicts, record it as a follow-up, and do not settle the item `done` — it is `blocked` with `cause.code: spec_conflict`, and that block is the operator's to adjudicate. The check is made when the finding arrives, **before the next fix round is spawned**: a round spent on code the spec says must not change is a round that cannot converge, and it ends at the cap with the wrong code and the wrong operator instruction. `land` and `unattended` still open the PR and do not merge, so the adjudication arrives after the PR is open. An adjudication with no spec citation is a skipped fix round.

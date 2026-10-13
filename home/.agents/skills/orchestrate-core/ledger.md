@@ -40,10 +40,16 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
                            "startedAt": null, "endedAt": null } } }
   ],
   // Runtime extensions, in this shape, never merged in:
-  //   bb: "task" (BB Task key), "pr"
+  //   bb: "task" (BB Task key), "pr", "runBranch" (Flow A),
+  //       "retro" {id, session, startedAt} when the manager spawned one,
+  //       "notes" [one line per plan-time note the executor carries],
+  //       "wholeTree" {at, suites, scope} (run-mode.md § Validation)
   //   herdr: "rundir", "retro" {id,session,tab,startedAt},
   //          "pr" {number,url,mergedAt,mergeCommit,base}, "prs" [...],
   //          "postMerge" {branchDeleted,tabsReleased,tabsKept,pending}, "reopenRounds" [...]
+  //   `gates.plan` owns the plan gate. A second top-level copy of it (an old run
+  //   wrote `planGate`) is drift, not shape — a reader cannot tell which one is
+  //   authoritative, and both can be right.
 }
 ```
 
