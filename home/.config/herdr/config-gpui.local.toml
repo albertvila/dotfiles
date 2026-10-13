@@ -11,6 +11,7 @@ theme = "Ghostty Default Style Dark"
 
 # Agents section below Spaces.
 show_agents = true
+confirm_close_pane = false
 
 [layout]
 mode = "normal-rounded"
