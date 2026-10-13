@@ -67,6 +67,15 @@ line.
    decision made here, and a reviewer that re-derives the criteria from it is
    checking a document nobody updated. An item whose acceptance one review
    agent cannot hold is an item to split (step 4).
+
+   When the acceptance line asserts a fact about **existing code** — that a
+   marker exists, a column is stamped, a value is stored, a behaviour is what
+   runs today — check that claim against the code before rendering the manifest.
+   A claim the code contradicts is rewritten in the acceptance line, or the item
+   is split so its first item is the investigation. A false premise does not
+   survive review: the reviewer proves the assumption wrong, the worker cannot
+   fix it, and the run ends at the findings cap with the wrong cause and the
+   wrong operator instruction.
 6. Flag the special handling so the executor and its reviewers start with the
    facts: run-alone resets, items ending in a push or merge, approval gates
    (commit plans, force-pushes), and any acceptance criterion reaching into

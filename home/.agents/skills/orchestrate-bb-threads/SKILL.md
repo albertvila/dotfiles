@@ -66,6 +66,14 @@ This section carries only the BB mechanics.
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
   would orphan the item's branch and desync the ledger's `envId`.
+- **A finding that contradicts the spec is not a fix round.** Before spawning
+  fix round n, read the finding against the manifest's acceptance line and the
+  tracker spec: when it quotes, or contradicts a clause of, either one, quote
+  the finding and the clause into the ledger, record it as a follow-up, and
+  block the item with `cause.code: spec_conflict` — do not spend a round
+  changing code the ticket says must not change. `cap_exhausted` tells the
+  operator to adjudicate the disagreement; `spec_conflict` tells them to
+  adjudicate the spec. Only one of those is true, and the ledger must say which.
 - **A re-review waits on the artifact, not on the fix's word.** Before spawning
   review pass n+1, freeze the diff again to `diffs/<item-id>-r<n+1>.diff` (or
   `snapshots/post-<item-id>-r<n+1>/`) and compare it with the freeze the previous
@@ -177,7 +185,24 @@ manager that never dispatched, whatever it shipped.
    [`threads.md#liveness`](../orchestrate-core/threads.md#liveness).
 
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
-   reports DONE, first freeze the item's diff so the review is immune to
+   reports DONE, two checks come first.
+
+   **The item's files.** `git diff --name-only HEAD` lists every file the worker
+   touched. A path outside the item's manifest `files` is a finding of its own —
+   the worker went past its scope — and it is resolved before the review is
+   spawned: revert it, or re-scope it through the plan. The freeze below cannot
+   see it (`git diff HEAD -- <item files>` filters it out by construction), so an
+   unchecked stray file ships unreviewed or gets reverted by accident. A stray
+   file that belongs to another item also reopens that item: freeze and re-review
+   *that* item's diff too.
+
+   **The validation.** [run-mode.md](../orchestrate-core/run-mode.md) §
+   *Validation* must already show the item's command green on a base-sha
+   worktree and again on base plus that item's files only. The worker's own run
+   is a claim; without the pair, a red suite has nothing to attribute it to but
+   a guess.
+
+   Then freeze the item's diff so the review is immune to
    the next worker's churn:
 
    ```sh
@@ -272,8 +297,11 @@ manager that never dispatched, whatever it shipped.
    defect — real behaviour, or a named acceptance criterion — is a finding and
    opens a fix round; a preference, a style choice, or an observation with no
    gate behind it stays out-of-band, reported to the operator in the run summary
-   and never fixed in-run. The fix path and the cap are in *Review loops* and
-   [review-contract.md](../orchestrate-core/review-contract.md).
+   and never fixed in-run. A pass whose only notes are out-of-band returns
+   `VERDICT CLEAN` with them listed as nits: `VERDICT FINDINGS` means a fix
+   round follows, so a `FINDINGS` verdict with no `fix` beside it in the ledger
+   is a record that contradicts itself. The fix path and the cap are in *Review
+   loops* and [review-contract.md](../orchestrate-core/review-contract.md).
 
    In a multi-repo run (see *Cross-repo runs*) there is no combined diff to
    pass: run one ponytail pass per item diff, none optional — the last
@@ -281,7 +309,8 @@ manager that never dispatched, whatever it shipped.
    substitute.
 
 6. **Commit + open one PR.** Do not open this gate until [run-mode.md](../orchestrate-core/run-mode.md)
-   validation exited 0. `land` and `unattended` skip the question: record the
+   validation exited 0: the item pair for every item, then the whole-tree run,
+   in that order and the last of them on a scratch copy. `land` and `unattended` skip the question: record the
    gate with `auto: true` and the conventional message, then create the run
    branch before pushing and commit — and open the PR as a draft titled
    `[AI-DRAFT] <the commit's subject>` (`--draft --title …` on the `gh pr create`

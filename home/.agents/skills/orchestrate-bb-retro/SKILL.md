@@ -148,7 +148,10 @@ runtime's figures:
   the human is not time the run spent working.
 - **Cost per model** — tokens and estimated USD per model and per role.
   Flag every thread the pricing table could not cover, and say how much of
-  the run that leaves unpriced.
+  the run that leaves unpriced. When the figures are a floor (they always are
+  on `pi` — see below), say that in the section, not in a footnote: quote the
+  tool-item count the floor is short by, and give the cross-check if the
+  corpus holds a comparable run.
 
 ## Reading the numbers
 
@@ -171,6 +174,21 @@ documents the shapes.
   it from the context window. In the pi payload
   `totalTokens = inputTokens + cachedInputTokens + outputTokens`, and
   `cachedInputTokens = cacheReadInputTokens + cacheWriteInputTokens`.
+- **A pi token event is one request, not a turn and not a thread.** It is
+  scoped to a turn and its `total` equals its `last`; the same number is the
+  `usedTokens` of the `thread/contextWindowUsage/updated` event beside it. A
+  turn that made 172 requests (the `tools` column: one tool item is at least
+  one request) reports the last of them. So `tokens` and the cost built on it
+  are a **floor**, and how far below the truth is not measurable from the log —
+  report the floor as a floor, name the tool-item count beside it, and never
+  present the estimate as what the run cost. A run whose `run.json` says
+  `$0.16` over 1,123 tool items is not a sixteen-cent run.
+- **A `RETRO …` title is the retro's own lane.** It is spawned after
+  `finishedAt` and nobody waits for it, so the script roles it `retro`,
+  excludes it from the run's span and from `partial`, and gives it its own
+  phase and thread line (its cost still counts in the run's spend). Its
+  completion re-enters the manager as a `child-completed` turn — that turn is
+  the retro's, not the run's work.
 - **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
   closed set in `../orchestrate-core/cause-contract.md`, which also gives
   the operator's move for each code; the findings name it. An item the run
@@ -179,16 +197,25 @@ documents the shapes.
 - **Cost is an estimate**: tokens multiplied by OpenRouter's advertised
   per-token prices from `https://openrouter.ai/api/v1/models`, cached a day
   in `<dataDir>/cache/openrouter-models.json`. Prices move, and a provider's
-  own billing can differ.
+  own billing can differ. Multiply a floor by real prices and the answer is
+  still a floor; say so wherever the figure appears.
 - **Waiting on the human** is a pending question, a question that timed out,
   and the idle tail until the human replies — a message that arrives two days
   later included. That wait is excluded from **orchestrator time**
   (`orchestratorMs` = span minus the part of the wait that overlaps no
   thread's active turn). Span stays the wall clock. Do not quote span as how
   long the orchestrator took.
-- **Roles come from titles** — `REVIEW …`, `PONYTAIL …`, everything else a
-  worker. Those titles are `/orchestrate-bb-threads`' own convention, so a
-  thread that fits none of them means the run went off-script.
+- **Roles come from titles** — `REVIEW …`, `PONYTAIL …`, `RETRO …`,
+  everything else a worker. Those titles are `/orchestrate-bb-threads`' own
+  convention, so a thread that fits none of them means the run went off-script.
+- **`bb thread log --all` is not stable over time.** The same command on the
+  same settled thread returns fewer events later — a delta stream is compacted
+  once the thread rests, and per-request `contextWindowUsage` events go first
+  (2,537 events at one read, 2,043 twenty minutes later; 121 context events,
+  then 3). Any figure read from event counts, and any per-request
+  reconstruction, is time-dependent: prefer counts that survive compaction
+  (turns, tool items, token events) and never publish a number you cannot
+  reproduce by re-running the script.
 - **Phases overlap by design** in a shared-worktree run: reviews run beside
   the next worker. Summed active time therefore exceeds the run's span, and
   that excess is overlap, not waste. Report both, and never present the sum
