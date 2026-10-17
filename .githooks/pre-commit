@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# The repo's own tests, run before every commit: they cover invariants a diff
+# never shows — the setup symlink tree, the cask config, the permission gate's
+# decision function, and the orchestrate skill body budget.
+#
+# It runs all of them rather than picking by changed path. The whole set takes
+# seconds, and a path-based filter is how the orchestrate bodies got a budget
+# that nothing enforced. `git commit --no-verify` is the escape hatch when a
+# failure is genuinely unrelated to what you are committing.
+set -eo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+shopt -s nullglob
+tests=("$REPO"/tests/*_test.sh)
+if [ "${#tests[@]}" -eq 0 ]; then
+  echo "pre-commit: no tests found under $REPO/tests" >&2
+  exit 1
+fi
+
+failed=0
+for test in "${tests[@]}"; do
+  name="$(basename "$test")"
+  if output="$(bash "$test" 2>&1)"; then
+    echo "ok   - $name"
+  else
+    echo "FAIL - $name"
+    printf '%s\n' "$output" | sed 's/^/       /'
+    failed=$((failed + 1))
+  fi
+done
+
+if [ "$failed" -gt 0 ]; then
+  echo >&2
+  echo "pre-commit: $failed test file(s) failed. Fix them, or commit with --no-verify." >&2
+  exit 1
+fi
