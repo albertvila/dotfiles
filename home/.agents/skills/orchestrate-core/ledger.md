@@ -144,5 +144,5 @@ The field name does not: everything around it is identical.
   belongs in `items[].fixes`: that array is review-scoped. Both are sessions like
   any other, and a lane whose sessions are not written here is a lane no retro can
   price.
-- `attempts` is **not** stored — the dagr projection derives it from
-  `reviews`/`fixes`.
+- `attempts` is **not** stored — a reader derives it from the `reviews` and
+  `fixes` written beside it.

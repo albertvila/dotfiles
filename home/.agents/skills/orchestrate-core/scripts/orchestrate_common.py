@@ -2,13 +2,12 @@
 """The machine copies of the contracts' constants, shared by the runtime scripts.
 
 The cause vocabulary is owned by `../cause-contract.md`, and the item lifecycle
-by `../threads.md`. This module is their single machine copy: both retro scripts
-and the Herdr ledger projection import it instead of defining the set three
-times, so a change to the vocabulary is a change here and in the contract, and
-nowhere else. `ledger_errors` is the ledger write-error checker — `validate-ledger.py`
+by `../threads.md`. This module is their single machine copy: the checker and both retro scripts
+import it instead of defining the set three times, so a change to the vocabulary
+is a change here and in the contract, and nowhere else. `ledger_errors` is the ledger write-error checker — `validate-ledger.py`
 is its command line, and both runtimes run it after every ledger write — and
-`stamp` and `ponytail_passes` are the shape readers both the projection and the
-Herdr retro price a lane from.
+`stamp` and `ponytail_passes` are the shape readers the Herdr retro prices a lane
+from.
 
     python3 orchestrate_common.py --self-test
 """
@@ -80,8 +79,7 @@ def ponytail_passes(ledger):
 
     The schema's `ponytail` is a **list** of passes; an older ledger holds one
     mapping instead. Both are read here, because a reader that crashes on the
-    shape the skill writes takes its whole view down with it — that is how the
-    projection lost its pane view and the retro lost the lane's price at once.
+    shape the skill writes takes its whole view down with it.
     """
     passes = (ledger or {}).get("ponytail") or []
     if isinstance(passes, dict):

@@ -49,73 +49,29 @@ ponytail fix round is recorded under the pass that opened it —
 `ponytail[<pass>].fix` `{id, session, startedAt, endedAt}`, and
 `ponytail[<pass>].fix.review` for the fresh-eyes review of its delta when the fix
 changed behaviour ([review-contract.md](../../orchestrate-core/review-contract.md)) —
-never in `items[].fixes`, because the
-projection pairs each `fixes` entry with a review round and reads an unmatched
-one as a round still in flight — a settled run then reports `E150`. Both
-sessions are named there or they are not priced: prose is not a session path.
+never in `items[].fixes`, because the ledger checker pairs each `fixes` entry with
+a review round and refuses an unmatched one — a ponytail round written there is a
+round the record cannot explain. Both sessions are named there or they are not
+priced: prose is not a session path.
 Write the item's `risk` (`high` | `mechanical`) when its first review is
 dispatched, so the depth and model call below is readable instead of inferred.
 **An item the run stops on is typed** — the invariant and the codes are
 [`threads.md#the-ledger`](../../orchestrate-core/threads.md#the-ledger) and
-[cause-contract.md](../../orchestrate-core/cause-contract.md). The projection below
-exits non-zero on an invented code, a cause on any other status, or a stopped
-item with no cause; `cap_exhausted`, `spec_conflict`, `worker_blocked` and
+[cause-contract.md](../../orchestrate-core/cause-contract.md). The ledger checker exits
+non-zero on an invented code, a cause on any other status, or a stopped item
+with no cause; `cap_exhausted`, `spec_conflict`, `worker_blocked` and
 `turn_stalled`, plus the review-driven `artifact_unchanged`, `finding_refuted`
 and `nonconvergent`, are the ones a normal run reaches.
 
-
-## The pane view — derived, never hand-written
-
-The operator watches the run in a dagr pane. `dagr-run.json` is a **projection of
-the ledger** for that pane, and the projection is the coordinator's job: re-render
-it after every ledger write (the pane reloads on mtime, so the view stays live).
-
-```sh
-python3 <this skill's dir>/scripts/ledger-to-run.py "$RUNDIR" --check   # writes $RUNDIR/dagr-run.json
-```
-
-The script ships with **this skill**, not with the worktree: an absolute path
-under `~/.agents/skills/orchestrate-herdr-threads/scripts/` (its `readlink -f`
-target) is the one that exists, and a run that looks for it in the repo will
-wrongly conclude the projection is unavailable and go without its pane view.
-
-`--check` runs `dagr check` on the result; **0 errors** every time. Warnings are
-the honest state of a live run — W208 (a working attempt with no liveness facts)
-until the item settles, W203 if the ledger is missing attempt timestamps — and
-only a settled run (`finishedAt` set) is expected to be clean under `--strict`.
-
-Open the pane beside your own work, once, when the run starts. `dagr-run.json`
-is passed explicitly because the pane's own discovery looks for `run.json`, which
-is the *retro's* metrics record name:
-
-```sh
-herdr plugin pane open --plugin herdr-dagr --entrypoint dagr --placement split \
-  --direction right --target-pane "$HERDR_PANE_ID" --cwd "$RUNDIR" \
-  --env "DAGR_RUN=$RUNDIR/dagr-run.json" --focus
-```
-
-Never hand-edit `dagr-run.json`, and never treat it as the record: the ledger
-holds what resume and the retro need (sessions, worktrees, PR urls, tickets, the
-model roster) and stays the source of truth. The projection script owns the
-contract's traps, which is why they are not restated per write: a review that
-returns FINDINGS settles `done` — the *reviewed* attempt is what goes `rejected`;
-a fix round is a new attempt whose `cause.sent_back` names the review attempt; an
-item blocked by a dependency renders `waits I01` rather than claiming the
-operator must act; and every terminal outcome is `reported`, never `verified`,
-because nothing in this flow mechanically checks the work.
-
-**The projection reads the shapes this file writes — and checks them.** The
-`ponytail` lane is a **list of passes** here and in the retro's script; a reader
-that treats it as one mapping takes the whole view down with it (and hides a
-`dagr` error it would otherwise have reported). A ledger-shape change lands in
-both scripts in the same commit. The checks themselves are not this script's:
-they are `orchestrate-core/scripts/validate-ledger.py` over `ledger_errors` in
-`orchestrate_common.py` (the command is under [The run's record](../SKILL.md#the-runs-record)), imported here
-so the pane, the checker and the two runtimes cannot disagree about what a write
-error is: an interval that runs backwards, a gate approved before it was
-requested, a terminal `finishedAt` standing over an item, a ponytail pass or a
+**The `ponytail` lane is a list of passes** here and in the retro's script; a
+reader that treats it as one mapping takes its whole view down with it. A
+ledger-shape change lands in the checker and the retro's script together. The
+checks themselves are `orchestrate-core/scripts/validate-ledger.py` over
+`ledger_errors` in `orchestrate_common.py` (the command is under
+[The run's record](../SKILL.md#the-runs-record)), so the checker and the two
+runtimes cannot disagree about what a write error is: an interval that runs
+backwards, a gate approved before it was requested, a terminal `finishedAt` standing over an item, a ponytail pass or a
 fix review that never settled, a stopped item with no `cause` or a code outside
 the contract, a status the fields beside it contradict. That is where "stamp
 the times honestly" gets its teeth — it runs after every write, so the
 coordinator sees the mistake while it still knows what it meant.
-

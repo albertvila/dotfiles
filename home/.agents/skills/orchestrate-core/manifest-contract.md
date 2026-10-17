@@ -83,4 +83,4 @@ and exits 1. Nothing is dispatched on a non-zero exit.
 script serves both runtimes: a conditional check reads "if this line is present"
 or "if this flow is", never "if this runtime is". A change to the shape above is
 a change to the checker in the same commit, the way a ledger-shape change lands
-in the projection and the retro's script together.
+in the checker and the retro's scripts together.
