@@ -256,6 +256,19 @@ try {
   rmSync(`${home}/.env`);
   check("missing dotenv retains catch-all deny", (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
   check("missing key never calls Jev", calls, before);
+  // A guardrail block is the key's state, not the command's. Keep this last: the
+  // latch is process-global, so every later Jev check would silently skip.
+  const beforeBlock = calls;
+  process.env.JEV_OPENROUTER_API_KEY = "blocked-key";
+  globalThis.fetch = async () => {
+    calls += 1;
+    return { ok: false, status: 404, text: async () => '{"error":{"message":"Model blocked by guardrail"}}' };
+  };
+  check("guardrail block retains catch-all deny", (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
+  check("guardrail block spends one call", calls, beforeBlock + 1);
+  globalThis.fetch = fakeFetch;
+  check("guardrail block is not retried", (await invoke())?.reason, "Blocked: AWS outside read-only allowlist");
+  check("no Jev call after a guardrail block", calls, beforeBlock + 1);
 } finally {
   globalThis.fetch = savedFetch;
   for (const key of Object.keys(process.env)) if (!(key in savedEnv)) delete process.env[key];
