@@ -719,7 +719,11 @@ Role defaults, passed on `herdr agent start` as pi flags after `--`:
 |---|---|---|
 | worker | *(none)* | pi's configured default (`~/.pi/agent/settings.json`) |
 | code-review | `-- --model openrouter/z-ai/glm-5.3` | GLM 5.3 |
-| ponytail | *(none)* | pi's configured default |
+| ponytail | `-- --model openrouter/anthropic/claude-sonnet-5` | Sonnet 5 |
+
+Neither gate may inherit pi's configured default: it is the worker model, so a
+role with no flag is the author reviewing itself. See *Models* in
+[`threads.md`](../orchestrate-core/threads.md#models) for the family rule.
 
 Check every named pattern against `pi --list-models` before dispatching, and
 record the effective choice in the ledger's `models` — `pi-default` when no flag

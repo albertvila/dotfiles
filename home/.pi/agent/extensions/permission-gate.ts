@@ -36,6 +36,8 @@ const JEV_PASS_AT = 0.9;
 const JEV_TIMEOUT_MS = 1_500;
 const JEV_MODEL = "~typesafe/jev-latest";
 const JEV_ENDPOINT = "https://openrouter.ai/api/v1/systemone";
+/** A guardrail block belongs to the key, not to the command, so one is enough for the process. */
+let jevBlocked = false;
 
 // Bypass all checks (no prompt).
 const allowedPatterns: Pattern[] = [
@@ -178,6 +180,7 @@ async function consultJev(command: string, ctx: ExtensionContext): Promise<boole
 		// read the same key from ~/.env without loading or changing chat credentials.
 		const key = (process.env.JEV_OPENROUTER_API_KEY || parseEnv(readFileSync(`${homedir()}/.env`, "utf8")).JEV_OPENROUTER_API_KEY)?.trim();
 		if (!key) return undefined;
+		if (jevBlocked) return undefined;
 
 		const signals = [AbortSignal.timeout(JEV_TIMEOUT_MS)];
 		if (ctx.signal) signals.push(ctx.signal);
@@ -201,7 +204,10 @@ async function consultJev(command: string, ctx: ExtensionContext): Promise<boole
 			}),
 			signal: AbortSignal.any(signals),
 		});
-		if (!response.ok) return undefined;
+		if (!response.ok) {
+			if (/guardrail/i.test(await response.text().catch(() => ""))) jevBlocked = true;
+			return undefined;
+		}
 		return parseJevDecision(await response.json());
 	} catch {
 		return undefined;

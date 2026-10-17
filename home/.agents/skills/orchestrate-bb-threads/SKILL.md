@@ -77,7 +77,7 @@ Role defaults, passed via `--model` when spawning:
 |-------------|----------------------------------------|
 | worker      | `openrouter/deepseek/deepseek-v4.1-flash` |
 | code-review | `openrouter/z-ai/glm-5.3`                     |
-| ponytail    | `openrouter/deepseek/deepseek-v4.1-flash` |
+| ponytail    | `openrouter/anthropic/claude-sonnet-5` |
 
 These are live catalog ids, not display names. Use the openrouter route only,
 never opencode.
