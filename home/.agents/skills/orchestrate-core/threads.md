@@ -188,7 +188,9 @@ the status a write replaced is gone by the time the next write is checked: a
 status and the fields beside it disagreeing (a `todo` with a worker, a `running`
 with an `endedAt`), a `done` with no clean review, a `FINDINGS` verdict with no
 round behind it, a fourth findings round, a stamp typed instead of read, a
-`finishedAt` standing over live work. Each runtime's skill carries the command
+`finishedAt` standing over live work, a lane with no `id` to price it by, and who
+acted — a worker or reviewer that is one of the run's own `executors`, or a
+reviewer that is the item's own worker. Each runtime's skill carries the command
 for its ledger path.
 
 **No history is stored, and that is a decision, not an oversight.** The checker

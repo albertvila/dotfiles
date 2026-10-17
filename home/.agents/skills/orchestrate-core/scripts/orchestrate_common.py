@@ -134,14 +134,22 @@ def ledger_errors(ledger):
         if begun and done and done < begun:
             problems.append("%s: endedAt %s precedes startedAt %s" % (where, end, start))
 
-    def rounds(entries, where, verdicts=False):
-        """Pass numbers are 1..n, and every verdict is CLEAN or FINDINGS."""
+    def rounds(entries, where, verdicts=False, ids=False):
+        """Pass numbers are 1..n, every verdict is CLEAN or FINDINGS, and every
+        entry in a lane a reader prices carries the id it is priced by."""
         passes = []
         for entry in entries or []:
             if not isinstance(entry, dict):
                 problems.append("%s: not an object" % where)
                 continue
             passes.append(entry.get("pass"))
+            if not entry.get("id") and (ids or _verdict_kind(entry.get("verdict"))):
+                if entry.get("verdict"):
+                    problems.append("%s[pass %s]: verdict %s with no id — a lane no retro can price"
+                                    % (where, entry.get("pass"), entry.get("verdict")))
+                else:
+                    problems.append("%s[pass %s]: no id — a lane no retro can price"
+                                    % (where, entry.get("pass")))
             if verdicts:
                 kind = _verdict_kind(entry.get("verdict"))
                 if entry.get("verdict") and not kind:
@@ -149,9 +157,6 @@ def ledger_errors(ledger):
                                     % (where, entry.get("pass"), entry.get("verdict")))
                 if entry.get("verdict") and not entry.get("endedAt"):
                     problems.append("%s[pass %s]: verdict %s with no endedAt"
-                                    % (where, entry.get("pass"), entry.get("verdict")))
-                if kind and not entry.get("id"):
-                    problems.append("%s[pass %s]: verdict %s with no id — a lane no retro can price"
                                     % (where, entry.get("pass"), entry.get("verdict")))
                 backwards(entry.get("startedAt"), entry.get("endedAt"),
                           "%s[pass %s]" % (where, entry.get("pass")))
@@ -166,6 +171,24 @@ def ledger_errors(ledger):
     if finished and stamp(ledger.get("startedAt")) and finished < stamp(ledger.get("startedAt")):
         problems.append("run: finishedAt %s precedes startedAt %s"
                         % (ledger["finishedAt"], ledger["startedAt"]))
+
+    # WHO acted is checkable, and it is the half of "the executor never implements
+    # items itself" and "a worker reviewing its own work does not count" that a
+    # single snapshot can hold (threads.md#rules).
+    executors = [e for e in (ledger.get("executors") or []) if isinstance(e, dict)]
+    executor_ids = {e["id"] for e in executors if e.get("id")}
+    # A retired executor — one that handed over to a successor — has ended by
+    # definition. The last one may not have: threads.md lets the manager finish its
+    # own handover acts after `finishedAt`, so a snapshot cannot tell a live
+    # executor from one at rest. This check stops at the retiree for that reason.
+    for index, executor in enumerate(executors[:-1]):
+        if not executor.get("endedAt"):
+            problems.append("executors[%d]: %r handed over with no endedAt"
+                            % (index, executor.get("id")))
+    retro = ledger.get("retro")
+    if isinstance(retro, dict) and not retro.get("session"):
+        problems.append("retro: %r with no session — a lane no retro can price (ledger.md)"
+                        % retro.get("id"))
 
     items = ledger.get("items") or {}
     for item_id, item in items.items():
@@ -183,6 +206,10 @@ def ledger_errors(ledger):
         typed(item.get("endedAt"), where + ".endedAt")
         backwards(item.get("startedAt"), (item.get("worker") or {}).get("endedAt"),
                   where + ".worker")
+        worker_id = (item.get("worker") or {}).get("id")
+        if worker_id and worker_id in executor_ids:
+            problems.append("%s.worker.id: %r is an executor — the executor dispatches and never "
+                            "implements items itself (threads.md#rules)" % (where, worker_id))
 
         # The state and the fields written beside it must agree: each disagreement
         # is a transition that left no trace in `status`.
@@ -220,8 +247,20 @@ def ledger_errors(ledger):
             problems.append("%s: cause on a %r item — a cause is for blocked or failed only"
                             % (where, status))
 
-        review_passes = rounds(item.get("reviews"), where + ".reviews", verdicts=True)
-        fix_passes = rounds(item.get("fixes"), where + ".fixes")
+        review_passes = rounds(item.get("reviews"), where + ".reviews", verdicts=True, ids=True)
+        fix_passes = rounds(item.get("fixes"), where + ".fixes", ids=True)
+        for review in item.get("reviews") or []:
+            if not isinstance(review, dict) or not review.get("id"):
+                continue
+            review_id = review["id"]
+            if review_id in executor_ids:
+                problems.append("%s.reviews[pass %s]: %r is an executor — the executor never "
+                                "reviews the run it executes (threads.md#rules)"
+                                % (where, review.get("pass"), review_id))
+            elif worker_id and review_id == worker_id:
+                problems.append("%s.reviews[pass %s]: %r is this item's own worker — a worker "
+                                "reviewing its own work is not a review (threads.md#rules)"
+                                % (where, review.get("pass"), review_id))
         for fix_pass in fix_passes:
             if fix_pass not in review_passes:
                 problems.append("%s.fixes[pass %s]: no review opened this round" % (where, fix_pass))
@@ -278,6 +317,11 @@ def ledger_errors(ledger):
             problems.append("ponytail: not an object")
             continue
         where = "ponytail[pass %s]" % pass_.get("pass")
+        if not pass_.get("id"):
+            problems.append("%s: no id — a lane no retro can price" % where)
+        elif pass_["id"] in executor_ids:
+            problems.append("%s: %r is an executor — the executor never runs the pass that "
+                            "checks its own run" % (where, pass_["id"]))
         backwards(pass_.get("startedAt"), pass_.get("endedAt"), where)
         if pass_.get("verdict") and not pass_.get("endedAt"):
             problems.append("%s: verdict %s with no endedAt" % (where, pass_["verdict"]))
