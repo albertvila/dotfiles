@@ -1,5 +1,6 @@
 home/.vim/bundle/*
 home/.vim/.netrwhist
+*.gpui-lock
 get-pip.py
 __pycache__/
 experiments/

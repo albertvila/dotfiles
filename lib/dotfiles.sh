@@ -165,8 +165,9 @@ function _install_dotfiles() {
     mkdir -p "$(dirname "$targetFile")"
     _symbolic_link "$sourceFile" "$targetFile"
   done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
-    # __pycache__ is regenerable cache, like ~/.cache: prune it, never link it.
-    _is_merge_dir "$(basename "$d")" && find "$d" -name __pycache__ -prune -o \( -type f -o -type l \) -print0
+    # __pycache__ and app lock files (e.g. Herdr's .config.toml.gpui-lock) are
+    # regenerable runtime artifacts: prune them, never link them.
+    _is_merge_dir "$(basename "$d")" && find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0
   done)
 
   # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.

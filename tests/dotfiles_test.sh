@@ -24,6 +24,7 @@ mkdir -p \
 touch \
   "$DOTFILES_DIR/home/.cache/huggingface/blob" \
   "$DOTFILES_DIR/home/.config/app/conf" \
+  "$DOTFILES_DIR/home/.config/app/.conf.gpui-lock" \
   "$DOTFILES_DIR/home/.vimrc" \
   "$DOTFILES_DIR/home/.vim/bundle/plug" \
   "$DOTFILES_DIR/home/.agents/skills/demo/scripts/demo.py" \
@@ -50,6 +51,7 @@ check "backup does not stash .cache" "[ ! -e '$HOME/.dotfiles_old/.cache' ]"
 _install_dotfiles
 check "install leaves ~/.cache a real dir" "[ -d '$HOME/.cache' ] && [ ! -L '$HOME/.cache' ]"
 check "merge file still linked" "[ -L '$HOME/.config/app/conf' ]"
+check "app lock file never linked" "[ ! -e '$HOME/.config/app/.conf.gpui-lock' ]"
 check "merge file beside a pruned cache still linked" "[ -L '$HOME/.agents/skills/demo/scripts/demo.py' ]"
 check "__pycache__ never linked" "[ ! -e '$HOME/.agents/skills/demo/scripts/__pycache__/demo.cpython-310.pyc' ]"
 check "wholesale file still linked" "[ -L '$HOME/.vimrc' ]"
