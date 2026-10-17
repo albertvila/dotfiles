@@ -127,6 +127,20 @@ function install_herdr_integrations() {
   ok
 }
 
+# The repo's tests run as a pre-commit hook (tests/*_test.sh, wired by
+# .githooks/pre-commit). core.hooksPath is machine-local config, so a fresh
+# clone needs this run. The path stays relative: git resolves it against the tree
+# you are committing in, so a linked worktree uses its own .githooks and nothing
+# breaks when a worktree is removed.
+function install_git_hooks() {
+  bot "Pointing git at the repo's hooks ..."
+  if git -C "$DOTFILES_DIR" config core.hooksPath .githooks; then
+    ok "git core.hooksPath"
+  else
+    warn "could not set git core.hooksPath"
+  fi
+}
+
 # pi itself + its npm: packages on every setup run.
 function update_pi() {
   if ! command -v pi &>/dev/null; then
@@ -152,6 +166,7 @@ _install_npm
 _install_app_store_apps
 _setup_osx
 install_dotfiles
+install_git_hooks
 install_fish
 
 unset DOTFILES_USER
