@@ -16,6 +16,13 @@ before the first dispatch. It owns `mode`, the CI baseline, the validation exit
 code, Flow B bases, and the merge command. A sentence in this file that
 disagrees with it is wrong.
 
+**The body is order; the references are mechanics.** Three files under
+[`references/`](references/) — waiting, prompts, record — are loaded at the step
+that acts on them, and each stub below names what it owns and what goes wrong
+without it. Read the reference, not the stub, before the step it belongs to. The
+body stays under 40 KiB (`tests/skills_budget_test.sh`): anything only one step
+needs belongs in a reference, not here.
+
 `$RUNDIR` is the run directory `<worktree>/.herdr-runs/<feature>/`. Entered from
 `/orchestrate-herdr-plan` it is already set; entered directly, resolve it as the
 most recent `.herdr-runs/*/manifest.txt` in this worktree and say which run was
@@ -34,7 +41,7 @@ picked.
   (`caffeinate -s` **on AC power**, or the platform's equivalent — clamshell
   sleep on battery overrides an idle or display assertion), or accept that the
   run pauses at the lid and tell the operator the run is waiting on the machine.
-  On resume, the first move is the *Waiting* stalled-turn recovery — `agent read`
+  On resume, the first move is the stalled-turn recovery in `references/waiting.md` — `agent read`
   each live agent, then `continue` the same agent — and the timestamps the ledger
   gains are the resume's, not the sleep's.
 - A coordinator turn that spans the whole run is normal: the coordinator is
@@ -135,230 +142,20 @@ deciding anything.
 
 ## Waiting
 
-`herdr agent wait` fires on a **transition**, not on the current state, so a
-worker that settled while nobody was looking is invisible to it. Check first,
-then wait — and treat every wait timeout as a checkpoint, not a failure:
-
-```sh
-# the lane's heartbeat: the pi session transcript recorded when the agent started
-sess_of() { jq -r --arg id "$1" \
-  '[.items[].worker, .items[].reviews[], .items[].fixes[], .ponytail[], .ponytail[].fix,
-    .ponytail[].fix.review] | .[]? | select(.id == $id) | .session' \
-  "$RUNDIR/orchestration.json" | head -1; }
-
-# settle <agent-name>: loop until the turn is over, or until the agent is unreadable
-while :; do
-  st=$(herdr agent get "<name>" 2>/dev/null | jq -r '.result.agent.agent_status // empty')
-  case "$st" in idle|done|blocked|"") break;; esac   # "" = no agent left: inspect, never assume
-  # liveness: an open turn that has written nothing for STALE_GAP_SEC is a candidate, not a verdict
-  sess=$(sess_of "<name>")
-  age=$(( $(date +%s) - $(python3 -c 'import os,sys;print(int(os.stat(sys.argv[1]).st_mtime))' \
-    "${sess:-/dev/null}" 2>/dev/null || date +%s) ))
-  [ -n "$sess" ] && [ "$age" -gt 900 ] && \
-    herdr agent read "<name>" --source recent-unwrapped --lines 60   # confirm before acting
-  herdr agent wait "<name>" --until idle --until done --until blocked --timeout 600000 \
-    > "$RUNDIR/logs/wait-<name>.json" 2>&1 || true
-done
-```
-
-The transcript's mtime is the lane's heartbeat: an open turn that has written
-nothing for longer than `STALE_GAP_SEC` (900s) is a **stale candidate**. Confirm
-it with `agent read` — a tool call longer than the gap writes nothing until it
-returns, so a long test run is the expected false positive — and only then apply
-the stalled-turn recovery below. This is
-[`threads.md#liveness`](../orchestrate-core/threads.md#liveness)'s rule, not a
-second one.
-
-**A finished pi turn reports `idle` or `done` — treat both alike.** Herdr returns
-`agent_status: "done"` for a pi agent whose turn ended (14 of 14 wait logs in the
-run that produced this line) and `idle` for one caught between turns; a
-coordinator that expected only `idle` would read every settle as an agent exit.
-Break on `idle`, `done`, `blocked` and the empty status alike, and include both
-`idle` and `done` in the `--until` list. Whichever arrives is a settle
-**candidate**, not proof: the agent's report file on disk is what settles it.
-
-A wave dispatches in parallel and settles in parallel — one shell block each:
-
-```sh
-for id in <id1> <id2>; do
-  herdr agent prompt "item-$id" "$(cat "$RUNDIR/prompts/item-$id.txt")" \
-    > "$RUNDIR/logs/prompt-item-$id.json" 2>&1 &
-done
-wait                       # prompts are in their panes; the status each leaves is read next
-# settle-wait the wave with the loop above in parallel; freeze each diff as it settles
-for id in <id1> <id2>; do
-  ( while :; do
-      st=$(herdr agent get "item-$id" 2>/dev/null | jq -r '.result.agent.agent_status // empty')
-      case "$st" in idle|done|blocked|"") break;; esac
-      sess=$(sess_of "item-$id")
-      age=$(( $(date +%s) - $(python3 -c 'import os,sys;print(int(os.stat(sys.argv[1]).st_mtime))' \
-        "${sess:-/dev/null}" 2>/dev/null || date +%s) ))
-      [ -n "$sess" ] && [ "$age" -gt 900 ] && \
-        herdr agent read "item-$id" --source recent-unwrapped --lines 60
-      herdr agent wait "item-$id" --until idle --until done --until blocked --timeout 600000 >/dev/null 2>&1 || true
-    done ) &
-done
-wait
-```
-
-**A prompt's exit code is not a delivery report.** `--wait --timeout <ms>` says
-whether the agent's status became readable inside that window and nothing more:
-`{"error":{"code":"timeout"}}` from a prompt whose agent is working is the normal
-outcome of a short window, not a lost prompt. Never re-prompt on that code alone —
-`herdr agent get` and `herdr agent read` say whether the text arrived, and a
-genuinely unprompted agent is re-prompted only after that read. The log is for the
-case where the prompt never landed at all.
-
-**Wake on the first settle, not the last.** A block that ends in `wait` hands back
-control only when the slowest agent in it is done, so a worker that settled two
-minutes in keeps its review waiting for as long as its sibling runs — the run pays
-for the slowest agent twice, once in work and once in the wait. Settle each agent
-in its own bounded call, or wake on the first (`wait -n`), and do its work the
-moment it settles: freeze that diff, dispatch that review, then go back to waiting
-for the rest. Keep the settle loop's budget short and *below* the timeout that
-wraps the call — a 1500s budget inside a 1600s bash timeout reports neither, and
-the turn is gone for 26 minutes.
-
-**A stalled turn is not a settle.** `idle` — or a `wait` timeout — with no report
-file on disk means the turn died mid-work, not that the agent finished: read the
-pane (`herdr agent read "<name>" --source recent-unwrapped --lines 60`) and, if
-the turn ended without a report, re-prompt **that same agent** once with
-`continue` — never the whole prompt again. A second stall is a blocker: record
-it with `cause.code: turn_stalled`, notify the operator, and keep the rest of the
-frontier moving. A turn that ended mid-generation is invisible in every status
-field the run reads, so this
-check is the only thing that catches it.
-
-**Reading and releasing.** The report file is the truth; the scrollback tail is
-the summary: `head -1` the report for a verdict, then
-`herdr agent read "<name>" --source recent-unwrapped --lines 60` for the final
-message. A **review, fix or ponytail** tab is released —
-`herdr tab close "$tab"` — once its settlement is recorded; that recording is
-what makes the close safe. A **worker** tab is retained until the run's cleanup,
-so a fix round re-prompts the same agent instead of respawning it. Release only
-tabs this coordinator created, and never close one before its verdict or report
-is on disk. Retention is the other safe choice, and it is *required* while a loop
-can still re-open the tab — a reviewer whose completion carried no verdict, a turn
-that stalled and needs `continue`, a ponytail pass awaiting a fix round: keep that
-tab until the loop is closed, then release it.
-
-**Respawn into the same pane.** When an agent has exited and its item needs
-another turn, restart it in the pane recorded in the ledger — the tab keeps its
-label and position, and the freed name is reused:
-
-```sh
-herdr agent start "item-<slug>" --kind pi --pane "<recorded pane>" \
-  > "$RUNDIR/logs/start-item-<slug>-f<n>.json"
-```
-
-**Blocked dialog.** `blocked` is a user-facing gate. Inspect `agent get` and
-`agent read`, then: if the approved manifest answers the question exactly, answer
-it in the pane (`herdr pane send-text "<pane>" "<answer>"`, then
-`herdr pane send-keys "<pane>" Enter`) and confirm the worker resumes working;
-otherwise record the blocker with `cause.code: worker_blocked`, notify the
-operator, and end the turn. The
-coordinator never guesses an answer and never leaves a blocked worker unwatched.
-
-**Escalation round-trip.** A worker that reports `ESCALATE:` has stopped on one
-question ([`threads.md#escalation`](../orchestrate-core/threads.md#escalation)).
-Answer it from the approved manifest when the manifest answers — prompt the
-**same** agent with the answer (`herdr agent prompt "<name>" "<answer>"`) and the
-item stays `running`. When it does not: in `gated`, put that one question to the
-operator with `AskUserQuestion`, the worker's options as its choices, and on the
-reply prompt that same agent; the
-item returns to `running` and its `cause` is cleared. In `land` and `unattended`
-there is no human, so record `cause.code: worker_blocked` (its `detail` is the
-question), surface it, and keep the frontier moving. Never respawn a worker to
-answer a question its own context already holds.
+Load [`references/waiting.md`](references/waiting.md) at the first settle, and
+again the moment a turn stalls. It owns the settle loop, what Herdr's `idle` and
+`done` mean, the stalled-turn recovery, tab release and the respawn command — a
+settle written from this stub gets one of those wrong, and the run then waits on
+an agent that already stopped.
 
 ## Prompt contracts
 
-The coordinator writes every prompt to `$RUNDIR/prompts/<name>.txt` and passes it
-by quoted substitution, so a long multi-line prompt never becomes a
-shell-quoting bug. Every prompt is self-contained: target, change, constraints,
-ownership, observable acceptance — and the report contract. **Paths are spelled
-out absolutely in the prompt file**: a worker tab is a fresh shell with no
-`$RUNDIR` in its environment. Work orders never restate lifecycle mechanics
-(start flags, wait loops); those are this skill's. Every prompt also quotes the
-item's `acceptance` and `out-of-scope` lines verbatim from the manifest: those
-are the criteria a review checks, and a reviewer never re-derives them from the
-ticket. The review brief also quotes the worker's own `HARDEST:`, `REJECTED:`
-and `UNSURE:` lines from its report; where the report omitted them, the brief
-says so rather than passing silence off as certainty.
-
-**Worker** (`item-<slug>.txt`) — ends with:
-
-> You are in this run's worktree: leave your changes uncommitted and do
-> NOT commit or push. Touch nothing outside the file scope above. Never wait for
-> human input: if something blocks you, stop and report — `BLOCKED` with what
-> remains, or `ESCALATE:` when a single decision would unblock you — one
-> question, the options you see, the one you recommend. Run the item's tests
-> and name the command in your report. Write your report to
-> `$RUNDIR/reports/item-<slug>.md`: what changed, the acceptance evidence, the
-> exact test command and result, then three one-line answers — `HARDEST:` the
-> hardest decision you made, `REJECTED:` the alternatives you rejected and why,
-> `UNSURE:` what you are least confident about. Your final message is three
-> lines — `DONE`, `BLOCKED` or `ESCALATE`, one line of what changed, one line of
-> what remains (for `ESCALATE`, the question).
-
-**Review** (`review-<slug>-r<n>.txt`) — ends with:
-
-> Fresh eyes: review the frozen diff at `$RUNDIR/diffs/<slug>-r<n>.diff`, not the live
-> worktree — another worker may already be changing those files; read worktree
-> files for surrounding context only. Report findings against the item's
-> acceptance criteria and within its out-of-scope line, both quoted above, and
-> read the worker's `HARDEST:`/`REJECTED:`/`UNSURE:` lines quoted above as a lead
-> to check against the frozen diff, never as a verdict. Do not edit files. A
-> test proved non-vacuous by reverting
-> the change is reverted in a **scratch copy** — a `/tmp` copy, or
-> `git worktree add --detach` — never in this worktree, which holds other items'
-> uncommitted work; a gate you run in this worktree measures whatever else is
-> uncommitted here, so name the revision your evidence is about. Read only the dependency roots you
-> need; never run unbounded scans (no `find /`, no recursive grep over `/`). A
-> criterion needing source you cannot locate is reported **unverifiable**. The
-> `<class>` names already recorded in this run's `classFixes` are listed above:
-> reuse one of those spellings when the finding is that class, and coin a
-> kebab-case one when it is new. Write
-> your full report to `$RUNDIR/reports/review-<slug>-r<n>.md` whose FIRST line is
-> `VERDICT CLEAN` or `VERDICT FINDINGS`. Your final message must be the complete
-> report, starting with that verdict line. Write each finding as one line —
-> `<file>:<line> · <class> · <what breaks> · "<the quoted code>"` — because a
-> claim with no quotation from the code it is about is a nit, opens no fix round,
-> and is reported to the operator with the rest:
->
-> ```
-> retry.ts:12 · unbounded-retry · the loop has no cap, so a 500 replays forever
->   · "for (let i = 0; ; i++) { await post(url) }"
-> ```
->
-> Reuse a `<class>` named above when the finding is that class. Two findings on
-> the same file, line and normalized title are one finding.
-
-**Ponytail** (`ponytail-<n>.txt`) — ends with:
-
-> Run `/ponytail-review` on the full uncommitted diff (`git diff HEAD` plus
-> `git status --porcelain` so new files are not invisible). Report over-
-> engineering findings only; anything else you notice goes in the same report
-> labelled out of scope — no class list is quoted on this pass, so coin a
-> kebab-case `<class>` if a finding names a defect. Do not edit
-> files. Write your report to `$RUNDIR/reports/ponytail-<n>.md` whose FIRST line
-> is `VERDICT CLEAN` or `VERDICT FINDINGS`; your final message starts with that
-> verdict line. A finding that names a defect is written like a review finding —
-> `<file>:<line> · <class> · <what breaks> · "<the quoted code>"` — because it
-> opens a fix round, and a claim with no quotation is only a nit.
-
-**Fix** (`fix-<slug>-f<n>.txt`) — the findings verbatim, the item's file scope,
-and the worker contract above, plus one outcome the worker contract does not
-carry: **if the finding is wrong, say so and prove it.**
-
-> If a finding does not hold, do not change the code to satisfy it and do not
-> change it to make the complaint go away: reply `REFUTED: <the finding>` and
-> quote the code that disproves it (`<file>:<line> "<the quoted code>"`). A
-> `REFUTED:` with no quotation is not a refutation and the finding stands, so
-> either prove it or fix it.
-
-A fix round to a live worker re-prompts its own agent; a fresh `fix-<slug>-f<n>`
-agent starts only when the worker's pane is gone.
+Load [`references/prompts.md`](references/prompts.md) before writing the first
+prompt file. It owns the worker, review, ponytail and fix contracts verbatim, the
+report each one writes, and the rule that every prompt is self-contained and
+quotes the item's `acceptance` and `out-of-scope` lines from the manifest — a
+prompt written from this stub drops one of them, and the agent it starts reports
+something no review can check.
 
 ## The run's record
 
@@ -377,6 +174,13 @@ mkdir -p "$RUNDIR"/{logs,prompts,reports,diffs,snapshots}
 herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   # coordinator session
 ```
 
+**Load [`references/record.md`](references/record.md) before the first write.**
+It owns the Herdr field list, the runtime extensions, the ponytail lane's shape,
+the typed stops, the reopen rule and the pane projection — the ledger's *shape*
+as opposed to the order below, which stays here. A record written from this page
+has the right opening and the wrong fields, and the pane, the checker and the
+retro then read three different runs.
+
 **Check every write, and never dispatch on a non-zero exit.** The ledger is what
 resume and the retro read; a record that contradicts itself charges them for a
 mistake the coordinator already knows it made.
@@ -387,68 +191,7 @@ python3 ~/.agents/skills/orchestrate-core/scripts/validate-ledger.py "$RUNDIR/or
 
 What it refuses is the half a single snapshot can prove, item by item, against
 [`threads.md#the-item-lifecycle`](../orchestrate-core/threads.md#the-item-lifecycle).
-The projection below imports the same checks, so the pane cannot disagree with it.
-
-The ledger's shape is [`ledger.md`](../orchestrate-core/ledger.md) — the same
-record BB writes. Herdr fills it like this:
-
-- `runtime: "herdr"`, plus `feature`, `project`, `rundir`, `tracker`, `flow`,
-  `mode`, `startedAt`, `models`, `ciBaseline`, `validationBaseline`, `gates`
-- `executors: [{ "id": "coordinator", "pane": "$HERDR_PANE_ID", "session": … }]`
-  — `executors[0]` is the run's identity. Its `endedAt` is stamped in the same
-  write as the verification ask: a coordinator row left `null` has no upper
-  bound, so everything the turn does after `finishedAt` lands in the retro's
-  covered time as if it were run work.
-- `retro: { "id": "retro-<feature-slug>", "session": …, "tab": … }`, written the
-  moment the spawn returns its session — a retro with no row is an agent the
-  record cannot name and nobody can price. It is the run's recorder, not a lane
-  of it: the retro reports its own session on its own line, outside the run's
-  totals, as BB's does.
-- each item's `worker: { "id": "item-<slug>", "pane": …, "tab": …, "session": … }`,
-  and in Flow B a `worktree: { workspace, path, branch }`
-- every `reviews`/`fixes`/`ponytail` entry carries `id` (the agent name),
-  `session`, `pass`, and — for a review or ponytail pass — `verdict`
-- `served` sits beside `models` as the receipt described under *Models*; a lane's
-  own `served` is written only where that lane diverges from its role's
-- `classFixes` holds one entry per defect class the run diagnosed — `{class,
-  brief, items, id, session, startedAt, endedAt}` — with the same lane id and
-  session written on each affected item's `fixes` round, which the retro's
-  one-row-per-transcript rule prices once
-- `dispatchAttempt` is written before every start: `{at, role, label}`, the label
-  being the tab label (`ITEM`, `REVIEW`, `FIX`, `PONYTAIL`) of the agent about to
-  be started
-
-Extensions Herdr adds, in the contract's shape: `pr` {number, url, mergedAt,
-mergeCommit, base}, `prs` [{number, url, head, commit, mergedAt, kind}],
-`postMerge` {branchDeleted, tabsReleased, tabsKept, pending}, `reopenRounds`
-[{item, at, why, agent, landedAs}].
-
-Record the coordinator as `executors[0]` at the start. The findings-round cap
-reads off the review rounds that opened a `fixes` entry, per the review contract. The `done` rule and the reopen rule are
-[`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger). `ponytail` is a list of passes, appended in order like `reviews` —
-a two-pass ponytail (`FINDINGS` → fix round → re-check) keeps both, at `pass: 1`
-and `pass: 2`, because only the last one is the verdict and only the first one
-holds the findings that opened the fix round. Every pass keeps its `id` and
-`session`: a rewrite that drops the session prices the whole lane at
-zero in the retro. A convenience `verdict`/`report` may name the last pass; the
-array is the record. `items[].fixes` counts **review-driven** rounds only: a
-ponytail fix round is recorded under the pass that opened it —
-`ponytail[<pass>].fix` `{id, session, startedAt, endedAt}`, and
-`ponytail[<pass>].fix.review` for the fresh-eyes review of its delta when the fix
-changed behaviour ([review-contract.md](../orchestrate-core/review-contract.md)) —
-never in `items[].fixes`, because the
-projection pairs each `fixes` entry with a review round and reads an unmatched
-one as a round still in flight — a settled run then reports `E150`. Both
-sessions are named there or they are not priced: prose is not a session path.
-Write the item's `risk` (`high` | `mechanical`) when its first review is
-dispatched, so the depth and model call below is readable instead of inferred.
-**An item the run stops on is typed** — the invariant and the codes are
-[`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger) and
-[cause-contract.md](../orchestrate-core/cause-contract.md). The projection below
-exits non-zero on an invented code, a cause on any other status, or a stopped
-item with no cause; `cap_exhausted`, `spec_conflict`, `worker_blocked` and
-`turn_stalled`, plus the review-driven `artifact_unchanged`, `finding_refuted`
-and `nonconvergent`, are the ones a normal run reaches.
+The projection in `references/record.md` imports the same checks, so the pane cannot disagree with it.
 
 **Stamp the times honestly, and assert them.** Every timestamp you write is read
 from `date -u` at the moment of the event — never typed, never rounded to the
@@ -486,61 +229,6 @@ behind the PRs' checks: the retro reads the run while the checks are still
 running, and a spawn parked behind a `gh pr checks --watch` costs the run the
 whole wait. This skill does not restate the spawn.
 
-### The pane view — derived, never hand-written
-
-The operator watches the run in a dagr pane. `dagr-run.json` is a **projection of
-the ledger** for that pane, and the projection is the coordinator's job: re-render
-it after every ledger write (the pane reloads on mtime, so the view stays live).
-
-```sh
-python3 <this skill's dir>/scripts/ledger-to-run.py "$RUNDIR" --check   # writes $RUNDIR/dagr-run.json
-```
-
-The script ships with **this skill**, not with the worktree: an absolute path
-under `~/.agents/skills/orchestrate-herdr-threads/scripts/` (its `readlink -f`
-target) is the one that exists, and a run that looks for it in the repo will
-wrongly conclude the projection is unavailable and go without its pane view.
-
-`--check` runs `dagr check` on the result; **0 errors** every time. Warnings are
-the honest state of a live run — W208 (a working attempt with no liveness facts)
-until the item settles, W203 if the ledger is missing attempt timestamps — and
-only a settled run (`finishedAt` set) is expected to be clean under `--strict`.
-
-Open the pane beside your own work, once, when the run starts. `dagr-run.json`
-is passed explicitly because the pane's own discovery looks for `run.json`, which
-is the *retro's* metrics record name:
-
-```sh
-herdr plugin pane open --plugin herdr-dagr --entrypoint dagr --placement split \
-  --direction right --target-pane "$HERDR_PANE_ID" --cwd "$RUNDIR" \
-  --env "DAGR_RUN=$RUNDIR/dagr-run.json" --focus
-```
-
-Never hand-edit `dagr-run.json`, and never treat it as the record: the ledger
-holds what resume and the retro need (sessions, worktrees, PR urls, tickets, the
-model roster) and stays the source of truth. The projection script owns the
-contract's traps, which is why they are not restated per write: a review that
-returns FINDINGS settles `done` — the *reviewed* attempt is what goes `rejected`;
-a fix round is a new attempt whose `cause.sent_back` names the review attempt; an
-item blocked by a dependency renders `waits I01` rather than claiming the
-operator must act; and every terminal outcome is `reported`, never `verified`,
-because nothing in this flow mechanically checks the work.
-
-**The projection reads the shapes this file writes — and checks them.** The
-`ponytail` lane is a **list of passes** here and in the retro's script; a reader
-that treats it as one mapping takes the whole view down with it (and hides a
-`dagr` error it would otherwise have reported). A ledger-shape change lands in
-both scripts in the same commit. The checks themselves are not this script's:
-they are `orchestrate-core/scripts/validate-ledger.py` over `ledger_errors` in
-`orchestrate_common.py` (the command is under *The run's record*), imported here
-so the pane, the checker and the two runtimes cannot disagree about what a write
-error is: an interval that runs backwards, a gate approved before it was
-requested, a terminal `finishedAt` standing over an item, a ponytail pass or a
-fix review that never settled, a stopped item with no `cause` or a code outside
-the contract, a status the fields beside it contradict. That is where "stamp
-the times honestly" gets its teeth — it runs after every write, so the
-coordinator sees the mistake while it still knows what it meant.
-
 ## Flow A — one shared worktree, one PR
 
 Shape `A` is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes).
@@ -566,7 +254,7 @@ agent, no ledger entry and no reviewer it can honestly claim.
    rule is [`threads.md#flow-shapes`](../orchestrate-core/threads.md#flow-shapes);
    apply it from the item scopes plus what already changed in the worktree
    (`git status`, files touched by running workers).
-3. **Wait, then collect.** Settle every running agent (see *Waiting*), read its
+3. **Wait, then collect.** Settle every running agent (see `references/waiting.md`), read its
    report and final message, and mark the item `done` or `blocked`/`failed`
    from evidence — the worker's `DONE` is a claim, not proof. This step runs to
    completion before the turn ends: the coordinator's turn ends at a pending
