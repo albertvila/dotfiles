@@ -26,7 +26,11 @@ GOOD = {
     "runtime": "bb", "feature": "demo", "project": "p", "tracker": "scratch demo",
     "flow": "A", "mode": "gated",
     "startedAt": "2026-09-27T10:00:00Z", "finishedAt": None,
-    "models": {"worker": "pi-default"}, "ciBaseline": [], "validationBaseline": {},
+    "models": {"worker": "pi-default"}, "served": {"worker": "pi-default"},
+    "ciBaseline": [], "validationBaseline": {},
+    "classFixes": [{"class": "unbounded-retry", "brief": "cap the retry loop at its caller",
+                    "items": ["01"], "id": "fix-class-1", "session": None,
+                    "startedAt": "2026-09-27T10:06:00Z", "endedAt": "2026-09-27T10:09:00Z"}],
     "executors": [{"id": "manager-1", "pane": None, "session": None,
                    "startedAt": "2026-09-27T10:00:00Z", "endedAt": None}],
     "gates": {"plan": {"requestedAt": "2026-09-27T09:59:00Z",
@@ -34,6 +38,8 @@ GOOD = {
               "commit": {"requestedAt": None, "approvedAt": None, "auto": None}},
     "items": {
         "01": {"title": "one", "status": "done", "blockedBy": [], "prUrl": None,
+               "dispatchAttempt": {"at": "2026-09-27T09:59:30Z", "role": "worker",
+                                   "label": "ITEM · one"},
                "worker": {"id": "item-01", "startedAt": "2026-09-27T10:00:00Z",
                           "endedAt": "2026-09-27T10:12:00Z"},
                "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:12:00Z",
@@ -109,6 +115,59 @@ def self_test():
     rejects("cause on a done item",
             lambda l: l["items"]["01"].update(cause={"code": "turn_stalled", "detail": "x"}),
             "blocked or failed only")
+
+    # The two stops whose evidence is in the record itself (review-contract.md).
+    rejects("a refutation cause with no refutation recorded",
+            lambda l: l["items"]["02"].update(
+                cause={"code": "finding_refuted", "detail": "the guard the finding asks for exists"}),
+            "with no fix round carrying a refutation")
+    rejects("nonconvergent before two findings rounds",
+            lambda l: l["items"]["02"].update(
+                cause={"code": "nonconvergent", "detail": "the retry cap came back"}),
+            "cannot have bounced off each other")
+    rejects("a refutation with no quotation",
+            lambda l: (l["items"]["01"].update(
+                status="blocked",
+                cause={"code": "finding_refuted", "detail": "the guard already exists"}),
+                l["items"]["01"]["fixes"][0].update(
+                    refutation={"finding": "unbounded retry", "evidence": "  "})),
+            "a refutation is the quotation")
+
+    # The write that precedes the spawn (threads.md#the-ledger).
+    rejects("a dispatch attempt with no label",
+            lambda l: l["items"]["04"].update(
+                dispatchAttempt={"at": "2026-09-27T09:00:00Z", "role": "worker"}),
+            "no label")
+    rejects("a dispatch attempt for an invented role",
+            lambda l: l["items"]["04"].update(
+                dispatchAttempt={"at": "2026-09-27T09:00:00Z", "role": "scout", "label": "x"}),
+            "role 'scout' is not one of")
+    rejects("a dispatch attempt with a typed stamp",
+            lambda l: l["items"]["04"].update(
+                dispatchAttempt={"at": "soon", "role": "worker", "label": "x"}),
+            "is not an ISO-8601 UTC stamp")
+
+    # The receipt beside the request (threads.md#models).
+    rejects("a served model that names nothing",
+            lambda l: l.update(served={"worker": "  "}),
+            "an unknown receipt is absent")
+    rejects("a served model under an invented role",
+            lambda l: l.update(served={"scout": "m"}),
+            "is not a role")
+
+    # One diagnosis recorded once, however many items the class reached.
+    rejects("a class fix with no brief",
+            lambda l: l["classFixes"][0].pop("brief"),
+            "a reused diagnosis is the point")
+    rejects("a class fix that reached no item",
+            lambda l: l["classFixes"][0].update(items=[]),
+            "a class fix that reached nothing")
+    rejects("a class fix naming something that is not an item",
+            lambda l: l["classFixes"][0].update(items=["99"]),
+            "is not an item")
+    rejects("a class fix run by the manager",
+            lambda l: l["classFixes"][0].update(id="manager-1"),
+            "is an executor")
 
     # The `done` rule, and the round a FINDINGS verdict says happened.
     rejects("done with no reviews",
@@ -248,6 +307,22 @@ def self_test():
     mid_run["ponytail"] = []
     mid_run["items"] = {"01": mid_run["items"]["01"]}
     assert ledger_errors(mid_run) == [], ledger_errors(mid_run)
+
+    # A refuted round that records its evidence is the valid shape, not a stop the
+    # checker distrusts: the round is on the item, so the cause can point at it.
+    refuted = fixture()
+    refuted["items"]["02"]["cause"] = {
+        "code": "finding_refuted",
+        "detail": "the finding asks for a guard that already exists at retry.ts:40"}
+    refuted["items"]["02"]["reviews"] = [
+        {"pass": 1, "id": "review-02-r1", "verdict": "FINDINGS",
+         "startedAt": "2026-09-27T10:00:00Z", "endedAt": "2026-09-27T10:05:00Z"}]
+    refuted["items"]["02"]["fixes"] = [
+        {"pass": 1, "id": "fix-02-f1", "startedAt": "2026-09-27T10:06:00Z",
+         "endedAt": "2026-09-27T10:09:00Z",
+         "refutation": {"finding": "unbounded retry at retry.ts:12",
+                        "evidence": "retry.ts:40 \"for (let i = 0; i < MAX_RETRIES; i++)\""}}]
+    assert ledger_errors(refuted) == [], ledger_errors(refuted)
 
     print("self-test OK")
     return 0

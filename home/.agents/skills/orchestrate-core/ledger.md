@@ -22,6 +22,9 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   "mode": "gated" | "land" | "unattended",
   "startedAt": "<ISO-8601 UTC>", "finishedAt": null,
   "models": { "worker": "…", "code-review": "…", "ponytail": "…" },
+  // what actually served each role, read from the lane's own record; a role or
+  // lane whose record names no model is left out and reads as unverified
+  "served": { "worker": … , "code-review": … , "ponytail": … },
   "ciBaseline": [], "validationBaseline": {},
   "executors": [
     { "id": "<handle>", "pane": null, "session": null, "startedAt": null, "endedAt": null }
@@ -29,6 +32,13 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   "gates": { "plan": { "requestedAt": null, "approvedAt": null, "auto": null },
              "commit": { "requestedAt": null, "approvedAt": null, "auto": null } },
   "items": { "<id>": { /* item, below */ } },
+  // one entry per defect class the run diagnosed and repaired, recorded once
+  // however many items it reached (review-contract.md)
+  "classFixes": [
+    { "class": "<kebab-case>", "brief": "<one line, reused verbatim>",
+      "items": ["<id>", …], "id": "<handle>", "session": null,
+      "startedAt": null, "endedAt": null }
+  ],
   "ponytail": [
     { "pass": 1, "id": "<handle>", "session": null, "verdict": "CLEAN|FINDINGS",
       "report": null, "startedAt": null, "endedAt": null,
@@ -69,6 +79,10 @@ one, the coordinator. This is the `executors` field BB used to call
   "risk": "high" | "mechanical",       // the review's depth class — see the bullets
   "worker": { "id": "<handle>", "session": null, "worktree": null,
               "startedAt": null, "endedAt": null },
+  // the last dispatch this item began, written before the spawn and left in
+  // place: the role plus the label are how a resume finds the lane an
+  // interrupted spawn may already have produced (threads.md)
+  "dispatchAttempt": { "at": "<ISO-8601 UTC>", "role": "worker", "label": "<label>" },
   "status": "todo" | "running" | "done" | "failed" | "blocked",
   "blockedBy": [], "prUrl": null, "reviewedHead": null,
   "startedAt": null, "endedAt": null,
@@ -79,7 +93,10 @@ one, the coordinator. This is the `executors` field BB used to call
       "report": null, "startedAt": null, "endedAt": null }
   ],
   "fixes": [
-    { "pass": 1, "id": "<handle>", "session": null, "startedAt": null, "endedAt": null }
+    { "pass": 1, "id": "<handle>", "session": null, "startedAt": null, "endedAt": null,
+      // only when the round returned REFUTED: with the code that disproves the
+      // finding (review-contract.md) — the item is then blocked on it
+      "refutation": { "finding": "<the finding, one line>", "evidence": "<file>:<line> \"<quote>\"" } }
   ],
   "commitGate": null                   // Flow B per-item gate
 }
@@ -104,6 +121,23 @@ The field name does not: everything around it is identical.
   the rule — which reviewer model the item's passes get. It is written when the
   item's first review is dispatched. A run that never wrote it leaves it out; the
   retro then reports the model choice as unexplained rather than guessing one.
+- `served` is the **receipt**, not the request: `models` is what the run asked
+  for, `served` is what the lanes' own records name. It is keyed by role and
+  written when that role's first lane settles on a model the lane's record names,
+  and a lane whose record names a different one carries its own `served` on its
+  entry. A role or lane the record cannot name is **absent**, never guessed — an
+  absent `served` reads as unverified, and the retro says so instead of pricing an
+  intention as a fact.
+- `classFixes` is run-level and not per item: one entry is one diagnosis, however
+  many items the class reached ([review-contract.md](review-contract.md)). Each
+  affected item's `fixes` round still names the lane that ran — a shared lane is
+  named by several items and priced once, since both retros count a session once.
+- `dispatchAttempt` is the one write that **precedes** the action it records: the
+  executor writes `{at, role, label}` before it spawns, so a manager that dies
+  between the spawn and the lane's own write leaves a record naming what it may
+  already have started ([threads.md](threads.md#the-ledger)). It is not cleared —
+  it is the item's last dispatch, and a reader compares it with the lanes beside
+  it rather than treating it as in-flight.
 - A ponytail pass records the round its own findings opened under the pass —
   `ponytail[].fix`, and `ponytail[].fix.review` for the fresh-eyes review a
   behaviour-changing fix gets ([review-contract.md](review-contract.md)). Neither

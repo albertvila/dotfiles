@@ -127,7 +127,10 @@ runtime's figures:
 - **Cost per model** — tokens and USD per model and per role, from pi's own
   recorded usage. Flag every session whose turns recorded no cost, and say how
   much of the run that leaves unpriced. The retro's own cost sits on its own
-  line, outside this total.
+  line, outside this total. Then set the ledger's `served` against its `models`:
+  what served each role, and every lane that ran a model the run did not ask for.
+  A role with no `served` is **unverified** — reported as such, never priced as if
+  the request were the fact.
 
 ## Reading the numbers
 
@@ -225,15 +228,22 @@ every one is a candidate for the *What to fix* section.
   changed behaviour and shipped without a fresh-eyes review of its delta; the
   coordinator reviewing work it dispatched; a review brief that carried no
   acceptance line, so the reviewer re-derived the criteria from the ticket; a
-  re-review spawned against a freeze identical to the one the previous pass read,
-  instead of a `blocked` item with `artifact_unchanged`; a fix round that wrote no
-  report and was read as one.
+  re-review spawned against a freeze identical to one the item had already read,
+  instead of a `blocked` item with `artifact_unchanged`; a freeze repeated from an
+  **earlier** pass, or the same finding back in two consecutive rounds, run as a
+  third round instead of a `blocked` item with `nonconvergent`; a `REFUTED:`
+  accepted with no `refutation: {finding, evidence}` on the round that made it, or
+  accepted without the quotation that proves it; the same defect class diagnosed
+  item by item when a `classFixes` entry already carried its brief; a fix round
+  that wrote no report and was read as one.
 - **Release** — a tab closed before its verdict was read; a report that never
   reached disk because the only record was the scrollback; a tab the coordinator
   did not create closed; a dirty worktree removed with `--force`.
 - **Model claims** — a role reported on a model that was never passed; a respawn
   that silently inherited different flags; a run that continued past a model
-  failure instead of stopping to ask.
+  failure instead of stopping to ask; a `served` written without the lane's own
+  transcript naming that model — an absent receipt is the honest value, and
+  inventing one is the finding.
 - **Gates** — a dispatch before the plan approval when `mode` is `gated` or
   `land`; a commit before the operator's yes when `mode` is `gated`; a
   coordinator that kept working after asking; human wait where the skill

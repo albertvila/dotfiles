@@ -29,6 +29,8 @@ The field lives in each runtime's ledger, on the item:
 | `worker_blocked` | the worker reported `BLOCKED`, or sits at a dialog the coordinator will not answer out of the approved manifest, or escalates a question the run cannot answer (`land`/`unattended`, or the operator declines) | answer it |
 | `turn_stalled` | a turn ended with no report and the same agent stalled again when re-prompted | inspect the pane and the transcript |
 | `artifact_unchanged` | the fix round settled without moving the frozen diff, so the re-review was not spawned | inspect why the fix produced nothing |
+| `finding_refuted` | the fix round returned `REFUTED:` — its worker quotes the code that disproves the finding, and the re-review was not spawned | adjudicate the disagreement |
+| `nonconvergent` | the same finding returned in two consecutive findings rounds, or a re-freeze repeated a freeze an earlier pass already read — the rounds are bouncing the diff instead of converging on it | park it and name the invariant, or change the approach |
 | `cap_exhausted` | the item's findings rounds reached the cap — three — and a fourth would have been needed | adjudicate the disagreement |
 | `spec_conflict` | a finding contradicts the approved manifest or the tracker spec | adjudicate the spec |
 | `model_unavailable` | the role's model is missing from `pi --list-models`, was refused at start, or died on its first turn | name a model |
@@ -43,6 +45,13 @@ A pause **before a merge** — a red check the change caused, a head that moved,
 missing `lm` or AWS credentials — is not an item cause either. By then the item
 has settled and the pause is the run's, so it belongs to the run summary and not
 to the ledger.
+
+`finding_refuted` and `nonconvergent` are stops the review contract defines
+([review-contract.md](review-contract.md)): both are read before a fix round or a
+re-review is spawned, so both cost the run less than the round they replace, and
+neither is a disagreement the cap exists for. `cap_exhausted` is what is left
+when three rounds each moved the diff and the item still disagrees with its
+reviewer.
 
 `unclassified` is a last resort and it is a **finding**: a run that needed it has
 a failure path neither skill names. It exists so that a coordinator never invents

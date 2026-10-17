@@ -146,7 +146,10 @@ runtime's figures:
   that overlaps no work). Then the span, each phase's summed active time,
   and the overlap between them. Name the phase that dominated. A wait for
   the human is not time the run spent working.
-- **Cost per model** — tokens and estimated USD per model and per role.
+- **Cost per model** — tokens and estimated USD per model and per role, and the
+  ledger's `served` against its `models`: what served each role, and every lane
+  that ran a model the run did not ask for. A role with no `served` is
+  **unverified** — reported as such, never priced as if the request were the fact.
   Flag every thread the pricing table could not cover, and say how much of
   the run that leaves unpriced. When the figures are a floor (they always are
   on `pi` — see below), say that in the section, not in a footnote: quote the
@@ -234,16 +237,23 @@ rules; every one is a candidate for the *What to fix* section.
   PR-per-item run serializing on files it was free to parallelize.
 - **Models** — a route other than openrouter; a role on a model nobody asked
   for (the skill says a model that does not work stops the run and asks);
-  one item split across two models.
+  one item split across two models; a `served` written without the thread's own
+  log naming that model — an absent receipt is the honest value, and inventing
+  one is the finding.
 - **Review** — an item that shipped with no review thread; a review read
   from the live worktree rather than the frozen diff or branch; the manager
   reviewing work it dispatched; a review thread that used `/code-review`
   subagents, whose tokens and verdicts never reached the ledger; a ponytail fix
   that changed behaviour and shipped without a fresh-eyes review of its delta; a
   review brief that carried no acceptance line, so the reviewer re-derived the
-  criteria from the ticket; a re-review spawned against a freeze identical to the
-  one the previous pass read, instead of a `blocked` item with
-  `artifact_unchanged`.
+  criteria from the ticket; a re-review spawned against a freeze identical to one
+  the item had already read, instead of a `blocked` item with
+  `artifact_unchanged`; a freeze repeated from an **earlier** pass, or the same
+  finding back in two consecutive rounds, run as a third round instead of a
+  `blocked` item with `nonconvergent`; a `REFUTED:` accepted with no
+  `refutation: {finding, evidence}` on the round that made it, or accepted without
+  the quotation that proves it; the same defect class diagnosed item by item when
+  a `classFixes` entry already carried its brief.
 - **Iterations** — a re-review after a `CLEAN` verdict is legal and does not
   count against the cap; the cap is 3 **findings rounds** (the `fixes` entries), not
   three passes. At the cap the item should have been surfaced as blocked with

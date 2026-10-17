@@ -90,6 +90,16 @@ dispatch refused for any other reason leaves its item `failed` with
 `cause.code: dispatch_failed`. A respawn passes the role's recorded model
 explicitly — a fresh agent inherits nothing from the one that died.
 
+**The request and the receipt are two fields, and both are written.** `models` is
+what the run asked for; `served` is what the lane's own record names, read as the
+lane settles — Herdr: the pi session transcript the ledger already points at; BB:
+`bb thread log <id> --json` and its `execution.model`. Write it when the record
+names exactly one model, under the role for that role's first lane and on the lane
+itself when a lane diverges from its role. A lane that ran several models, or
+whose record names none, leaves `served` out and reads as **unverified** — absent
+is the honest value there, and a retro that cannot see the field prices the
+request as if it were the fact ([ledger.md](ledger.md)).
+
 ## Liveness
 
 A dispatched lane has a heartbeat: the pi session transcript on Herdr, the
@@ -140,6 +150,15 @@ runtimes:
 
 - Write the ledger as the run moves, never batched at settlement — it must read
   true mid-run.
+- **The dispatch write comes before the spawn.** Dispatching is the run's one
+  non-idempotent act: a manager that dies between spawning a lane and recording
+  it leaves a resume with nothing to read, and the second spawn it then makes is
+  the duplicate this record exists to prevent. So the item's `dispatchAttempt`
+  (`{at, role, label}`, [ledger.md](ledger.md)) is written **first**, then the
+  lane. On resume, an attempt whose role has no lane beside it is resolved by
+  finding that lane in the runtime — BB: the child thread carrying that label;
+  Herdr: `herdr agent list` — before any replacement is spawned. Never spawn on
+  an attempt that already produced a lane.
 - Stamp the times honestly: every timestamp is read at the moment of the event,
   never typed and never rounded. An interval that runs backwards, or predates the
   agent's own session, is a write error, not a rounding artefact.
