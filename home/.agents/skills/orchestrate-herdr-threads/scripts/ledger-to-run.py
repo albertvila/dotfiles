@@ -64,7 +64,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import ledger_errors, stamp  # noqa: E402
+from orchestrate_common import ledger_errors, ponytail_passes, stamp  # noqa: E402
 
 
 def utcnow():
@@ -76,20 +76,6 @@ def run_id(feature, started_at):
     slug = "".join(c if c.isalnum() else "-" for c in str(feature or "run").lower())
     slug = "-".join(p for p in slug.split("-") if p) or "run"
     return "run-%s%s" % (slug, ("-" + started_at[:10]) if started_at else "")
-
-
-def ponytail_passes(ledger):
-    """The ponytail passes in order.
-
-    The schema's `ponytail` is a **list** of passes; an older ledger holds one
-    mapping instead. Both are read here, because a projection that crashes on the
-    shape the skill writes takes the whole pane view down with it.
-    """
-    passes = ledger.get("ponytail") or []
-    if isinstance(passes, dict):
-        passes = [passes]
-    return [entry for entry in passes if isinstance(entry, dict) and entry.get("id")]
-
 
 
 def attempts_for_item(item_id, item):

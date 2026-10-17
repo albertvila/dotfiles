@@ -150,6 +150,32 @@ def self_test():
     rejects("a review lane with no id",
             lambda l: l["items"]["01"]["reviews"][1].pop("id"),
             "a lane no retro can price")
+    rejects("a fix lane with no id",
+            lambda l: l["items"]["01"]["fixes"][0].pop("id"),
+            "a lane no retro can price")
+    rejects("a ponytail lane with no id",
+            lambda l: l["ponytail"][0].pop("id"),
+            "a lane no retro can price")
+    rejects("a retro entry with no session",
+            lambda l: l.update(retro={"id": "retro-1", "startedAt": "2026-09-27T12:00:00Z"}),
+            "a lane no retro can price")
+    rejects("a retired executor with no endedAt",
+            lambda l: l["executors"].insert(0, {"id": "manager-0", "startedAt": None}),
+            "handed over with no endedAt")
+
+    # Who acted: the executor never implements, and a worker does not review itself.
+    rejects("the manager implemented the item",
+            lambda l: l["items"]["01"]["worker"].update(id="manager-1"),
+            "is an executor")
+    rejects("the manager reviewed the run",
+            lambda l: l["items"]["01"]["reviews"][0].update(id="manager-1"),
+            "is an executor")
+    rejects("an item reviewed by its own worker",
+            lambda l: l["items"]["01"]["reviews"][0].update(id="item-01"),
+            "is this item's own worker")
+    rejects("the manager ran the ponytail pass",
+            lambda l: l["ponytail"][0].update(id="manager-1"),
+            "is an executor")
 
     # Stamps are read, never typed.
     rejects("backwards review",

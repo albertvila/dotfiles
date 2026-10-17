@@ -33,7 +33,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import CAUSE_CODES, corpus_dirname  # noqa: E402
+from orchestrate_common import CAUSE_CODES, corpus_dirname, ponytail_passes  # noqa: E402
 
 # A session whose messages pause longer than this is not working: it is waiting on
 # another agent, or the machine was suspended under it.
@@ -197,14 +197,6 @@ def session_metrics(path):
             ordered.append(model)
     result["models"] = ordered
     return result
-
-
-def ponytail_passes(ledger):
-    """The ponytail passes in order; a pre-list ledger holds one mapping."""
-    passes = ledger.get("ponytail") or []
-    if isinstance(passes, dict):
-        passes = [passes]
-    return [entry for entry in passes if entry.get("id")]
 
 
 def agents_from_ledger(ledger):
