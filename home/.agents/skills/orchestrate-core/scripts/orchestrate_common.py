@@ -6,7 +6,9 @@ by `../threads.md`. This module is their single machine copy: both retro scripts
 and the Herdr ledger projection import it instead of defining the set three
 times, so a change to the vocabulary is a change here and in the contract, and
 nowhere else. `ledger_errors` is the ledger write-error checker — `validate-ledger.py`
-is its command line, and both runtimes run it after every ledger write.
+is its command line, and both runtimes run it after every ledger write — and
+`stamp` and `ponytail_passes` are the shape readers both the projection and the
+Herdr retro price a lane from.
 
     python3 orchestrate_common.py --self-test
 """
@@ -65,6 +67,20 @@ def stamp(value):
     except ValueError:
         return None
     return parsed.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def ponytail_passes(ledger):
+    """The ponytail passes in order.
+
+    The schema's `ponytail` is a **list** of passes; an older ledger holds one
+    mapping instead. Both are read here, because a reader that crashes on the
+    shape the skill writes takes its whole view down with it — that is how the
+    projection lost its pane view and the retro lost the lane's price at once.
+    """
+    passes = (ledger or {}).get("ponytail") or []
+    if isinstance(passes, dict):
+        passes = [passes]
+    return [entry for entry in passes if isinstance(entry, dict) and entry.get("id")]
 
 
 def _verdict_kind(value):
@@ -307,6 +323,12 @@ def self_test():
     assert stamp("done") is None and stamp(None) is None and stamp("") is None
     assert _verdict_kind("CLEAN") == "CLEAN" and _verdict_kind("findings") == "FINDINGS"
     assert _verdict_kind("MAYBE") is None and _verdict_kind(None) is None
+    # A lane is read from either shape, and junk entries are skipped, not fatal.
+    assert ponytail_passes({"ponytail": []}) == []
+    assert ponytail_passes({}) == []
+    assert [p["id"] for p in ponytail_passes({"ponytail": {"id": "p1"}})] == ["p1"]
+    assert [p["id"] for p in ponytail_passes(
+        {"ponytail": [{"id": "p1"}, {"id": None}, "junk", None]})] == ["p1"]
 
 
 if __name__ == "__main__":
