@@ -134,6 +134,21 @@ def ledger_errors(ledger):
         if begun and done and done < begun:
             problems.append("%s: endedAt %s precedes startedAt %s" % (where, end, start))
 
+    def as_object(value, where):
+        """A mapping field, reported rather than crashed on.
+
+        A pre-shape ledger holds `items` or `gates` as a list. Every reader here
+        keys them by name, and one that meets a list stops reading the whole
+        record — bb's normalise_items tolerates it, so this does too.
+        """
+        if not value:
+            return {}
+        if not isinstance(value, dict):
+            problems.append("%s: %s, not an object — a reader that meets a list here stops "
+                            "reading the record" % (where, type(value).__name__))
+            return {}
+        return value
+
     def rounds(entries, where, verdicts=False, ids=False):
         """Pass numbers are 1..n, every verdict is CLEAN or FINDINGS, and every
         entry in a lane a reader prices carries the id it is priced by."""
@@ -190,7 +205,7 @@ def ledger_errors(ledger):
         problems.append("retro: %r with no session — a lane no retro can price (ledger.md)"
                         % retro.get("id"))
 
-    items = ledger.get("items") or {}
+    items = as_object(ledger.get("items"), "run.items")
     for item_id, item in items.items():
         where = "items[%s]" % item_id
         if not isinstance(item, dict):
@@ -351,7 +366,7 @@ def ledger_errors(ledger):
                         "item is done on a clean review AND a settled ponytail (threads.md)"
                         % finished)
 
-    for name, gate in (ledger.get("gates") or {}).items():
+    for name, gate in as_object(ledger.get("gates"), "run.gates").items():
         if isinstance(gate, dict):
             backwards(gate.get("requestedAt"), gate.get("approvedAt"), "gates.%s" % name)
     return problems

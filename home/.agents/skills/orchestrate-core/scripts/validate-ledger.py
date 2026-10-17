@@ -223,6 +223,10 @@ def self_test():
     # What the run must carry for every reader to work.
     rejects("no runtime", lambda l: l.pop("runtime"), "no 'runtime'")
     rejects("no items", lambda l: l.update(items={}), "no 'items'")
+    rejects("a list-shaped items", lambda l: l.update(items=[{"id": "01"}]),
+            "not an object")
+    rejects("a list-shaped gates", lambda l: l.update(gates=["plan", "commit"]),
+            "not an object")
     rejects("a blocker that is not an item",
             lambda l: l["items"]["04"].update(blockedBy=["99"]),
             "is not an item")

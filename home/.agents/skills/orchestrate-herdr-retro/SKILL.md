@@ -175,7 +175,9 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   per-session span minus gaps > 10m, deduped; `quietSumSec` is what that removes
   — a host suspend, or the hours between a re-prompted worker's turns. `ledgerDrift`
   lists every ledger interval its own transcript contradicts (backwards, before
-  the session's first message, after its last). Quote it instead of re-deriving it
+  the session's first message, after its last), plus a coordinator row with no
+  `endedAt` — no upper bound, so its wind-down would otherwise read as run work.
+  Quote it instead of re-deriving it
   by hand: a drifted row is a finding, not arithmetic to redo.
 - **Gate waits** come from the ledger's `gates.plan` / `gates.commit`
   `requestedAt` → `approvedAt` pairs (in a Flow B run, each item's own
