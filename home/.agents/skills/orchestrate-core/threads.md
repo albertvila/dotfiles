@@ -77,9 +77,25 @@ Three roles: **worker**, **code-review**, **ponytail**. Each runtime names the
 role's default model and the flag that passes it; this file owns the policy.
 
 A per-run override is the manifest's model line — "workers on X, reviewers on
-Y". Ponytail follows the worker model unless the line also names one. The
-operator sets the override at plan time and the manifest carries it; the executor
+Y". Ponytail keeps its own role default; only a ponytail **fix** runs on the
+worker model, because a fix is authoring, not review. The operator sets the
+override at plan time and the manifest carries it; the executor
 keeps the syntax and the dispatch-time decisions, not the choice.
+
+**No gate reviews its author's family.** `code-review` and the ponytail pass are
+the run's two independent gates: each must run on a model family different from
+the one that wrote the diff, and different from each other. A second opinion from
+the author's own family is the author's opinion twice. A runtime whose default for
+one role is another role's default, or a role that inherits the runtime's own
+default (equal to the worker), breaks this silently.
+
+The one licensed exception is the Herdr adapter's risk rule
+([`/orchestrate-herdr-threads`](../orchestrate-herdr-threads/SKILL.md#models)): a
+**mechanical** item's `code-review` may run on the worker model, and the recorded
+`risk` is what makes that deliberate rather than forgotten. It never covers a
+ponytail pass or the fresh-eyes review of a fix delta — those read taste and
+behaviour, which is exactly where a same-family reviewer converges on the author's
+blind spots instead of finding them.
 
 **A model that does not work stops the run.** That covers every failure: the id
 missing from the catalog, a refused dispatch, or a first turn dying on a provider

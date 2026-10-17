@@ -75,9 +75,10 @@ Steps 1–6 and the completeness rule are
 7. Record the **launch reality**. Workers, reviewers and the ponytail pass are
    all `herdr agent start … --kind pi` agents in their own tabs of this
    workspace; the operator watches them in the tab bar and the coordinator never
-   shares a pane with them. Role models are pi's own: workers and the ponytail
-   pass run on pi's configured default and reviews default to
-   `openrouter/z-ai/glm-5.3`, passed as
+   shares a pane with them. Role models are pi's own: workers run on pi's
+   configured default, the ponytail pass defaults to
+   `openrouter/anthropic/claude-sonnet-5` and reviews default to
+   `openrouter/z-ai/glm-5.3`, both passed as
    `-- --model <pattern>`. Read pi's default once so the approval states it
    truthfully rather than guessing:
 
@@ -86,7 +87,8 @@ Steps 1–6 and the completeness rule are
    ```
 
    A per-run override is operator syntax — "workers on X, reviewers on Y";
-   ponytail follows the worker model unless the line also names one. Check every
+   ponytail keeps its own role default unless the line also names one, and no gate
+   may run on the worker's family (see *Models* in `/orchestrate-core`). Check every
    named model against `pi --list-models` before approving it; a model that does
    not work stops the run (see *Models* in `/orchestrate-herdr-threads`).
 
