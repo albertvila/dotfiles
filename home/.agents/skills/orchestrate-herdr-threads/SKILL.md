@@ -176,7 +176,7 @@ herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   #
 
 **Load [`references/record.md`](references/record.md) before the first write.**
 It owns the Herdr field list, the runtime extensions, the ponytail lane's shape,
-the typed stops, the reopen rule and the pane projection — the ledger's *shape*
+the typed stops and the reopen rule — the ledger's *shape*
 as opposed to the order below, which stays here. A record written from this page
 has the right opening and the wrong fields, and the pane, the checker and the
 retro then read three different runs.
@@ -191,7 +191,6 @@ python3 ~/.agents/skills/orchestrate-core/scripts/validate-ledger.py "$RUNDIR/or
 
 What it refuses is the half a single snapshot can prove, item by item, against
 [`threads.md#the-item-lifecycle`](../orchestrate-core/threads.md#the-item-lifecycle).
-The projection in `references/record.md` imports the same checks, so the pane cannot disagree with it.
 
 **Stamp the times honestly, and assert them.** Every timestamp you write is read
 from `date -u` at the moment of the event — never typed, never rounded to the
@@ -203,10 +202,8 @@ gate's `requestedAt`; gate times belong in `gates` and nowhere else. Before
 writing, check what you are about to record: every agent's `startedAt ≤ endedAt`,
 and both inside that agent's session window. An interval that runs backwards or
 predates the agent's own transcript is a write error, not a rounding artefact.
-The projection below reports the write errors `scripts/validate-ledger.py`
-refuses, so the pane cannot disagree with the checker; containment in the agent's
-own session window is asserted by the retro, which is the only reader holding
-both sides.
+Containment in the agent's own session window is asserted by the retro, which is
+the only reader holding both sides.
 
 **A reopen clears the terminal marker.** Reopening an item sets `status` back to
 `running`, nulls the item's `endedAt`, records why under the item, and clears
@@ -499,8 +496,8 @@ mechanics.
 - Append a `reviews` entry for every completed pass; the findings rounds are the
   review rounds that opened a `fixes` entry, and the cap reads off those. A
   ponytail fix round is named under `ponytail`, never in `items[].fixes` — the
-  `fixes` array is review-scoped, and the projection reads an extra entry there
-  as an in-flight review round.
+  `fixes` array is review-scoped, and the ledger checker refuses an entry there that
+  no review opened.
 
 ## Ticket write-back
 

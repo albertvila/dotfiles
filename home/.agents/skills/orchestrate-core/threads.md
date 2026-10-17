@@ -235,7 +235,7 @@ write replaced is gone. Two ways to close that were considered, and both are
 refused. A `--previous` copy per write tolls every write in both runtimes to catch
 a record that, once shipped, is identical to a correct one. An append-only journal
 that derives the snapshot reverses [ledger.md](ledger.md)'s shape and rebuilds
-every reader, down to the runtime projections, to reconcile a drift a single
+every reader, down to the retro's own scripts, to reconcile a drift a single
 writer does not produce — and the shape drift that does occur, an old run's extra
 field or a second copy of the gates, is caught above without it. An item that
 never passed through `running` leaves nothing a reader can act on: the retro

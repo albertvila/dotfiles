@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Check a run ledger against the item lifecycle and the ledger invariants.
 
-Both threads skills run this after every ledger write, and the Herdr projection
-reports it as part of rendering, so a write error is caught by the writer while
-it still knows what it meant. The contract is `../threads.md#the-item-lifecycle`
+Both threads skills run this after every ledger write, so a write error is caught
+by the writer while it still knows what it meant. The contract is `../threads.md#the-item-lifecycle`
 (the transitions) with `../cause-contract.md` (the cause vocabulary) and
 `../ledger.md` (the shape); the checks themselves are `ledger_errors` in
-`orchestrate_common.py`, so this file and the projection cannot drift.
+`orchestrate_common.py`, so this file and its callers cannot drift.
 
 It reads one file, never a run, and exits non-zero on any error.
 
@@ -21,7 +20,7 @@ import sys
 from orchestrate_common import ledger_errors
 
 # A ledger both runtimes write, with one item in each status the checker has
-# something to say about. `ledger-to-run.py`'s self-test reads the same shape.
+# something to say about.
 GOOD = {
     "runtime": "bb", "feature": "demo", "project": "p", "tracker": "scratch demo",
     "flow": "A", "mode": "gated",
