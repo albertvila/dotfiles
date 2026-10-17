@@ -13,7 +13,7 @@ Enforced by linter where configured — the module-alias form is banned project-
 
 ## Bar
 - Root cause only: a fix that leaves a sibling caller broken is not done.
-- Done means demonstrated: every modified file's tests run, behavior verified, not just code written.
+- Done means demonstrated: every modified file's tests run, behavior verified, not just code written. Name what you did not check.
 - Skepticism over agreement: critique objectively, flag anything you're not confident about.
 - Bugs are fixed autonomously end-to-end: logs, errors, failing CI — no hand-holding requested.
 - Replacements delete what they replace: no compat layers, fallbacks, or dead paths left behind.
