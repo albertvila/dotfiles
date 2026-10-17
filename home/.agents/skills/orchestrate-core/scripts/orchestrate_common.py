@@ -18,9 +18,15 @@ import os
 import re
 
 CAUSE_CODES = frozenset((
-    "worker_blocked", "turn_stalled", "artifact_unchanged", "cap_exhausted",
-    "spec_conflict", "model_unavailable", "dispatch_failed", "unclassified",
+    "worker_blocked", "turn_stalled", "artifact_unchanged", "finding_refuted",
+    "nonconvergent", "cap_exhausted", "spec_conflict", "model_unavailable",
+    "dispatch_failed", "unclassified",
 ))
+
+# The roles a dispatch can be for (ledger.md's `dispatchAttempt`), and the two
+# stops whose evidence the contract says is in the record itself.
+DISPATCH_ROLES = ("worker", "review", "fix", "ponytail")
+EVIDENCED_CAUSES = ("finding_refuted", "nonconvergent")
 
 STATUSES = ("todo", "running", "done", "failed", "blocked")
 TERMINAL_STATUSES = ("done", "failed", "blocked")
@@ -182,6 +188,18 @@ def ledger_errors(ledger):
 
     typed(ledger.get("startedAt"), "run.startedAt")
     typed(ledger.get("finishedAt"), "run.finishedAt")
+
+    # `served` is the receipt beside `models`' request (threads.md#models). A role
+    # whose record named no model is absent and reads as unverified; a present one
+    # that names nothing is the write error.
+    served = as_object(ledger.get("served"), "run.served")
+    for role, model in served.items():
+        if role not in ("worker", "code-review", "ponytail"):
+            problems.append("run.served: %r is not a role" % role)
+        if not isinstance(model, str) or not model.strip():
+            problems.append("run.served.%s: %r is not a model — an unknown receipt is absent, "
+                            "not empty (threads.md#models)" % (role, model))
+
     finished = stamp(ledger.get("finishedAt"))
     if finished and stamp(ledger.get("startedAt")) and finished < stamp(ledger.get("startedAt")):
         problems.append("run: finishedAt %s precedes startedAt %s"
@@ -192,6 +210,33 @@ def ledger_errors(ledger):
     # single snapshot can hold (threads.md#rules).
     executors = [e for e in (ledger.get("executors") or []) if isinstance(e, dict)]
     executor_ids = {e["id"] for e in executors if e.get("id")}
+
+    # One entry per diagnosis, however many items the class reached
+    # (review-contract.md). A class fix with no lane is a diagnosis no retro can
+    # price, and a class fix naming no item is a class no reader can check.
+    for index, fix in enumerate(ledger.get("classFixes") or []):
+        where = "classFixes[%d]" % index
+        if not isinstance(fix, dict):
+            problems.append("%s: not an object" % where)
+            continue
+        if not str(fix.get("class") or "").strip():
+            problems.append("%s: no class — the slug is what a later finding matches" % where)
+        if not str(fix.get("brief") or "").strip():
+            problems.append("%s: no brief — a reused diagnosis is the point of the entry" % where)
+        if not fix.get("id"):
+            problems.append("%s: no id — a lane no retro can price" % where)
+        elif fix["id"] in executor_ids:
+            problems.append("%s: %r is an executor — the executor never repairs the classes its own "
+                            "run produced (threads.md#rules)" % (where, fix["id"]))
+        typed(fix.get("startedAt"), where + ".startedAt")
+        typed(fix.get("endedAt"), where + ".endedAt")
+        backwards(fix.get("startedAt"), fix.get("endedAt"), where)
+        if not fix.get("items"):
+            problems.append("%s: no items — a class fix that reached nothing" % where)
+        known_items = ledger.get("items") if isinstance(ledger.get("items"), dict) else {}
+        for member in fix.get("items") or []:
+            if str(member) not in {str(i) for i in known_items}:
+                problems.append("%s.items: %s is not an item" % (where, member))
     # A retired executor — one that handed over to a successor — has ended by
     # definition. The last one may not have: threads.md lets the manager finish its
     # own handover acts after `finishedAt`, so a snapshot cannot tell a live
@@ -226,6 +271,24 @@ def ledger_errors(ledger):
             problems.append("%s.worker.id: %r is an executor — the executor dispatches and never "
                             "implements items itself (threads.md#rules)" % (where, worker_id))
 
+        # The write that precedes the spawn, so a resume can find the lane
+        # (threads.md#the-ledger). Its shape is all one snapshot can prove.
+        attempt = item.get("dispatchAttempt")
+        if attempt is not None:
+            if not isinstance(attempt, dict):
+                problems.append("%s.dispatchAttempt: not an object" % where)
+            else:
+                typed(attempt.get("at"), where + ".dispatchAttempt.at")
+                if not attempt.get("at"):
+                    problems.append("%s.dispatchAttempt: no at — the write precedes the spawn, so "
+                                    "its time is the point" % where)
+                if attempt.get("role") not in DISPATCH_ROLES:
+                    problems.append("%s.dispatchAttempt: role %r is not one of %s"
+                                    % (where, attempt.get("role"), ", ".join(DISPATCH_ROLES)))
+                if not str(attempt.get("label") or "").strip():
+                    problems.append("%s.dispatchAttempt: no label — the label is how a resume "
+                                    "finds the lane" % where)
+
         # The state and the fields written beside it must agree: each disagreement
         # is a transition that left no trace in `status`.
         if status == "todo":
@@ -245,6 +308,7 @@ def ledger_errors(ledger):
         # An item the run stopped on is typed: a `blocked`/`failed` item carries a
         # `cause` from the contract's closed set, and nothing else carries one.
         cause = item.get("cause")
+        cause_code = cause.get("code") if isinstance(cause, dict) else None
         if status in CAUSED_STATUSES:
             if not isinstance(cause, dict) or not cause.get("code"):
                 problems.append("%s: status %r with no cause (cause-contract.md)"
@@ -279,6 +343,29 @@ def ledger_errors(ledger):
         for fix_pass in fix_passes:
             if fix_pass not in review_passes:
                 problems.append("%s.fixes[pass %s]: no review opened this round" % (where, fix_pass))
+        # A refutation is recorded on the round that made it, and it is what the
+        # stop names (review-contract.md). Neither is provable from the cause alone.
+        refuted = any(isinstance(fix, dict) and isinstance(fix.get("refutation"), dict)
+                      for fix in item.get("fixes") or [])
+        for fix in item.get("fixes") or []:
+            refutation = (fix or {}).get("refutation") if isinstance(fix, dict) else None
+            if refutation is None:
+                continue
+            if not isinstance(refutation, dict):
+                problems.append("%s.fixes[pass %s].refutation: not an object"
+                                % (where, (fix or {}).get("pass")))
+                continue
+            for field in ("finding", "evidence"):
+                if not str(refutation.get(field) or "").strip():
+                    problems.append("%s.fixes[pass %s].refutation: no %s — a refutation is the "
+                                    "quotation that disproves the finding"
+                                    % (where, (fix or {}).get("pass"), field))
+        if cause_code in ("finding_refuted",) and not refuted:
+            problems.append("%s: cause finding_refuted with no fix round carrying a refutation "
+                            "(review-contract.md)" % where)
+        if cause_code == "nonconvergent" and len(fix_passes) < 2:
+            problems.append("%s: cause nonconvergent with %d findings round(s) — the rounds "
+                            "cannot have bounced off each other" % (where, len(fix_passes)))
         # Cap: the findings rounds are the ones that opened a fix, and a fourth is
         # never spawned.
         if len(fix_passes) > CAP:

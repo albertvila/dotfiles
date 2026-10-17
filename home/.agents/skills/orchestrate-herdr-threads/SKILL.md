@@ -21,6 +21,55 @@ disagrees with it is wrong.
 most recent `.herdr-runs/*/manifest.txt` in this worktree and say which run was
 picked.
 
+## Failure handling
+
+- **A suspended host ends every live turn, and nothing in the run can say so.**
+  Closing a laptop drops the network first and then freezes the machine: every
+  in-flight turn — the workers' and the coordinator's own — dies on provider
+  timeouts, the ledger stops being written, and the run resumes only when the
+  operator wakes the host and prompts `continue`. In the run that produced this
+  line that was 9h31m of a 13h20m span, and the two dead turns looked exactly
+  like a slow model: `Request timed out.` ×3, `Retry failed after 3 attempts`.
+  For a `land` or `unattended` dispatch, say which it is: keep the host awake
+  (`caffeinate -s` **on AC power**, or the platform's equivalent — clamshell
+  sleep on battery overrides an idle or display assertion), or accept that the
+  run pauses at the lid and tell the operator the run is waiting on the machine.
+  On resume, the first move is the *Waiting* stalled-turn recovery — `agent read`
+  each live agent, then `continue` the same agent — and the timestamps the ledger
+  gains are the resume's, not the sleep's.
+- A coordinator turn that spans the whole run is normal: the coordinator is
+  blocked on `herdr agent wait`, not thinking.
+- A resumed coordinator re-reads the ledger and the ticket files before acting —
+  its own memory of the run may be stale.
+- An agent reports `BLOCKED`, or `agent get` no longer finds it: read its
+  report, `agent read` tail and logs before respawning anything, record the
+  blocker in the ledger (`worker_blocked` for a question, `turn_stalled` when the
+  turn died), surface it to the operator, and keep working the rest
+  of the frontier.
+- **Never act on absence.** A failed `agent get`, an `unknown` status and a wait
+  timeout are all unverifiable: inspect the pane and its transcript before
+  deciding anything. Positive evidence that an agent is gone is `agent get`
+  reporting no such agent while its pane shows a shell prompt again. Only then
+  is a respawn — same pane, same name — the move.
+- A `herdr agent start` that exits non-zero is **not** relaunched blindly: read
+  its error code and surface it — an item that could not be started is `failed`
+  with `cause.code: dispatch_failed`. A refused start is a fact about the run,
+  not a retry prompt.
+- **A turn that ended mid-run is re-entered from the ledger.** After a context
+  exhaustion, a provider error or a suspended host, read `$RUNDIR/orchestration.json`
+  and continue from it — never from memory, and never by starting a second
+  coordinator. This pane is the run's only coordinator.
+- The coordinator never answers a blocked dialog it cannot answer from the
+  approved manifest, never stops an agent it did not start, and never closes a
+  tab it did not create.
+
+## Rules
+
+[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
+rules. The Herdr-specific one: workers, reviews, fix rounds and ponytail passes
+are all normal pi agents in their own tabs; every settled one ends in a release
+decision (closed), or retention the operator asked for.
+
 ## Where work runs
 
 One work unit = one tab + one named pi agent in that tab's root pane. The
@@ -46,6 +95,13 @@ herdr agent prompt "item-<slug>" "$(cat "$RUNDIR/prompts/item-<slug>.txt")" \
 `herdr agent start` returns only once pi is ready for input; its JSON carries
 `agent_session.value` (the pi session transcript the retro reads), `pane_id` and
 `argv`. Record all of them in the ledger.
+
+**Write the item's `dispatchAttempt` before `herdr agent start`.** The write
+(`{at, role, label}` — the label is the tab label you are about to use) is what a
+coordinator resumed after a death looks for: an attempt with no lane recorded
+beside it is resolved with `herdr agent list` for the lane whose tab carries that
+label, **before** any replacement is started. A start that already happened is a
+duplicate, not a retry ([threads.md](../orchestrate-core/threads.md#the-ledger)).
 
 **Names.** `[a-z][a-z0-9_-]{0,31}`, unique among live agents — a settled agent
 still holds its name until it exits. `<slug>` is the item id lowercased with `#`
@@ -259,23 +315,50 @@ says so rather than passing silence off as certainty.
 > uncommitted work; a gate you run in this worktree measures whatever else is
 > uncommitted here, so name the revision your evidence is about. Read only the dependency roots you
 > need; never run unbounded scans (no `find /`, no recursive grep over `/`). A
-> criterion needing source you cannot locate is reported **unverifiable**. Write
+> criterion needing source you cannot locate is reported **unverifiable**. The
+> `<class>` names already recorded in this run's `classFixes` are listed above:
+> reuse one of those spellings when the finding is that class, and coin a
+> kebab-case one when it is new. Write
 > your full report to `$RUNDIR/reports/review-<slug>-r<n>.md` whose FIRST line is
 > `VERDICT CLEAN` or `VERDICT FINDINGS`. Your final message must be the complete
-> report, starting with that verdict line.
+> report, starting with that verdict line. Write each finding as one line —
+> `<file>:<line> · <class> · <what breaks> · "<the quoted code>"` — because a
+> claim with no quotation from the code it is about is a nit, opens no fix round,
+> and is reported to the operator with the rest:
+>
+> ```
+> retry.ts:12 · unbounded-retry · the loop has no cap, so a 500 replays forever
+>   · "for (let i = 0; ; i++) { await post(url) }"
+> ```
+>
+> Reuse a `<class>` named above when the finding is that class. Two findings on
+> the same file, line and normalized title are one finding.
 
 **Ponytail** (`ponytail-<n>.txt`) — ends with:
 
 > Run `/ponytail-review` on the full uncommitted diff (`git diff HEAD` plus
 > `git status --porcelain` so new files are not invisible). Report over-
 > engineering findings only; anything else you notice goes in the same report
-> labelled out of scope. Do not edit files. Write your report to
-> `$RUNDIR/reports/ponytail-<n>.md` whose FIRST line is `VERDICT CLEAN` or
-> `VERDICT FINDINGS`; your final message starts with that verdict line.
+> labelled out of scope — no class list is quoted on this pass, so coin a
+> kebab-case `<class>` if a finding names a defect. Do not edit
+> files. Write your report to `$RUNDIR/reports/ponytail-<n>.md` whose FIRST line
+> is `VERDICT CLEAN` or `VERDICT FINDINGS`; your final message starts with that
+> verdict line. A finding that names a defect is written like a review finding —
+> `<file>:<line> · <class> · <what breaks> · "<the quoted code>"` — because it
+> opens a fix round, and a claim with no quotation is only a nit.
 
 **Fix** (`fix-<slug>-f<n>.txt`) — the findings verbatim, the item's file scope,
-and the worker contract above. A fix round to a live worker re-prompts its own
-agent; a fresh `fix-<slug>-f<n>` agent starts only when the worker's pane is gone.
+and the worker contract above, plus one outcome the worker contract does not
+carry: **if the finding is wrong, say so and prove it.**
+
+> If a finding does not hold, do not change the code to satisfy it and do not
+> change it to make the complaint go away: reply `REFUTED: <the finding>` and
+> quote the code that disproves it (`<file>:<line> "<the quoted code>"`). A
+> `REFUTED:` with no quotation is not a refutation and the finding stands, so
+> either prove it or fix it.
+
+A fix round to a live worker re-prompts its own agent; a fresh `fix-<slug>-f<n>`
+agent starts only when the worker's pane is gone.
 
 ## The run's record
 
@@ -325,6 +408,15 @@ record BB writes. Herdr fills it like this:
   and in Flow B a `worktree: { workspace, path, branch }`
 - every `reviews`/`fixes`/`ponytail` entry carries `id` (the agent name),
   `session`, `pass`, and — for a review or ponytail pass — `verdict`
+- `served` sits beside `models` as the receipt described under *Models*; a lane's
+  own `served` is written only where that lane diverges from its role's
+- `classFixes` holds one entry per defect class the run diagnosed — `{class,
+  brief, items, id, session, startedAt, endedAt}` — with the same lane id and
+  session written on each affected item's `fixes` round, which the retro's
+  one-row-per-transcript rule prices once
+- `dispatchAttempt` is written before every start: `{at, role, label}`, the label
+  being the tab label (`ITEM`, `REVIEW`, `FIX`, `PONYTAIL`) of the agent about to
+  be started
 
 Extensions Herdr adds, in the contract's shape: `pr` {number, url, mergedAt,
 mergeCommit, base}, `prs` [{number, url, head, commit, mergedAt, kind}],
@@ -355,7 +447,8 @@ dispatched, so the depth and model call below is readable instead of inferred.
 [cause-contract.md](../orchestrate-core/cause-contract.md). The projection below
 exits non-zero on an invented code, a cause on any other status, or a stopped
 item with no cause; `cap_exhausted`, `spec_conflict`, `worker_blocked` and
-`turn_stalled` are the ones a normal run reaches.
+`turn_stalled`, plus the review-driven `artifact_unchanged`, `finding_refuted`
+and `nonconvergent`, are the ones a normal run reaches.
 
 **Stamp the times honestly, and assert them.** Every timestamp you write is read
 from `date -u` at the moment of the event — never typed, never rounded to the
@@ -632,6 +725,14 @@ Check every named pattern against `pi --list-models` before dispatching, and
 record the effective choice in the ledger's `models` — `pi-default` when no flag
 was passed.
 
+**Write the receipt beside the request.** `models` is what the run asked for;
+`served` is what the lane's own record named — the pi session transcript the
+ledger already points at, whose assistant messages carry `provider` and `model`
+— read when the role's first lane settles, and on a single lane when that lane
+diverges from its role. A transcript naming no model, or several, leaves `served`
+out, and a role with none reads as unverified
+([threads.md](../orchestrate-core/threads.md#models)).
+
 **The reviewer model follows the item's risk, not the role.** The table's reviewer
 is the model for a **high-risk** item; a **mechanical** item — the same ones step 4
 gives the short pass — is reviewed on the worker model instead. A review is
@@ -656,6 +757,21 @@ mechanics.
   the coordinator reviewing its own work does not count. When the coordinator
   judges findings it reads the frozen diff or a bounded path only — never an
   unbounded scan; an unlocatable criterion is reported unverifiable.
+- **The brief carries the finding contract and the run's classes.** Every finding
+  is asked for as `<file>:<line> · <class> · <what breaks> · "<the quoted code>"`,
+  and the brief lists every `<class>` already in the run's `classFixes` so a
+  finding of a known class reuses the recorded slug instead of coining a second
+  one. A claim with no quotation is a nit: it opens no round and goes to the
+  operator with the rest ([review-contract.md](../orchestrate-core/review-contract.md)).
+- **A class the run has already diagnosed is not diagnosed again.** When a
+  finding's `<class>` matches a `classFixes` entry, reuse that entry's `brief`
+  verbatim, append the item id to its `items`, and run **one** repair round for
+  the class in the worktree the affected items share (a `FIX · <class>` agent, or
+  the first affected item's live worker) — recording that lane's `id` and
+  `session` on each affected item's `fixes` round, which both retros price once.
+  Items that share no worktree (Flow B) still share the brief, each running its
+  own repair from it. Each affected item still gets its own re-review of the
+  repair's delta: a verdict is never shared.
 - Findings loop back to the **same worker** while its pane is live: re-prompt
   that agent with `prompts/fix-<slug>-f<n>.txt`. If the pane is gone, start a
   fresh `fix-<slug>-f<n>` agent in the item's worktree. A ponytail fix runs as a
@@ -664,11 +780,21 @@ mechanics.
   its findings are surfaced, and the frontier keeps moving.
 - **A re-review waits on the artifact, not on the fix's word.** Before spawning
   `review-<slug>-r<n+1>`, re-freeze to `diffs/<slug>-r<n+1>.diff` (or
-  `snapshots/post-<slug>-r<n+1>/`) and compare it with the diff the previous pass
-  read — `cmp -s` for a diff, `diff -rq` for a snapshot. Identical bytes are not a
-  new round: the item is `blocked` with `cause.code: artifact_unchanged`, its
-  findings are surfaced, and the frontier keeps moving. Changed bytes are the delta
-  the re-review is scoped to, and the brief names it.
+  `snapshots/post-<slug>-r<n+1>/`) and compare it with **every freeze this item has
+  read** — `cmp -s` against each `diffs/<slug>-r*.diff`, `diff -rq` against each
+  snapshot. Identical to the one the previous pass read is `cause.code:
+  artifact_unchanged`; identical to an **earlier** one is `cause.code:
+  nonconvergent`, because the rounds are bouncing the diff. Either way the item
+  stops, its findings are surfaced, and the frontier keeps moving. Changed bytes
+  are the delta the re-review is scoped to, and the brief names it.
+- **`REFUTED:` and a returning finding are stops, not rounds.** A fix round that
+  returns `REFUTED:` with the disproving code quoted adds no re-review: write
+  `refutation: {finding, evidence}` on that round's `fixes` entry and block the
+  item with `cause.code: finding_refuted`. The same finding — same file, line and
+  normalized title — in two consecutive findings rounds is `cause.code:
+  nonconvergent` before a third is spawned. Both rules are
+  [../orchestrate-core/review-contract.md](../orchestrate-core/review-contract.md);
+  what this skill owes is the write and the stop.
 - **Delete the worker's report before a fix round starts:**
   `rm -f "$RUNDIR/reports/item-<slug>.md"`, whether the round re-prompts the same
   worker or starts a fresh `fix-<slug>-f<n>` agent in its worktree. That path is
@@ -707,52 +833,3 @@ settled — a worker's `DONE` alone does not settle an item.
 
 [`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — read
 and follow the `pr` skill there. The body is identical in both runtimes.
-
-## Failure handling
-
-- **A suspended host ends every live turn, and nothing in the run can say so.**
-  Closing a laptop drops the network first and then freezes the machine: every
-  in-flight turn — the workers' and the coordinator's own — dies on provider
-  timeouts, the ledger stops being written, and the run resumes only when the
-  operator wakes the host and prompts `continue`. In the run that produced this
-  line that was 9h31m of a 13h20m span, and the two dead turns looked exactly
-  like a slow model: `Request timed out.` ×3, `Retry failed after 3 attempts`.
-  For a `land` or `unattended` dispatch, say which it is: keep the host awake
-  (`caffeinate -s` **on AC power**, or the platform's equivalent — clamshell
-  sleep on battery overrides an idle or display assertion), or accept that the
-  run pauses at the lid and tell the operator the run is waiting on the machine.
-  On resume, the first move is the *Waiting* stalled-turn recovery — `agent read`
-  each live agent, then `continue` the same agent — and the timestamps the ledger
-  gains are the resume's, not the sleep's.
-- A coordinator turn that spans the whole run is normal: the coordinator is
-  blocked on `herdr agent wait`, not thinking.
-- A resumed coordinator re-reads the ledger and the ticket files before acting —
-  its own memory of the run may be stale.
-- An agent reports `BLOCKED`, or `agent get` no longer finds it: read its
-  report, `agent read` tail and logs before respawning anything, record the
-  blocker in the ledger (`worker_blocked` for a question, `turn_stalled` when the
-  turn died), surface it to the operator, and keep working the rest
-  of the frontier.
-- **Never act on absence.** A failed `agent get`, an `unknown` status and a wait
-  timeout are all unverifiable: inspect the pane and its transcript before
-  deciding anything. Positive evidence that an agent is gone is `agent get`
-  reporting no such agent while its pane shows a shell prompt again. Only then
-  is a respawn — same pane, same name — the move.
-- A `herdr agent start` that exits non-zero is **not** relaunched blindly: read
-  its error code and surface it — an item that could not be started is `failed`
-  with `cause.code: dispatch_failed`. A refused start is a fact about the run,
-  not a retry prompt.
-- **A turn that ended mid-run is re-entered from the ledger.** After a context
-  exhaustion, a provider error or a suspended host, read `$RUNDIR/orchestration.json`
-  and continue from it — never from memory, and never by starting a second
-  coordinator. This pane is the run's only coordinator.
-- The coordinator never answers a blocked dialog it cannot answer from the
-  approved manifest, never stops an agent it did not start, and never closes a
-  tab it did not create.
-
-## Rules
-
-[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
-rules. The Herdr-specific one: workers, reviews, fix rounds and ponytail passes
-are all normal pi agents in their own tabs; every settled one ends in a release
-decision (closed), or retention the operator asked for.

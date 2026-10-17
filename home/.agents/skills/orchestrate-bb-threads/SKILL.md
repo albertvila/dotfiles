@@ -15,12 +15,55 @@ Read [run-mode.md](../orchestrate-core/run-mode.md) before the first spawn. It o
 baseline, the validation exit code, Flow B bases, and the merge command. A
 sentence in this file that disagrees with it is wrong.
 
+## Failure handling
+
+- A manager turn that spans the whole run is normal: the manager is blocked
+  on `bb thread wait`, not thinking. That is not licence for silence — use the
+  bounded waits in *Flow A* (step 3) and report between them.
+- A resumed manager re-reads the ledger and the ticket files before acting —
+  its own memory of the run may be stale.
+- A child reports BLOCKED or its thread dies: read `bb thread log <id>`
+  before respawning anything, record the blocker in the ledger (`worker_blocked`
+  for a question, `turn_stalled` when the turn died), surface it to
+  the user, and keep working the rest of the frontier.
+- A child that reports `ESCALATE:` has stopped on one question
+  ([`threads.md#escalation`](../orchestrate-core/threads.md#escalation)). Answer
+  it from the approved manifest when the manifest answers — queue the answer back
+  into the **same** child (`bb thread queue create <id> "<answer>"`, then
+  `bb thread queue send`) and the item stays `running`. When it does not:
+  in `gated`, put that one question to the user with `AskUserQuestion`, the
+  worker's options as its choices, and queue the reply back into the same child;
+  the item returns to `running` and its `cause` is cleared. In `land` and `unattended` there is no human, so record
+  `cause.code: worker_blocked` (its `detail` is the question), surface it, and
+  keep the frontier moving. Never respawn a worker to answer a question its own
+  thread already holds.
+- **The manager never dies mid-item.** When its context is nearly full it
+  writes the ledger and stops — it does not start an item it cannot finish.
+  A manager that stopped with items still `running` or `todo` is replaced by a
+  successor that reads that same ledger, which the plan thread spawns (see
+  `/orchestrate-bb-plan`, *Wait for the run*). The manager never spawns its own
+  replacement, and never forks itself: a fork inherits the context that just
+  ran out.
+
+## Rules
+
+[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
+rules. The BB-specific one: children (workers, review threads, ponytail) are
+standard visible threads parented to the manager; the manager never archives
+them, during the run or after it — the user keeps the manager and its children
+visible together and archives them themselves.
+
 ## Spawn flags
 
 Every spawn in this skill passes `--parent-self --json --permission-mode
 auto` and `--project "$BB_PROJECT_ID"`. On the pi provider `auto` is rejected
 ("Provider pi only supports full permission mode") — pass `full` there. Without
 `--project`, spawn fails with `missing_required` even inside that project.
+
+**Write the item's `dispatchAttempt` first.** Every spawn below is preceded by
+that ledger write (`{at, role, label}` — the label is the `--title` you are about
+to pass), so a manager that dies between the two leaves a resume something to
+look for instead of a second child ([threads.md](../orchestrate-core/threads.md#the-ledger)).
 
 ## Models
 
@@ -47,6 +90,13 @@ An id present in the catalog can still be blocked by an OpenRouter workspace
 guardrail; only a turn reveals that, so "absent from the catalog" and
 "blocked at runtime" are different failures with the same stop-and-ask ending.
 
+**Write the receipt beside the request.** `models` is what the run asked for;
+`served` is what the thread's own log named — `bb thread log <id> --json`, its
+`execution.model` — read when the role's first lane settles, and on a single lane
+when that lane diverges from its role. A log naming no model, or several, leaves
+`served` out, and a role with none reads as unverified
+([threads.md](../orchestrate-core/threads.md#models)).
+
 ## Review loops
 
 What a review is, when it ends, how deep it goes and how a fix round is capped:
@@ -59,6 +109,20 @@ This section carries only the BB mechanics.
   actor that wrote the diff. The manager never substitutes its own reading of a
   diff for the review thread; when it judges findings it reads the frozen diff
   or a bounded path only, and an unlocatable criterion is unverifiable.
+- **The brief carries the finding contract and the run's classes.** Every finding
+  is asked for as `<file>:<line> · <class> · <what breaks> · "<the quoted code>"`,
+  and the brief lists every `<class>` already in the run's `classFixes` so a
+  finding of a known class reuses the recorded slug instead of coining a second
+  one. A claim with no quotation is a nit: it opens no round and goes to the
+  operator with the rest ([review-contract.md](../orchestrate-core/review-contract.md)).
+- **A class the run has already diagnosed is not diagnosed again.** When a
+  finding's `<class>` matches a `classFixes` entry, reuse that entry's `brief`
+  verbatim, append the item id to its `items`, and run **one** repair round for
+  the class in the worktree the affected items share — recording that lane's `id`
+  on each affected item's `fixes` round, which both retros price once. Items that
+  share no worktree (Flow B) still share the brief, each running its own repair
+  from it. Each affected item still gets its own re-review of the repair's delta:
+  a verdict is never shared.
 - Findings loop back to the **same worker**: queue them as a follow-up message
   (`bb thread queue create <id> "<findings>"`, then `bb thread queue send`); if
   the thread is dead, respawn the item's worker with the findings in the prompt.
@@ -66,6 +130,10 @@ This section carries only the BB mechanics.
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
   would orphan the item's branch and desync the ledger's `envId`.
+  The queued message carries the `REFUTED:` outcome: a finding that does not
+  hold is answered by naming it and quoting the code that disproves it, never by
+  changing code to make the complaint go away. A refutation with no quotation is
+  not one — the round is `artifact_unchanged` and the finding stands.
 - **A finding that contradicts the spec is not a fix round.** Before spawning
   fix round n, read the finding against the manifest's acceptance line and the
   tracker spec: when it quotes, or contradicts a clause of, either one, quote
@@ -76,11 +144,21 @@ This section carries only the BB mechanics.
   adjudicate the spec. Only one of those is true, and the ledger must say which.
 - **A re-review waits on the artifact, not on the fix's word.** Before spawning
   review pass n+1, freeze the diff again to `diffs/<item-id>-r<n+1>.diff` (or
-  `snapshots/post-<item-id>-r<n+1>/`) and compare it with the freeze the previous
-  pass read — `cmp -s` for a diff, `diff -rq` for a snapshot. Identical bytes are
-  not a new round: the item is `blocked` with `cause.code: artifact_unchanged`,
-  its findings are surfaced, and the frontier keeps moving. Changed bytes are the
-  delta the re-review is scoped to, and the brief names it.
+  `snapshots/post-<item-id>-r<n+1>/`) and compare it with **every freeze this item
+  has read** — `cmp -s` against each `diffs/<item-id>-r*.diff`, `diff -rq`
+  against each snapshot. Identical to the one the previous pass read is
+  `cause.code: artifact_unchanged`; identical to an **earlier** one is
+  `cause.code: nonconvergent`, because the rounds are bouncing the diff. Either
+  way the item stops, its findings are surfaced, and the frontier keeps moving.
+  Changed bytes are the delta the re-review is scoped to, and the brief names it.
+- **`REFUTED:` and a returning finding are stops, not rounds.** A fix round that
+  returns `REFUTED:` with the disproving code quoted adds no re-review: write
+  `refutation: {finding, evidence}` on that round's `fixes` entry and block the
+  item with `cause.code: finding_refuted`. The same finding — same file, line and
+  normalized title — in two consecutive findings rounds is `cause.code:
+  nonconvergent` before a third is spawned. Both rules are
+  [review-contract.md](../orchestrate-core/review-contract.md); this runtime owes
+  the write and the stop.
 - A ponytail fix runs as a **new** child thread on the worker model, titled
   `FIX · <finding>` — a `PONYTAIL …` title is reserved for a ponytail pass.
 - Append a `reviews` entry for every completed pass and a `fixes` entry for
@@ -262,7 +340,10 @@ manager that never dispatched, whatever it shipped.
    needing source you cannot locate is reported unverifiable, not searched
    for. Your FINAL message must be the complete report starting with VERDICT
    CLEAN or VERDICT FINDINGS, and findings must not be recorded as follow-ups
-   instead of reported.`
+   instead of reported. Write each finding as one line — `<file>:<line> · <class>
+   · <what breaks> · "<the quoted code>"` — because a claim with no quotation from
+   the code it is about is a nit, opens no fix round, and goes to the operator with
+   the rest; reuse a `<class>` named above when the finding is that class.`
 
    The reviewer may read only the dependency roots it needs — the bb source
    checkout, sibling plugins, and the app bundle (e.g. under
@@ -300,8 +381,10 @@ manager that never dispatched, whatever it shipped.
    and never fixed in-run. A pass whose only notes are out-of-band returns
    `VERDICT CLEAN` with them listed as nits: `VERDICT FINDINGS` means a fix
    round follows, so a `FINDINGS` verdict with no `fix` beside it in the ledger
-   is a record that contradicts itself. The fix path and the cap are in *Review
-   loops* and [review-contract.md](../orchestrate-core/review-contract.md).
+   is a record that contradicts itself. A finding that names a defect is written
+   like a review finding — `<file>:<line> · <class> · <what breaks> · "<the
+   quoted code>"` — because it opens a round. The fix path and the cap are in
+   *Review loops* and [review-contract.md](../orchestrate-core/review-contract.md).
 
    In a multi-repo run (see *Cross-repo runs*) there is no combined diff to
    pass: run one ponytail pass per item diff, none optional — the last
@@ -464,6 +547,17 @@ BB fills it like this:
   [ledger.md](../orchestrate-core/ledger.md). A runtime-agnostic reader prices
   what the ledger names and nothing else, so a round kept out of these fields is
   a round no retro can see.
+- `served` sits beside `models` as the receipt described under *Models*, and
+  `classFixes` holds one entry per defect class the run diagnosed — `{class,
+  brief, items, id, session, startedAt, endedAt}` — with the same lane id written
+  on each affected item's `fixes` round.
+- `dispatchAttempt` is written **before** the spawn: `{at, role, label}`, the
+  label being the child's title convention (`ITEM · <id>`, `REVIEW · <id> r<n>`,
+  `FIX · <class>`, `PONYTAIL …`). On resume, an attempt with no lane recorded
+  beside it is resolved with `bb thread list --json` looking for a child carrying
+  that label — **before** any replacement spawn, because a spawn that already
+  happened is a duplicate, not a retry
+  ([threads.md](../orchestrate-core/threads.md#the-ledger)).
 
 The shared invariants — write-as-you-go, the item lifecycle, the typed cause,
 the `done` rule, the run's done-definition and `finishedAt` — are
@@ -515,41 +609,3 @@ nothing after that.
 
 [`threads.md#pr-body`](../orchestrate-core/threads.md#pr-body) owns it — read
 and follow the `pr` skill there. The body is identical in both runtimes.
-
-## Failure handling
-
-- A manager turn that spans the whole run is normal: the manager is blocked
-  on `bb thread wait`, not thinking. That is not licence for silence — use
-  step 3's bounded waits and report between them.
-- A resumed manager re-reads the ledger and the ticket files before acting —
-  its own memory of the run may be stale.
-- A child reports BLOCKED or its thread dies: read `bb thread log <id>`
-  before respawning anything, record the blocker in the ledger (`worker_blocked`
-  for a question, `turn_stalled` when the turn died), surface it to
-  the user, and keep working the rest of the frontier.
-- A child that reports `ESCALATE:` has stopped on one question
-  ([`threads.md#escalation`](../orchestrate-core/threads.md#escalation)). Answer
-  it from the approved manifest when the manifest answers — queue the answer back
-  into the **same** child (`bb thread queue create <id> "<answer>"`, then
-  `bb thread queue send`) and the item stays `running`. When it does not:
-  in `gated`, put that one question to the user with `AskUserQuestion`, the
-  worker's options as its choices, and queue the reply back into the same child;
-  the item returns to `running` and its `cause` is cleared. In `land` and `unattended` there is no human, so record
-  `cause.code: worker_blocked` (its `detail` is the question), surface it, and
-  keep the frontier moving. Never respawn a worker to answer a question its own
-  thread already holds.
-- **The manager never dies mid-item.** When its context is nearly full it
-  writes the ledger and stops — it does not start an item it cannot finish.
-  A manager that stopped with items still `running` or `todo` is replaced by a
-  successor that reads that same ledger, which the plan thread spawns (see
-  `/orchestrate-bb-plan`, *Wait for the run*). The manager never spawns its own
-  replacement, and never forks itself: a fork inherits the context that just
-  ran out.
-
-## Rules
-
-[`threads.md#rules`](../orchestrate-core/threads.md#rules) owns the shared
-rules. The BB-specific one: children (workers, review threads, ponytail) are
-standard visible threads parented to the manager; the manager never archives
-them, during the run or after it — the user keeps the manager and its children
-visible together and archives them themselves.
