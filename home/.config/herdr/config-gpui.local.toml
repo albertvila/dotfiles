@@ -34,3 +34,7 @@ show = true
 # superset, devices) with its own pull-request badges and diff counts, instead
 # of honouring the daemon's [ui.sidebar] rows and plugin tokens.
 inline = false
+
+[status_bar]
+usage = "detailed"
+theme = "label"
