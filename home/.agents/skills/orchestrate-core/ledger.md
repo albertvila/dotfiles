@@ -95,6 +95,10 @@ The field name does not: everything around it is identical.
   rounds that opened a `fixes` entry ([review-contract.md](review-contract.md)).
   BB's old `reviewCount`/`reviewThreadId`/`fixRounds` fields are gone.
 - `criteria` and `outOfScope` are quoted verbatim; they are what a review checks.
+- `status` moves only along the transitions in
+  [threads.md#the-item-lifecycle](threads.md#the-item-lifecycle), and
+  `scripts/validate-ledger.py` refuses a write the record contradicts — a status
+  the fields beside it disagree with, a `done` that never carried a clean review.
 - `risk` is the class the review's depth is scaled to
   ([review-contract.md](review-contract.md)) and — in a runtime whose skill carries
   the rule — which reviewer model the item's passes get. It is written when the

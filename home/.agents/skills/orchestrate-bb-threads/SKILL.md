@@ -465,9 +465,22 @@ BB fills it like this:
   what the ledger names and nothing else, so a round kept out of these fields is
   a round no retro can see.
 
-The shared invariants — write-as-you-go, the typed cause, the `done` rule, the
-run's done-definition and `finishedAt` — are
+The shared invariants — write-as-you-go, the item lifecycle, the typed cause,
+the `done` rule, the run's done-definition and `finishedAt` — are
 [`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger).
+
+**Check every write, and never dispatch on a non-zero exit.** The ledger is what
+resume and the retro read; a record that contradicts itself charges them for a
+mistake the manager already knows it made.
+
+```sh
+python3 ~/.agents/skills/orchestrate-core/scripts/validate-ledger.py "$BB_THREAD_STORAGE/orchestration.json"
+```
+
+`OK: <n> item(s)` and nothing else. `FAIL:` names each write error — the status
+and the field beside it that disagree, the `done` with no clean review, the stamp
+that was typed rather than read — and the fix is to make the record match what
+happened before the next dispatch, report or write.
 
 ## Ticket write-back
 

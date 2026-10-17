@@ -236,7 +236,17 @@ bb thread spawn --parent-self \
 The successor writes that same ledger file, so this loop keeps reading one
 record. Append its thread id to the ledger's `executors` and wait on it, but
 keep `<run-manager-id>` as the run's identity — the ledger stays in the first
-manager's storage, and that is the id the retro is given. A manager that ended
+manager's storage, and that is the id the retro is given. This append is a
+ledger write like any other, so check it the way the manager checks its own
+([`threads.md#the-ledger`](../orchestrate-core/threads.md#the-ledger)) — a
+succession that leaves the record contradicting itself is the one write no
+successor will be around to notice:
+
+```sh
+python3 ~/.agents/skills/orchestrate-core/scripts/validate-ledger.py "$ledger"
+```
+
+A manager that ended
 on a pending gate is not replaced — wait again. A second terminal state without
 `finishedAt` is surfaced to the operator with both logs.
 

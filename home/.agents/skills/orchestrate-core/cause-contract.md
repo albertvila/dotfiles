@@ -18,8 +18,9 @@ The field lives in each runtime's ledger, on the item:
   tells the operator which aisle the problem is in and nothing else.
 - Present **iff** `status` is `blocked` or `failed`. A `todo`, `running` or `done`
   item carrying a `cause` is a write error, and so is a `blocked` or `failed` item
-  without one. Both runtimes' ledgers are held to that: the Herdr projection
-  checks it on every ledger write, and both retro scripts read it.
+  without one. Both runtimes' ledgers are held to that: `scripts/validate-ledger.py`
+  runs after every ledger write, over the set's machine copy in
+  `scripts/orchestrate_common.py`, and both retro scripts read it.
 
 ## The codes
 
@@ -54,5 +55,5 @@ retro's lookup would miss it silently while the ledger still looked typed.
 [run-mode.md](run-mode.md) owns the mode and the merge; this file owns why an item
 stopped. The retro's report pairs every code present with the operator's move
 above, and reports an item with no cause, or an `unclassified` one, under *What to
-fix*. A change to this set is a change to both runtimes' ledger sections and both
-retro scripts in the same commit.
+fix*. A change to this set is a change to both runtimes' ledger sections, both
+retro scripts, and `scripts/orchestrate_common.py` in the same commit.

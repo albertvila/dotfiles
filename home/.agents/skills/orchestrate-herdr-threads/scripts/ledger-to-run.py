@@ -30,6 +30,11 @@ Contract semantics this projection is responsible for (the traps):
     review VERDICT lines are typed envelopes, so they are `reported` — never
     `verified`. Nothing here mechanically checks the work; claiming otherwise
     would be the exact blurring the contract exists to prevent.
+
+Not this file's job: the ledger's write-error checks. They are
+`orchestrate-core/scripts/validate-ledger.py` (over `ledger_errors` in
+`orchestrate_common.py`), which the coordinator runs after every write in both
+runtimes, so this projection only reports them alongside the view it renders.
 """
 
 import argparse
@@ -50,29 +55,20 @@ ITEM_STATE = {
 PLAN_GATE = "G-PLAN"
 COMMIT_GATE = "G-COMMIT"
 PONYTAIL = "PON"
-# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
-# so the three readers cannot drift from cause-contract.md.
+# The cause vocabulary and the ledger's write-error checks have their single
+# machine copy in orchestrate-core/scripts, so the three readers cannot drift
+# from cause-contract.md and threads.md — and the pane, the checker and the two
+# runtimes cannot disagree about what a write error is.
 sys.path.insert(
     0,
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import CAUSE_CODES  # noqa: E402
+from orchestrate_common import ledger_errors, stamp  # noqa: E402
 
 
 def utcnow():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def stamp(value):
-    """Normalize one ISO-8601 timestamp, or None when absent/unusable."""
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return parsed.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def run_id(feature, started_at):
@@ -94,73 +90,6 @@ def ponytail_passes(ledger):
         passes = [passes]
     return [entry for entry in passes if isinstance(entry, dict) and entry.get("id")]
 
-
-def ledger_errors(ledger):
-    """The ledger write errors provable from the ledger alone.
-
-    The retro reads the transcripts and owns the rest (an interval outside its own
-    agent's session window). These are errors, not warnings, because each one is a
-    coordinator write mistake — a stamp typed instead of read, or a terminal marker
-    standing over live work — and the coordinator runs this projection after every
-    ledger write, so it sees them at the moment it makes them.
-    """
-    problems = []
-
-    def backwards(start, end, where):
-        begun, done = stamp(start), stamp(end)
-        if begun and done and done < begun:
-            problems.append("%s: endedAt %s precedes startedAt %s" % (where, end, start))
-
-    finished = ledger.get("finishedAt")
-    for item_id, item in (ledger.get("items") or {}).items():
-        where = "items[%s]" % item_id
-        backwards(item.get("startedAt"), (item.get("worker") or {}).get("endedAt"),
-                  where + ".worker")
-        for review in item.get("reviews") or []:
-            spot = "%s.reviews[pass %s]" % (where, review.get("pass"))
-            backwards(review.get("startedAt"), review.get("endedAt"), spot)
-            if review.get("verdict") and not review.get("endedAt"):
-                problems.append("%s: verdict %s with no endedAt" % (spot, review["verdict"]))
-        for fix in item.get("fixes") or []:
-            backwards(fix.get("startedAt"), fix.get("endedAt"),
-                      "%s.fixes[pass %s]" % (where, fix.get("pass")))
-        # An item the run stopped on is typed: a `blocked`/`failed` item carries a
-        # `cause` from the contract's closed set, and nothing else carries one.
-        status, cause = item.get("status"), item.get("cause")
-        if status in ("blocked", "failed"):
-            if not isinstance(cause, dict) or not cause.get("code"):
-                problems.append("%s: status %r with no cause (cause-contract.md)"
-                                % (where, status))
-            else:
-                if cause["code"] not in CAUSE_CODES:
-                    problems.append("%s.cause: code %r is not in the contract"
-                                    % (where, cause["code"]))
-                if not str(cause.get("detail") or "").strip():
-                    problems.append("%s.cause: %s with no detail" % (where, cause["code"]))
-        elif cause:
-            problems.append("%s: cause on a %r item — a cause is for blocked or failed only"
-                            % (where, status))
-        if finished and item.get("status") not in ("done", "failed", "blocked"):
-            problems.append("%s: status %r under finishedAt %s"
-                            % (where, item.get("status"), finished))
-    for pass_ in ponytail_passes(ledger):
-        where = "ponytail[pass %s]" % pass_.get("pass")
-        backwards(pass_.get("startedAt"), pass_.get("endedAt"), where)
-        if pass_.get("verdict") and not pass_.get("endedAt"):
-            problems.append("%s: verdict %s with no endedAt" % (where, pass_["verdict"]))
-        if finished and not pass_.get("verdict"):
-            problems.append("%s: no verdict under finishedAt %s" % (where, finished))
-        fix = pass_.get("fix") or {}
-        backwards(fix.get("startedAt"), fix.get("endedAt"), where + ".fix")
-        review = fix.get("review") or {}
-        backwards(review.get("startedAt"), review.get("endedAt"), where + ".fix.review")
-        if finished and (review.get("id") or review.get("session")) and not review.get("verdict"):
-            problems.append("%s.fix.review: a review with no verdict under finishedAt %s"
-                            % (where, finished))
-    for name, gate in (ledger.get("gates") or {}).items():
-        if isinstance(gate, dict):
-            backwards(gate.get("requestedAt"), gate.get("approvedAt"), "gates.%s" % name)
-    return problems
 
 
 def attempts_for_item(item_id, item):
@@ -656,37 +585,6 @@ def self_test():
     cause = next(t for t in project(quiet_fix, "2026-09-27T11:00:00Z")["tasks"]
                  if t["id"] == "I01")["attempts"][1]["cause"]
     assert cause["by"] == "coordinator" and cause["reason"] == "restore the dropped state tone", cause
-
-    # Write errors the ledger can prove on its own.
-    assert ledger_errors(ledger) == [], ledger_errors(ledger)
-    broken = copy.deepcopy(ledger)
-    broken["items"]["01"]["reviews"][0]["startedAt"] = "2026-09-27T10:20:00Z"
-    broken["items"]["01"]["reviews"][0]["endedAt"] = "2026-09-27T10:19:00Z"
-    broken["gates"]["commit"] = {"requestedAt": "2026-09-27T11:00:00Z",
-                                 "approvedAt": "2026-09-27T10:59:00Z"}
-    found = ledger_errors(broken)
-    assert any("precedes startedAt" in p for p in found), found
-    assert any(p.startswith("gates.commit") for p in found), found
-    live = copy.deepcopy(ledger)
-    live["finishedAt"] = "2026-09-27T11:00:00Z"
-    live["items"]["02"]["status"] = "running"
-    assert any("under finishedAt" in p for p in ledger_errors(live))
-    live["ponytail"] = {"id": "ponytail"}  # a pass still in flight
-    assert any(p.startswith("ponytail[pass None]: no verdict") for p in ledger_errors(live))
-
-    # The block vocabulary is closed and paired with the status it belongs to.
-    missing_cause = copy.deepcopy(ledger)
-    del missing_cause["items"]["02"]["cause"]
-    assert any("with no cause" in p for p in ledger_errors(missing_cause)), ledger_errors(missing_cause)
-    invented = copy.deepcopy(ledger)
-    invented["items"]["02"]["cause"]["code"] = "made_up"
-    assert any("is not in the contract" in p for p in ledger_errors(invented))
-    no_detail = copy.deepcopy(ledger)
-    no_detail["items"]["02"]["cause"]["detail"] = "  "
-    assert any("with no detail" in p for p in ledger_errors(no_detail))
-    stray = copy.deepcopy(ledger)
-    stray["items"]["01"]["cause"] = {"code": "turn_stalled", "detail": "x"}
-    assert any("blocked or failed only" in p for p in ledger_errors(stray))
 
     dagr = find_dagr()
     if dagr:
