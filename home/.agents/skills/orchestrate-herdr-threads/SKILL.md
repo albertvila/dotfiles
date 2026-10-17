@@ -294,6 +294,18 @@ mkdir -p "$RUNDIR"/{logs,prompts,reports,diffs,snapshots}
 herdr agent get "$HERDR_PANE_ID" | jq -r '.result.agent.agent_session.value'   # coordinator session
 ```
 
+**Check every write, and never dispatch on a non-zero exit.** The ledger is what
+resume and the retro read; a record that contradicts itself charges them for a
+mistake the coordinator already knows it made.
+
+```sh
+python3 ~/.agents/skills/orchestrate-core/scripts/validate-ledger.py "$RUNDIR/orchestration.json"
+```
+
+What it refuses is the half a single snapshot can prove, item by item, against
+[`threads.md#the-item-lifecycle`](../orchestrate-core/threads.md#the-item-lifecycle).
+The projection below imports the same checks, so the pane cannot disagree with it.
+
 The ledger's shape is [`ledger.md`](../orchestrate-core/ledger.md) — the same
 record BB writes. Herdr fills it like this:
 
@@ -355,9 +367,10 @@ gate's `requestedAt`; gate times belong in `gates` and nowhere else. Before
 writing, check what you are about to record: every agent's `startedAt ≤ endedAt`,
 and both inside that agent's session window. An interval that runs backwards or
 predates the agent's own transcript is a write error, not a rounding artefact.
-The projection below enforces the half of that the ledger can prove on its own
-and exits non-zero on it; containment in the agent's own session window is
-asserted by the retro, which is the only reader holding both sides.
+The projection below reports the write errors `scripts/validate-ledger.py`
+refuses, so the pane cannot disagree with the checker; containment in the agent's
+own session window is asserted by the retro, which is the only reader holding
+both sides.
 
 **A reopen clears the terminal marker.** Reopening an item sets `status` back to
 `running`, nulls the item's `endedAt`, records why under the item, and clears
@@ -424,11 +437,14 @@ because nothing in this flow mechanically checks the work.
 `ponytail` lane is a **list of passes** here and in the retro's script; a reader
 that treats it as one mapping takes the whole view down with it (and hides a
 `dagr` error it would otherwise have reported). A ledger-shape change lands in
-both scripts in the same commit. The script also asserts what the ledger can
-prove on its own and exits non-zero when it doesn't hold: an interval that runs
-backwards, a gate approved before it was requested, a terminal `finishedAt`
-standing over an item, a ponytail pass or a fix review that never settled, and a stopped item
-with no `cause` or a code outside the contract. That is where "stamp
+both scripts in the same commit. The checks themselves are not this script's:
+they are `orchestrate-core/scripts/validate-ledger.py` over `ledger_errors` in
+`orchestrate_common.py` (the command is under *The run's record*), imported here
+so the pane, the checker and the two runtimes cannot disagree about what a write
+error is: an interval that runs backwards, a gate approved before it was
+requested, a terminal `finishedAt` standing over an item, a ponytail pass or a
+fix review that never settled, a stopped item with no `cause` or a code outside
+the contract, a status the fields beside it contradict. That is where "stamp
 the times honestly" gets its teeth — it runs after every write, so the
 coordinator sees the mistake while it still knows what it meant.
 

@@ -140,15 +140,9 @@ runtimes:
 
 - Write the ledger as the run moves, never batched at settlement — it must read
   true mid-run.
-- An item the run stops on is **typed**: every `blocked` or `failed` item carries
-  `cause: {code, detail}` from the closed set in
-  [cause-contract.md](cause-contract.md). A cause on any other status, and a
-  blocked or failed item with no cause, are write errors.
 - Stamp the times honestly: every timestamp is read at the moment of the event,
   never typed and never rounded. An interval that runs backwards, or predates the
   agent's own session, is a write error, not a rounding artefact.
-- An item is `done` only when its review is clean **and** its ponytail pass has
-  settled. A diff that changes after a `done` write reopens the item explicitly.
 - `finishedAt` is an **ISO-8601 UTC timestamp**, not a marker or a sentence, and
   the run corpus reads it as data. It is set only when the run is done: every
   item terminal, every `done` item's PR open or merged and handed over, and the
@@ -157,6 +151,61 @@ runtimes:
   exception: the runtime's own handover acts after it — the retro spawn, the
   verification ask, and the post-merge cleanup the operator's reply resumes — are
   part of setting the run down, and do not reopen it.
+
+### The item lifecycle
+
+An item's `status` is the only thing that moves, and these are the transitions.
+Anything else is a write error.
+
+| from | to | written when | the write carries |
+|---|---|---|---|
+| — | `todo` | seeded from the manifest, before wave 1 dispatches | nothing: no `worker`, no `startedAt`, no `reviews`, no `fixes` |
+| `todo` | `running` | its blockers have settled, and in shape `A` its files are disjoint from every running worker's | `worker.id`, `startedAt` |
+| `running` | `done` | its review is CLEAN **and** its ponytail pass has settled | `endedAt` |
+| `running` | `blocked` | a stop from the closed set | `cause: {code, detail}` — [cause-contract.md](cause-contract.md) |
+| `running` | `failed` | the dispatch itself was refused | `cause.code: dispatch_failed` |
+| `blocked` | `running` | the answer routed into the same worker, or the operator's adjudication | `cause` cleared |
+| `done` | `running` | its frozen diff changes | an explicit reopen: `endedAt` cleared, and `finishedAt` cleared with it |
+
+Two things that look like transitions and are not:
+
+- **A `todo` item held by an unmet blocker stays `todo`.** A wait is not a block:
+  no `cause`, no stop, and the item moves when its blocker settles.
+- **A block is not a settle.** `blocked` is terminal for the run's
+  done-definition and for `finishedAt`, and the item still returns to `running`
+  when what stopped it is answered.
+- **A `failed` item is terminal for the run.** `dispatch_failed` is a fact about
+  the run, not a retry prompt: the item is surfaced under the run's
+  done-definition, and the retry is the next run's, on an environment the operator
+  has fixed ([cause-contract.md](cause-contract.md)).
+
+The table is what the writer reads. `python3 scripts/validate-ledger.py <ledger>`
+prints `OK: <n> item(s)` and exits 0, or `FAIL:` with one line per write error and
+exits 1 — and the run does not move again until it reads clean: a runtime that
+acts on a record contradicting itself charges the retro for a mistake the writer
+already knows it made. It enforces the half a single snapshot can prove, since
+the status a write replaced is gone by the time the next write is checked: a
+status and the fields beside it disagreeing (a `todo` with a worker, a `running`
+with an `endedAt`), a `done` with no clean review, a `FINDINGS` verdict with no
+round behind it, a fourth findings round, a stamp typed instead of read, a
+`finishedAt` standing over live work. Each runtime's skill carries the command
+for its ledger path.
+
+**No history is stored, and that is a decision, not an oversight.** The checker
+sees one file, so an item batched straight past a status — a `done` never written
+`running` — is indistinguishable from one written as the run moved: the status the
+write replaced is gone. Two ways to close that were considered, and both are
+refused. A `--previous` copy per write tolls every write in both runtimes to catch
+a record that, once shipped, is identical to a correct one. An append-only journal
+that derives the snapshot reverses [ledger.md](ledger.md)'s shape and rebuilds
+every reader, down to the runtime projections, to reconcile a drift a single
+writer does not produce — and the shape drift that does occur, an old run's extra
+field or a second copy of the gates, is caught above without it. An item that
+never passed through `running` leaves nothing a reader can act on: the retro
+prices intervals from the stamps and the sessions, and those are written either
+way. Keeping that discipline is the writer's — *write the ledger as the run
+moves*, never batched — and the failure it prevents is invisible because it would
+not have changed anything a reader reads.
 
 ## PR body
 
