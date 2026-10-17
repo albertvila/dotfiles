@@ -112,11 +112,21 @@ def ledger_drift(sessions):
     """
     drift = []
     for metrics in sessions:
+        where = "%s (%s)" % (metrics["name"], metrics["role"])
+        # The ledger's own row, so it is read before the transcript gate: a
+        # coordinator with no `endedAt` has no upper bound, and this reader's
+        # fallback (the session's last message) absorbs its wind-down into run
+        # time instead of reporting it — which is what `endedAt` exists to stop
+        # (orchestrate-herdr-threads/SKILL.md, *The run's record*).
+        if metrics.get("role") == "coordinator" and not metrics.get("endedAt"):
+            drift.append({"agent": metrics["name"], "role": metrics["role"],
+                          "kind": "no-upper-bound",
+                          "detail": "%s: no endedAt — the coordinator's window has no upper "
+                                    "bound, so its wind-down reads as run work" % where})
         if not metrics.get("exists"):
             continue
         start, end = parse_ts(metrics.get("startedAt")), parse_ts(metrics.get("endedAt"))
         first, last = parse_ts(metrics["firstTs"]), parse_ts(metrics["lastTs"])
-        where = "%s (%s)" % (metrics["name"], metrics["role"])
         if start and end and end < start:
             drift.append({"agent": metrics["name"], "role": metrics["role"],
                           "kind": "backwards",
@@ -312,6 +322,11 @@ def build_record(rundir):
         raise SystemExit("no ledger at %s" % ledger_path)
     with open(ledger_path, encoding="utf-8") as handle:
         ledger = json.load(handle)
+    # A pre-list ledger holds `items` as a list. Every reader here keys it by item
+    # id, and one that meets the list stops reading the whole record — bb's
+    # normalise_items tolerates it, so this one does too.
+    if isinstance(ledger, dict) and not isinstance(ledger.get("items") or {}, dict):
+        ledger["items"] = {}
 
     sessions = []
     for agent in agents_from_ledger(ledger):
@@ -554,6 +569,15 @@ def self_test():
                            "startedAt": second.isoformat(), "endedAt": start.isoformat(),
                            "firstTs": third.isoformat(), "lastTs": third.isoformat()}])
     assert {d["kind"] for d in drift} == {"backwards", "before-session"}, drift
+    # A coordinator row with no endedAt is reported even when its transcript is
+    # missing: the finding is about the ledger's bound, not the transcript.
+    unbounded = ledger_drift([{"name": "coordinator", "role": "coordinator", "exists": False,
+                               "startedAt": start.isoformat(), "endedAt": None,
+                               "firstTs": None, "lastTs": None}])
+    assert [d["kind"] for d in unbounded] == ["no-upper-bound"], unbounded
+    assert ledger_drift([{"name": "coordinator", "role": "coordinator", "exists": True,
+                          "startedAt": start.isoformat(), "endedAt": end.isoformat(),
+                          "firstTs": start.isoformat(), "lastTs": end.isoformat()}]) == []
     assert ledger_drift([{"name": "x", "role": "worker", "exists": True,
                           "startedAt": start.isoformat(), "endedAt": end.isoformat(),
                           "firstTs": datetime(2026, 1, 1, 12, 0, 30,
