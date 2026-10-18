@@ -16,15 +16,23 @@ source ./lib/fish.sh
 # Parameters
 #  -u to define a user
 #  -f to force and do not ask for confirmation at the beginning
-while getopts ":u:f" opt; do
+#  -o with -u to install only that user's config, and nothing else
+while getopts ":u:fo" opt; do
   case $opt in
     u) USER_PARAM="$OPTARG"
     ;;
     f) FORCE=1
+    ;;
+    o) USER_ONLY=1
     ;;    \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
 done
+
+if [[ $USER_ONLY && ! $USER_PARAM ]]; then
+  error "-o needs -u <user>: without it there is no user config to install"
+  exit 1
+fi
 
 # Get current dir (so run this script from anywhere)
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -159,15 +167,20 @@ if ! is_osx; then
   exit;
 fi
 
-_install_brew_cask
-_install_brew
-_install_pip
-_install_npm
-_install_app_store_apps
-_setup_osx
-install_dotfiles
-install_git_hooks
-install_fish
+# Default pass: the config.sh lists, then the machine-wide setup. -o skips all
+# of it, and the agent tooling at the end, leaving only the -u config.
+if [[ ! $USER_ONLY ]]; then
+  _install_brew_cask
+  _install_brew
+  _install_pip
+  _install_npm
+  _install_app_store_apps
+
+  _setup_osx
+  install_dotfiles
+  install_git_hooks
+  install_fish
+fi
 
 unset DOTFILES_USER
 DOTFILES_USER=$USER_PARAM
@@ -177,6 +190,11 @@ if [[ $DOTFILES_USER ]]; then
     error "Config file not found: config_${DOTFILES_USER}.sh"
     exit 1
   fi
+  if [[ $USER_ONLY ]]; then
+    # -o: the default pass never consumed these, so drop them before sourcing.
+    # A config that only lists extras must not inherit the config.sh lists.
+    unset BREW_APPS BREW_CASK_APPS BREW_TAPS BREW_TRUSTED_FORMULAS PIP_APPS NPM_PACKAGES APP_STORE_APPS
+  fi
   source "$DOTFILES_DIR/config_$DOTFILES_USER.sh"
   _install_brew_cask
   _install_brew
@@ -185,14 +203,16 @@ if [[ $DOTFILES_USER ]]; then
   _install_app_store_apps
 fi
 
-# Agent tooling (bb, pi, herdr) is installed by the user config above, so these run last
-link_bb_cli
-install_bb_cli_skills
-install_bb_plugins
-install_twg_cli
-update_pi
-install_herdr_integrations
+# Everything else the full run does, agent tooling and housekeeping included
+if [[ ! $USER_ONLY ]]; then
+  link_bb_cli
+  install_bb_cli_skills
+  install_bb_plugins
+  install_twg_cli
+  update_pi
+  install_herdr_integrations
 
-cleanup
+  cleanup
+fi
 
 end
