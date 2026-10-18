@@ -20,7 +20,8 @@ The field lives in each runtime's ledger, on the item:
   item carrying a `cause` is a write error, and so is a `blocked` or `failed` item
   without one. Both runtimes' ledgers are held to that: `scripts/validate-ledger.py`
   runs after every ledger write, over the set's machine copy in
-  `scripts/orchestrate_common.py`, and both retro scripts read it.
+  `scripts/orchestrate_common.py`, and both retro scripts read it through
+  `scripts/ledger_read.py`.
 
 ## The codes
 

@@ -29,7 +29,7 @@ every number it printed, and did it end in an edit someone can make.
    script walks the chain so the numbers cover the whole run.
 
 2. **Collect the mechanics.** Run the metrics script, which pages every
-   child's log and prints phases, threads, cost and findings:
+   child's log and prints roles, lanes, cost and findings:
 
    ```sh
    python3 scripts/run-metrics.py <manager-thread-id>
@@ -75,29 +75,19 @@ every number it printed, and did it end in an edit someone can make.
    one directory per run:
 
    ```
-   runs/<date>-<project>-<slug>-<threadId>/
+   runs/<date>-bb-<project>-<feature>/
      report.md    the report written in step 5
      run.json     the machine record the metrics script produces
    ```
 
-   Derive the directory name from the script's own `record_dirname()` so the
-   naming can never drift from the writer: load `scripts/run-metrics.py` with
-   `importlib.util.spec_from_file_location` (the filename has a dash, so it
-   cannot be imported by name) and give it the record from `--json`.
-
-   Fetch the record **once**. The name and the archived `run.json` come from
-   that same fetch, so the directory's name and its bytes cannot describe two
-   different records:
+   Fetch the record **once**. The directory name is the record's own
+   `record_dirname` field — the shared reader's, so it cannot drift from the
+   writer — and the archived `run.json` is that same fetch, so the directory's
+   name and its bytes cannot describe two different records:
 
    ```sh
    python3 scripts/run-metrics.py <manager-thread-id> --json > /tmp/run.json  # --ledger / --no-pricing go HERE
-   name=$(python3 - <<'PY'
-   import importlib.util, json
-   spec = importlib.util.spec_from_file_location("run_metrics", "scripts/run-metrics.py")
-   metrics = importlib.util.module_from_spec(spec); spec.loader.exec_module(metrics)
-   print(metrics.record_dirname(json.load(open("/tmp/run.json"))))
-   PY
-   )
+   name=$(python3 -c "import json;print(json.load(open('/tmp/run.json'))['record_dirname'])")
    mkdir -p ~/personal_workspace/orchestrate-runs/runs/$name
    cp /tmp/run.json ~/personal_workspace/orchestrate-runs/runs/$name/run.json
    ```
@@ -108,8 +98,8 @@ every number it printed, and did it end in an edit someone can make.
    Both flags belong on the single `--json` call above, alongside the fetch
    whose record they shape. Copy the step-5 report in as `report.md`.
 
-   The record is a **snapshot, not a log**: the manager thread id is the
-   primary key and `record_dirname()` is stable for the same run, so a re-run
+   The record is a **snapshot, not a log**: `record_dirname` is
+   `<date>-bb-<project>-<feature>`, stable for the same run, so a re-run
    rewrites this exact directory in place rather than adding a second one.
 
    Commit the record as **one commit**, then stop — the corpus is **never
@@ -143,9 +133,10 @@ sections (*Execution plan*, *What to fix*, *Changes to the main skill*). This
 runtime's figures:
 
 - **Time per phase** — lead with orchestrator time (span minus human wait
-  that overlaps no work). Then the span, each phase's summed active time,
-  and the overlap between them. Name the phase that dominated. A wait for
-  the human is not time the run spent working.
+  that overlaps no work; `extras.orchestratorSec`), then the span
+  (`run.spanSec`), each role's summed work time (`roles[].workSec`), and the
+  overlap between them (`run.overlapSec`). Name the role that dominated. A
+  wait for the human is not time the run spent working.
 - **Cost per model** — tokens and estimated USD per model and per role, and the
   ledger's `served` against its `models`: what served each role, and every lane
   that ran a model the run did not ask for. A role with no `served` is
@@ -166,8 +157,8 @@ documents the shapes.
   working. A turn that never completed still counts, and is marked.
 - **Failed turns** are `turn/completed` with a status other than
   `completed`, plus `system/error` events and a thread status of `error`.
-  A failed turn is what a respawn follows, so pair it with the ledger's
-  `attempts` before calling an item flaky.
+  A failed turn is what a respawn follows; count them from the lane's
+  `turnsFailed` and its `errors` before calling an item flaky.
 - **The model** comes from `client/turn/requested` →
   `data.execution.model`, per turn. More than one model in a thread means
   the model changed mid-thread.
@@ -187,12 +178,14 @@ documents the shapes.
   present the estimate as what the run cost. A run whose `run.json` says
   `$0.16` over 1,123 tool items is not a sixteen-cent run.
 - **A `RETRO …` title is the retro's own lane.** It is spawned after
-  `finishedAt` and nobody waits for it, so the script roles it `retro`,
-  excludes it from the run's span and from `partial`, and gives it its own
-  phase and thread line (its cost still counts in the run's spend). Its
+  `finishedAt` and nobody waits for it, so the script roles it `retro` and
+  reports it under `record["retro"]`, outside the run's lanes, span, cost and
+  `partial` — the recorder is not a lane of the run, and the two runtimes' totals
+  only stay comparable if both leave it out. A run whose spend should include the
+  retro adds that lane's cost to `run.cost` by hand. Its
   completion re-enters the manager as a `child-completed` turn — that turn is
   the retro's, not the run's work.
-- **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
+- **A stopped item is typed by its `cause`.** `items[<id>].cause.code` comes from the
   closed set in `../orchestrate-core/cause-contract.md`, which also gives
   the operator's move for each code; the findings name it. An item the run
   stopped on with no cause, or with a code outside the set, is a finding — never
@@ -204,13 +197,19 @@ documents the shapes.
   still a floor; say so wherever the figure appears.
 - **Waiting on the human** is a pending question, a question that timed out,
   and the idle tail until the human replies — a message that arrives two days
-  later included. That wait is excluded from **orchestrator time**
-  (`orchestratorMs` = span minus the part of the wait that overlaps no
-  thread's active turn). Span stays the wall clock. Do not quote span as how
-  long the orchestrator took.
+  later included. That wait is excluded from BB's **orchestrator time**
+  (`extras.orchestratorSec` = span minus the part of the wait that overlaps no
+  lane's active turn). The record's shared `run.orchestratorSec` is span minus
+  the ledger's gate waits, so the two agree when the ledger carried the gates
+  and `extras` carries the event-derived figure the recipe reads. Span stays the
+  wall clock. Do not quote span as how long the orchestrator took.
 - **Roles come from titles** — `REVIEW …`, `PONYTAIL …`, `RETRO …`,
   everything else a worker. Those titles are `/orchestrate-bb-threads`' own
   convention, so a thread that fits none of them means the run went off-script.
+  The record itself is the shared one: `orchestrate-core/scripts/ledger_read.py`
+  owns the schema (`schemaVersion` 2) and the role vocabulary (`coordinator`,
+  `worker`, `code-review`, `fix`, `ponytail`, `retro`), so a BB record and a
+  Herdr record of the same ledger are comparable field for field.
 - **`bb thread log --all` is not stable over time.** The same command on the
   same settled thread returns fewer events later — a delta stream is compacted
   once the thread rests, and per-request `contextWindowUsage` events go first
@@ -224,9 +223,9 @@ documents the shapes.
   that excess is overlap, not waste. Report both, and never present the sum
   as elapsed time.
 - **The ledger** is at `<dataDir>/thread-storage/<manager>/orchestration.json`
-  (`dataDir` from `bb status --json`). Its `items` is a list in some runs and
-  a dict keyed by item id in others; both are read. A ledger that disagrees
-  with the threads is a finding in itself.
+  (`dataDir` from `bb status --json`). Its `items` is a dict keyed by item id;
+  a pre-shape list is a write error the checker reports, and the reader keys it
+  as empty. A ledger that disagrees with the lanes is a finding in itself.
 
 ## Where runs go wrong
 

@@ -1,36 +1,34 @@
 #!/usr/bin/env python3
-"""Aggregate timing, tokens, cost and anomalies for one BB run.
+"""Read a BB orchestration run into numbers (adapter).
 
-A run is a manager thread plus its children (workers, review, ponytail). A run
-that outlived one manager's context holds one ledger and more than one manager
-thread: the ledger's `executors` names them, oldest first, and every manager
-in it plus every child of each is part of the run. All
-numbers come from `bb thread log --json` events and, when present, the run's
-`orchestration.json` ledger. Read-only against the run: nothing is written
-except the pricing cache and, when `--output-dir` is given, the record.
+This script is BB's **telemetry adapter**: the facts come from `bb thread
+log --json` events, normalised into one **lane** per thread, plus the run's
+`orchestration.json` ledger. `orchestrate-core/scripts/ledger_read.py` owns the
+record — the figures, the role vocabulary and the output schema, which is the
+same one Herdr's adapter emits. A run that outlived one manager's context holds
+one ledger and more than one manager thread: the ledger's `executors` names
+them, oldest first, and every manager in it plus every child of each is part of
+the run. Read-only against the run: nothing is written except the pricing cache
+and, when `--output-dir` is given, the record.
 
     run-metrics.py <manager-thread-id> [--json] [--no-pricing] [--ledger PATH]
     run-metrics.py <manager-thread-id> --output-dir DIR   # also writes run.json
     run-metrics.py --self-test
 
-The record is assembled by `assemble_record`, a pure function of the events,
-the ledger and the run's identity; `--self-test` asserts against it. Pass the
-run's identity — the first manager in `executors`, which is where the ledger
-lives — not the last one.
+`lane_of` is the adapter's own: one analysed thread -> one lane, pure and
+covered by `--self-test`. `analyse_thread` is pure too; prices are applied on
+the lane.
 
 Timing caveat: in a shared-worktree run the phases overlap on purpose, so
 per-role totals sum to more than the run's wall-clock span. Both are reported.
 
 Token caveat: pi emits one `thread/tokenUsage/updated` per turn and it is that
-request's usage, not the turn's or the thread's (`total` equals `last`, and it
-equals the `contextWindowUsage.usedTokens` of the same moment). A turn with 160
-model requests therefore reports one of them, and every cost here is a **floor**
-whose distance from the truth is the requests-per-turn ratio. `toolItems`
-counts tool items per thread as a floor on that denominator; it is deliberately
+request's usage, not the turn's or the thread's. `toolItems` counts tool items
+per thread as a floor on the requests-per-turn denominator; it is deliberately
 not turned into a dollar figure, because the multiplier is not measurable.
 
 Retro caveat: the retro thread a run spawns at its end is the run's recorder,
-not the run. It keeps its own phase and its cost, and it never stretches the
+not the run. It keeps its own lane and its cost, and it never stretches the
 span or makes a terminal run read as partial.
 """
 
@@ -47,24 +45,20 @@ import urllib.request
 
 PRICING_URL = "https://openrouter.ai/api/v1/models"
 PRICING_TTL = 24 * 3600
-SCHEMA_VERSION = 1
 
 TASK_KEY_RE = re.compile(r"^[A-Z][A-Z0-9]*-\d+$")
 WAIT_CMD_RE = re.compile(r"(?:^|[;&|]\s*)bb\s+thread\s+wait\s+(thr_\w+)")
 
-IDLE_FINDING_MS = 10 * 60_000
-# A host-daemon restart is not a thread waiting on anybody; below this it is noise.
-INFRA_FINDING_MS = 60_000
 ACTIVE_STATUSES = {"active", "starting", "running", "settling"}
-RUNNING_ITEM_STATUSES = {"running", "in_progress", "in-progress"}
-# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
-# so the three readers cannot drift from cause-contract.md.
+
+# The record is not this adapter's: orchestrate-core owns one reader, one role
+# vocabulary and one schema, and both runtimes' adapters feed it lanes.
 sys.path.insert(
     0,
     os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                  "orchestrate-core", "scripts"),
 )
-from orchestrate_common import CAUSE_CODES, corpus_dirname  # noqa: E402
+from ledger_read import fmt_seconds, normalise_items, parse_ts, read_run  # noqa: E402
 
 
 def sh(*args):
@@ -100,26 +94,6 @@ def iso(ms):
     if ms is None:
         return None
     return datetime.datetime.fromtimestamp(ms / 1000, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def minutes(ms):
-    return f"{ms / 60_000:.1f}m"
-
-
-def normalise_items(ledger):
-    """The ledger's `items`, keyed by item id, as a list of dicts with `id` set."""
-    if not isinstance(ledger, dict):
-        return []
-    items = ledger.get("items") or {}
-    if not isinstance(items, dict):
-        return []
-    out = []
-    for key, value in items.items():
-        item = dict(value) if isinstance(value, dict) else {}
-        if item.get("id") is None:
-            item["id"] = key
-        out.append(item)
-    return out
 
 
 def cost_of(tokens, price):
@@ -230,29 +204,10 @@ def _subtract(a, b):
     return out
 
 
-def _infra_intervals(row):
-    """The windows a thread spent dead in a host-daemon restart, not waiting."""
-    return _merge(row.get("infra") or [])
-
-
-def _idle_intervals(row):
-    """The gaps between a thread's turns, inside its own wall window."""
-    if not row["start"] or not row["end"]:
-        return []
-    out, cur = [], row["start"]
-    for start, end in _merge(row["_intervals"]):
-        if start > cur:
-            out.append([cur, start])
-        cur = max(cur, end)
-    if cur < row["end"]:
-        out.append([cur, row["end"]])
-    return out
-
-
 def analyse_thread(thread, events):
     """One thread's events -> timings, tokens and the raw facts cost is built on.
 
-    Pure: no filesystem, no network. Prices are applied in `assemble_record`.
+    Pure: no filesystem, no network. Prices are applied in `record_of`.
     """
     row = {
         "threadId": thread["id"],
@@ -475,99 +430,6 @@ def _message_text(data):
     return None
 
 
-def best_wait_cause(rows, row):
-    """Name the thread a parked thread was waiting on, or None. A thread parked
-    while a review scans must say so rather than reading as unexplained idle (M3)."""
-    idle = _subtract(_idle_intervals(row), _infra_intervals(row))
-    if not idle:
-        return None
-    def longest(candidates):
-        best = None
-        for other in candidates:
-            overlap = _overlap_ms(idle, _merge(other["_intervals"]))
-            if overlap and (best is None or overlap > best[1]):
-                best = (other, overlap)
-        return best
-
-    # Prefer a sibling: the manager's run-spanning turn is an artifact of M5 and
-    # names the wrong cause. Fall back to the manager only if nothing else moved.
-    return (longest([o for o in rows if o is not row and o["role"] != "manager"])
-            or longest([o for o in rows if o is not row and o["role"] == "manager"]))
-
-
-def build_findings(rows, ledger, manager):
-    out = []
-    for row in rows:
-        where = f"{row['role']} {row['threadId']} ({row['title']})"
-        if row["turnsFailed"]:
-            out.append(f"{where}: {row['turnsFailed']} failed turn(s) — {row['errors']}")
-        elif row["errors"]:
-            out.append(f"{where}: {row['errors']}")
-        if row["status"] == "error" and row["role"] != "retro":
-            out.append(f"{where}: thread ended in error")
-        if len(row["models"]) > 1:
-            out.append(f"{where}: ran {len(row['models'])} models ({', '.join(row['models'])}); "
-                       f"its tokens are attributed to {row['pricingModel'] or row['models'][0]}")
-        if row["cost"]["basis"] == "unpriced":
-            model = row["pricingModel"] or (row["models"][0] if row["models"] else "unknown model")
-            out.append(f"{where}: unpriced — tokens present but no price for {model}")
-        elif row["cost"]["basis"] == "unmeasured" and row["role"] != "retro":
-            out.append(f"{where}: unmeasured — no token usage event recorded")
-    for row in rows:
-        infra = _infra_intervals(row)
-        total = sum(end - start for start, end in infra)
-        if total >= INFRA_FINDING_MS:
-            where = f"{row['role']} {row['threadId']} ({row['title']})"
-            reasons = ", ".join(row.get("infraReasons") or []) or "host-connection-lost"
-            out.append(f"{where}: {minutes(total)} of its {minutes(row['wallMs'])} wall is host-restart "
-                       f"downtime ({reasons}) — not waiting on another thread")
-    for row in rows:
-        if row["role"] == "manager" or row["idleMs"] <= IDLE_FINDING_MS:
-            continue
-        cause = best_wait_cause(rows, row)
-        if not cause:
-            continue
-        other, overlap = cause
-        row["waitingOn"] = other["threadId"]
-        out.append(f"{row['role']} {row['threadId']} ({row['title']}): idle {minutes(row['idleMs'])} "
-                   f"of {minutes(row['wallMs'])} wall — waiting on "
-                   f"{other['role']} {other['threadId']} ({minutes(overlap)} active)")
-    if manager:
-        if manager["waitMs"]:
-            extra = (f"; {minutes(manager['waitOutOfTurnMs'])} of it ran outside any recorded turn, "
-                     f"so it is not counted as manager work either") if manager.get("waitOutOfTurnMs") else ""
-            out.append(f"manager {manager['threadId']}: blocked on bb thread wait for "
-                       f"{len(manager['waitedOn'])} child(ren) — {minutes(manager['waitMs'])}, "
-                       f"reported as waiting, not manager work{extra}")
-        if manager["questionTimeoutMs"]:
-            out.append(f"manager {manager['threadId']}: a question timed out after "
-                       f"{minutes(manager['questionTimeoutMs'])}; the wait until the reply is human time, "
-                       f"excluded from orchestrator time")
-    # A manager-only run: the ORCHESTRATE thread dispatched nothing and left no
-    # ledger, so the work it shipped was done in-thread and there is no worker,
-    # no review thread and no ledger entry to audit. The numbers cannot see the
-    # threads that were never spawned, so say it here.
-    if (manager and len(rows) == 1 and not ledger
-            and (manager.get("title") or "").startswith("ORCHESTRATE")):
-        out.append(f"manager {manager['threadId']} ({manager['title']}): manager-only run — "
-                   f"0 children and no ledger; dispatch never happened. An item implemented "
-                   f"in this thread has no worker, no review thread and no ledger entry")
-    for item in normalise_items(ledger):
-        findings_rounds = len(item.get("fixes") or [])
-        if findings_rounds >= 3:
-            out.append(f"item {item.get('id')}: review hit the cap ({findings_rounds})")
-        if item.get("status") in ("blocked", "failed"):
-            cause = item.get("cause") or {}
-            code = cause.get("code")
-            if code in CAUSE_CODES:
-                out.append(f"item {item.get('id')}: {item.get('status')} — {code}: "
-                           f"{cause.get('detail') or 'no detail'}")
-            else:
-                out.append(f"item {item.get('id')}: {item.get('status')} with no cause "
-                           f"({code or 'none'}) — cause-contract.md")
-    return out
-
-
 def _task_link(ledger, identity):
     """taskKey/taskId plus how they resolved. Explicit and `unresolved` when the
     ledger carries no task reference, never a guess from git history."""
@@ -588,131 +450,95 @@ def _task_link(ledger, identity):
     return key, task_id, resolution
 
 
-def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
-    """events + ledger + run identity -> the run record.
+def lane_of(row, pricing):
+    """One analysed thread -> one lane, in the shared shape. Times in seconds."""
+    price = price_for(row.get("pricingModel"), pricing) if row.get("pricingModel") else None
+    cost = cost_state(row, price)
+    intervals = row.get("_intervals") or []
+    clipped = _overlap_ms(_merge(row.get("_wait_intervals") or []), _merge(intervals))
+    work_ms = max(0, row["activeMs"] - clipped) if row["role"] == "manager" else row["activeMs"]
+    usd = cost["reported"] if cost["reported"] is not None else cost["estimated"]
+    return {
+        "name": row["threadId"], "title": row.get("title"), "role": row["role"],
+        "provider": row.get("provider"), "status": row.get("status"),
+        "firstTs": iso(row.get("start")), "lastTs": iso(row.get("end")),
+        "spanSec": row["wallMs"] / 1000, "activeSec": row["activeMs"] / 1000,
+        "workSec": work_ms / 1000,
+        "intervals": [[iso(s), iso(e)] for s, e in intervals],
+        "waitSec": row["waitMs"] / 1000,
+        "waitOutOfTurnSec": max(0, row["waitMs"] - clipped) / 1000,
+        "humanSec": row["humanMs"] / 1000, "humanWaits": row.get("humanWaits") or [],
+        "questionTimeoutSec": row["questionTimeoutMs"] / 1000,
+        "models": row.get("models") or [], "model": row.get("model"),
+        "tokens": row.get("tokens"), "turns": row.get("turns", 0),
+        "turnsFailed": row.get("turnsFailed", 0), "errors": row.get("errors") or [],
+        "openTurn": row.get("openTurn", False), "retroInFlight": row.get("retroInFlight", False),
+        "infra": [[iso(s), iso(e)] for s, e in (row.get("infra") or [])],
+        "infraReasons": row.get("infraReasons") or [],
+        "toolItems": row.get("toolItems", 0), "tokensSource": row.get("tokensSource"),
+        "waitedOn": row.get("waitedOn") or [], "pendingGate": row.get("pendingGate", False),
+        "costUsd": usd if usd is not None else 0.0,
+        "cost": {"basis": cost["basis"], "reported": cost["reported"],
+                 "estimated": cost["estimated"]},
+    }
+
+
+def record_of(threads, ledger, identity, pricing=None, pricing_meta=None):
+    """events + ledger + run identity -> the shared run record.
 
     `threads` is a list of `{"meta": <bb thread>, "events": [...]}`. Pure: no
-    filesystem or network access; `pricing` is the model->price table.
+    filesystem or network access; `pricing` is the model->price table. What the
+    shared schema does not carry — BB's event-derived human time, its work
+    window, the pricing provenance — sits in `record["extras"]`.
     """
     pricing = pricing or {}
     ledger = ledger if isinstance(ledger, dict) else {}
-    rows = [analyse_thread(t["meta"], t["events"]) for t in threads]
-    for row in rows:
+    rows = []
+    for thread in threads:
+        row = analyse_thread(thread["meta"], thread["events"])
         row["pricingModel"] = next((m for m in row["models"] if price_for(m, pricing)), None)
-        price = price_for(row["pricingModel"], pricing) if row["pricingModel"] else None
-        row["cost"] = cost_state(row, price)
-        row["idleMs"] = max(0, row["wallMs"] - row["activeMs"])
-        # A wait that ran past the end of its turn is not work done in a turn: clip
-        # it, or `activeMs - waitMs` collapses real manager work to ~0 (F4).
-        clipped = _overlap_ms(_merge(row.get("_wait_intervals") or []), _merge(row["_intervals"]))
-        row["waitInTurnMs"] = clipped
-        row["waitOutOfTurnMs"] = max(0, row["waitMs"] - clipped)
-        row["workMs"] = (max(0, row["activeMs"] - clipped) if row["role"] == "manager"
-                         else row["activeMs"])
+        rows.append(row)
+    lanes = [lane_of(row, pricing) for row in rows]
 
     manager_id = identity.get("managerThreadId")
     manager = next((r for r in rows if r["threadId"] == manager_id), rows[0] if rows else None)
-    # The retro is the run's recorder, not the run: `run-mode.md` spawns it after
-    # `finishedAt` and nobody waits for it, so it must not stretch the span or
-    # make a terminal run read as partial. It keeps its own phase and its cost.
+    record = read_run(ledger, lanes, "bb",
+                      feature=identity.get("name") or (ledger or {}).get("feature"),
+                      project=identity.get("project"))
+
     work_rows = [r for r in rows if r["role"] != "retro"]
-    children = [r for r in work_rows if r is not manager]
-
     starts = [r["start"] for r in work_rows if r["start"]]
-    ends = [r["end"] for r in work_rows if r["end"]]
-    run_start = min(starts) if starts else None
-    run_end = max(ends) if ends else None
-    span = (run_end - run_start) if starts and ends else 0
     child_ends = [r["end"] for r in work_rows if r is not manager and r["end"]]
-    # M1: the work window is the first event to the last child settle (the end
-    # of the manager's turn during which that settle landed), not the run's span
-    # — a long idle tail must not read as work.
+    run_start = min(starts) if starts else None
     if child_ends and run_start is not None:
+        # M1: the work window ends at the last child settle, not the run's span,
+        # so a long idle tail does not read as work.
         settle = max(child_ends)
-        containing = [end for start, end in (manager["_intervals"] if manager else [])
+        containing = [end for start, end in (manager.get("_intervals") or [])
                       if start <= settle <= end]
-        work_window = max(0, (containing[-1] if containing else settle) - run_start)
+        work_window_ms = max(0, (containing[-1] if containing else settle) - run_start)
     else:
-        work_window = span
+        work_window_ms = (record["run"]["spanSec"] or 0) * 1000
 
-    items = normalise_items(ledger)
-    project = identity.get("project")
+    human_only_ms = _human_only_ms([r for r in rows if r["role"] == "manager"], rows)
+    task_key, task_id, task_resolution = _task_link(ledger, identity)
     repos = set(identity.get("repos") or [])
-    for item in items:
+    for item in normalise_items(ledger):
         if isinstance(item.get("repo"), str) and item["repo"]:
             repos.add(item["repo"])
-    if project:
-        repos.add(project)
-
-    by_role = collections.defaultdict(lambda: {"role": None, "activeMs": 0, "threads": 0, "turns": 0})
-    for row in rows:
-        phase = by_role[row["role"]]
-        phase["role"] = row["role"]
-        phase["activeMs"] += row["workMs"]
-        phase["threads"] += 1
-        phase["turns"] += row["turns"]
-
-    reported = [r["cost"]["reported"] for r in rows if r["cost"]["reported"] is not None]
-    estimated = [r["cost"]["estimated"] for r in rows if r["cost"]["estimated"] is not None]
-    run_reported = sum(reported) if reported else None
-    run_estimated = sum(estimated) if estimated else None
-    if run_reported is not None:
-        basis = "reported"
-    elif run_estimated is not None:
-        basis = "estimated"
-    elif any(r["tokenEventSeen"] for r in rows):
-        basis = "unpriced"
-    else:
-        basis = "unmeasured"
-    cost = {
-        "reported": run_reported,
-        "estimated": run_estimated,
-        "basis": basis,
-        "threadsPriced": sum(1 for r in rows if r["cost"]["basis"] in ("reported", "estimated")),
-        "threadsUnpriced": sum(1 for r in rows if r["cost"]["basis"] == "unpriced"),
-        "threadsUnmeasured": sum(1 for r in rows if r["cost"]["basis"] == "unmeasured"),
-    }
-
-    task_key, task_id, task_resolution = _task_link(ledger, identity)
-    partial = (any(r["status"] in ACTIVE_STATUSES or r["openTurn"] for r in work_rows)
-               or any(item.get("status") in RUNNING_ITEM_STATUSES for item in items))
-
-    run = {
+    if identity.get("project"):
+        repos.add(identity["project"])
+    span_sec = record["run"]["spanSec"] or 0.0
+    record["extras"] = {
         "managerThreadId": manager_id,
-        "name": identity.get("name") or ledger.get("feature"),
-        "taskKey": task_key,
-        "taskId": task_id,
-        "taskResolution": task_resolution,
-        "project": project,
-        "repos": sorted(repos),
-        "flow": identity.get("flow") or ledger.get("flow"),
-        "startedAt": iso(run_start),
-        "endedAt": iso(run_end),
-        "spanMs": span,
-        "orchestratorMs": max(0, span - (human_only := _human_only_ms(
-            [r for r in rows if r["role"] == "manager"], rows))),
-        "humanExcludedMs": human_only,
-        "workWindowMs": work_window,
-        "managerWaitMs": manager["waitMs"] if manager else 0,
-        "humanWaitMs": manager["humanMs"] if manager else 0,
-        "questionTimeoutMs": manager["questionTimeoutMs"] if manager else 0,
-        "humanWaits": manager["humanWaits"] if manager else [],
-        "skillSha": None,
-        "provenance": "unavailable",
-        "models": sorted({m for r in rows for m in r["models"]}),
-        "threads": len(rows),
-        "turns": sum(r["turns"] for r in rows),
-        "cost": cost,
         "pricing": pricing_meta,
-    }
-    record = {
-        "schemaVersion": SCHEMA_VERSION,
-        "run": run,
-        "phases": [by_role[k] for k in sorted(by_role)],
-        "threads": rows,
-        "items": items,
-        "findings": build_findings(rows, ledger, manager),
-        "partial": partial,
+        "humanExcludedSec": human_only_ms / 1000,
+        "orchestratorSec": max(0.0, span_sec - human_only_ms / 1000),
+        "workWindowSec": work_window_ms / 1000,
+        "managerWaitSec": (manager["waitMs"] / 1000) if manager else 0.0,
+        "questionTimeoutSec": (manager["questionTimeoutMs"] / 1000) if manager else 0.0,
+        "taskKey": task_key, "taskId": task_id, "taskResolution": task_resolution,
+        "repos": sorted(repos),
     }
     for row in rows:
         row.pop("_intervals", None)
@@ -720,44 +546,29 @@ def assemble_record(threads, ledger, identity, pricing=None, pricing_meta=None):
         row.pop("costReported", None)
     return record
 
-
-def slugify(value):
-    return re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
-
-
-def record_dirname(record):
-    """The corpus directory name: `<date>-bb-<project>-<feature>`."""
-    run = record["run"]
-    return corpus_dirname((run.get("startedAt") or "")[:10], "bb",
-                          run.get("project"), run.get("name") or run.get("managerThreadId"))
-
-
 def self_test():
-    """Assert the pure logic: pricing, cost arithmetic, ledger shapes, M1-M5."""
+    """Assert the adapter: pricing, event parsing, lanes, and the shared schema.
+
+    The record's own figures are asserted where they live — ledger_read.py's
+    self-test; this one proves the adapter fills lanes correctly and that the
+    record it produces carries the shared shape plus BB's `extras`.
+    """
     assert manager_ids("m1") == ["m1"]
     assert manager_ids("m1", ["m2", "m1", "", None]) == ["m1", "m2"]
     price = {"prompt": 1e-6, "completion": 1e-5, "input_cache_read": 1e-7}
     tokens = {"inputTokens": 1000, "cacheReadInputTokens": 2000,
               "cacheWriteInputTokens": 0, "outputTokens": 100}
     got = cost_of(tokens, price)
-    want = 1000e-6 + 2000e-7 + 100e-5
-    assert abs(got - want) < 1e-12, (got, want)
+    assert abs(got - (1000e-6 + 2000e-7 + 100e-5)) < 1e-12
     assert cost_of(None, price) is None and cost_of(tokens, None) is None
-
     table = {"anthropic/claude-sonnet-5": price}
     assert price_for("openrouter/anthropic/claude-sonnet-5", table) == price
     assert price_for("opencode/deepseek-v4-flash", table) is None
-
-    assert normalise_items({"items": {"01": {"status": "done"}}}) == [{"status": "done", "id": "01"}]
-    assert normalise_items({}) == []
-    assert normalise_items({"items": []}) == []
-
-    # unavailable cost never renders as $0.00
     assert format_cost({"reported": None, "estimated": None, "basis": "unpriced"}) == "unpriced"
     assert format_cost({"reported": None, "estimated": None, "basis": "unmeasured"}) == "unmeasured"
+    assert format_cost({"reported": 1.5, "estimated": None, "basis": "reported"}) == "$1.50"
     assert "$0.00" not in format_cost({"reported": None, "estimated": None, "basis": "unpriced"})
 
-    # --- a synthetic run exercising M1-M5 ---------------------------------
     T0 = 1_700_000_000_000
 
     def ev(kind, offset, data=None):
@@ -813,8 +624,6 @@ def self_test():
             "inputTokens": 10, "outputTokens": 5, "cacheReadInputTokens": 0, "cacheWriteInputTokens": 0}}}),
         ev("turn/completed", 800_000, {"status": "completed"}),
     ]
-    # A manager `bb thread tell` follow-up to a worker is shaped exactly like a
-    # human message (initiator "user"); on a child it must not count as human.
     worker_told = [
         ev("client/turn/requested", 80_000, sonnet),
         ev("turn/started", 80_000),
@@ -831,20 +640,14 @@ def self_test():
         thread("thr_cr", "REVIEW 01 · thing", "idle", review_unpriced),
         thread("thr_ct", "02 · worker", "idle", worker_told),
     ]
-    item = {"id": "01", "status": "done", "reviews": [{"pass": 1, "verdict": "CLEAN"}],
-            "blockedBy": []}
-    ledger_dict = {"feature": "DOT-11", "task": "DOT-11", "flow": "A",
-                   "items": {"01": dict(item)}}
-    ledger_list = ledger_dict
+    item = {"id": "01", "status": "done", "reviews": [{"pass": 1, "verdict": "CLEAN"}], "blockedBy": []}
+    ledger_dict = {"feature": "DOT-11", "task": "DOT-11", "flow": "A", "items": {"01": dict(item)}}
     ledger_no_task = {"feature": "DOT-11", "items": {"01": dict(item)}}
     identity = {"managerThreadId": "thr_mgr", "project": "bb-plugins"}
     pricing = {"anthropic/claude-sonnet-5": price}
 
-    rec = assemble_record(threads, ledger_list, identity, pricing)
-    assert rec == assemble_record(threads, ledger_dict, identity, pricing)
-
     # a compacted thread resets its counter; epochs are summed, not last-wins
-    compacted = [thread("thr_cc", "07 · worker", "idle", [
+    compacted = thread("thr_cc", "07 · worker", "idle", [
         ev("client/turn/requested", 0, dict(sonnet)),
         ev("turn/started", 0),
         ev("thread/tokenUsage/updated", 50_000, {"tokenUsage": {"total": {
@@ -856,89 +659,54 @@ def self_test():
             "inputTokens": 10, "cachedInputTokens": 3000, "cacheReadInputTokens": 3000,
             "cacheWriteInputTokens": 0, "outputTokens": 50, "totalTokens": 3060}}}),
         ev("turn/completed", 100_000, {"status": "completed"}),
-    ])]
-    cc = analyse_thread(compacted[0]["meta"], compacted[0]["events"])
-    assert cc["tokenEpochs"] == 2, cc["tokenEpochs"]
-    assert cc["tokens"]["totalTokens"] == 9260, cc["tokens"]
+    ])
+    cc = analyse_thread(compacted["meta"], compacted["events"])
+    assert cc["tokenEpochs"] == 2 and cc["tokens"]["totalTokens"] == 9260, cc["tokens"]
     assert cc["tokens"]["inputTokens"] == 2010, cc["tokens"]
 
-    # F1: a report turn is many requests but pi reports one usage snapshot, so
-    # the tool-item count is the floor on the request count, and it is reported
-    # rather than converted into a dollar figure
-    heavy = [thread("thr_hv", "01 · worker", "idle", [
+    # F1: the tool-item count is the floor on the requests-per-turn denominator
+    heavy = thread("thr_hv", "01 · worker", "idle", [
         ev("client/turn/requested", 0, dict(sonnet)),
         ev("turn/started", 0),
         ev("item/started", 1_000, {"item": {"id": "r1", "type": "reasoning"}}),
-        ev("item/started", 1_100, {"item": {"id": "c1", "type": "commandExecution",
-                                             "command": "ls"}}),
-        ev("item/completed", 1_200, {"item": {"id": "c1", "type": "commandExecution",
-                                                "command": "ls"}}),
-        ev("item/started", 1_300, {"item": {"id": "c2", "type": "commandExecution",
-                                             "command": "ls"}}),
+        ev("item/started", 1_100, {"item": {"id": "c1", "type": "commandExecution", "command": "ls"}}),
+        ev("item/completed", 1_200, {"item": {"id": "c1", "type": "commandExecution", "command": "ls"}}),
+        ev("item/started", 1_300, {"item": {"id": "c2", "type": "commandExecution", "command": "ls"}}),
         ev("item/started", 1_400, {"item": {"id": "m1", "type": "agentMessage"}}),
         ev("thread/tokenUsage/updated", 2_000, {"tokenUsage": {"total": {
             "inputTokens": 100, "cachedInputTokens": 70_000, "cacheReadInputTokens": 70_000,
             "cacheWriteInputTokens": 0, "outputTokens": 50, "totalTokens": 70_150}}}),
         ev("turn/completed", 3_000, {"status": "completed"}),
-    ])]
-    hrow = analyse_thread(heavy[0]["meta"], heavy[0]["events"])
-    assert hrow["toolItems"] == 2, hrow["toolItems"]         # the two tool items, not the reasoning
-    assert hrow["tokensSource"] == "snapshot" and hrow["tokens"]["totalTokens"] == 70_150, hrow["tokens"]
+    ])
+    hrow = analyse_thread(heavy["meta"], heavy["events"])
+    assert hrow["toolItems"] == 2 and hrow["tokensSource"] == "snapshot", hrow
 
-    # pricing provenance is carried verbatim into the record
-    meta = {"source": "cache", "fetchedAt": iso(1_700_000_000_000)}
-    assert assemble_record(threads, ledger_list, identity, pricing, meta)["run"]["pricing"] == meta
-
-    # a manager-only ORCHESTRATE run is a finding; a dispatched run never fires it
-    solo = [thread("thr_solo", "ORCHESTRATE thing", "idle", [
-        ev("client/turn/requested", 0, dict(sonnet, initiator="user", target={"kind": "thread-start"})),
-        ev("turn/started", 0),
-        ev("turn/completed", 60_000, {"status": "completed"}),
-    ], is_manager=True)]
-    solo_rec = assemble_record(solo, {}, {"managerThreadId": "thr_solo", "project": "x"}, pricing)
-    assert any("manager-only run" in f for f in solo_rec["findings"]), solo_rec["findings"]
-    assert not any("manager-only run" in f for f in rec["findings"]), rec["findings"]
-
+    rec = record_of(threads, ledger_dict, identity, pricing)
+    assert rec["schemaVersion"] == 2 and rec["runtime"] == "bb"
+    assert rec["run"]["spanSec"] == 1500, rec["run"]["spanSec"]
+    assert rec["run"]["lanes"] == 5 and rec["run"]["turns"] == 7
     # M1: span, work window and the manager's wait are three quantities
-    assert rec["run"]["spanMs"] == 1_500_000, rec["run"]["spanMs"]
-    assert rec["run"]["workWindowMs"] == 1_000_000, rec["run"]["workWindowMs"]
-    assert rec["run"]["spanMs"] > rec["run"]["workWindowMs"]
-    assert rec["run"]["managerWaitMs"] == 120_000, rec["run"]["managerWaitMs"]
-
-    # M2: a message-borne approval counts, and so does the wait after a
-    # timed-out gate until the reply. Review work during that wait stays.
-    assert rec["run"]["humanWaitMs"] == 1_280_000, rec["run"]["humanWaitMs"]
-    assert rec["run"]["questionTimeoutMs"] == 390_000, rec["run"]["questionTimeoutMs"]
-    assert rec["run"]["orchestratorMs"] == 700_000, rec["run"]["orchestratorMs"]
+    assert rec["extras"]["workWindowSec"] == 1000, rec["extras"]["workWindowSec"]
+    assert rec["extras"]["workWindowSec"] < rec["run"]["spanSec"]
+    assert rec["extras"]["managerWaitSec"] == 120, rec["extras"]["managerWaitSec"]
+    # M2: message-borne approval and the post-timeout wait are human time
+    assert rec["extras"]["humanExcludedSec"] == 800, rec["extras"]["humanExcludedSec"]
+    assert rec["extras"]["questionTimeoutSec"] == 390, rec["extras"]["questionTimeoutSec"]
+    assert rec["extras"]["orchestratorSec"] == 700, rec["extras"]["orchestratorSec"]
+    # pricing provenance is carried verbatim into extras
+    meta = {"source": "cache", "fetchedAt": iso(1_700_000_000_000)}
+    assert record_of(threads, ledger_dict, identity, pricing, meta)["extras"]["pricing"] == meta
 
     # a tell-shaped follow-up is human wait on the manager, never on a child
-    ct = next(t for t in rec["threads"] if t["threadId"] == "thr_ct")
-    assert ct["humanMs"] == 0, ct["humanMs"]
-    assert ct["humanWaits"] == [], ct["humanWaits"]
-
-    # a gate still pending when the log ends is real elapsed wait, not zero
-    pending_gate_events = [
-        ev("client/turn/requested", 0, dict(sonnet, initiator="user", target={"kind": "thread-start"})),
-        ev("turn/started", 0),
-        ev("system/interaction/lifecycle", 100_000, {"interaction": {"id": "q2", "status": "pending",
-                                                                      "payload": {"kind": "plugin", "title": "Still open?"}}}),
-        ev("agentMessage", 400_000, {}),
-    ]
-    pending_rec = assemble_record(
-        [thread("thr_pg", "DOT-11 gate", "idle", pending_gate_events, is_manager=True)],
-        ledger_list, identity, pricing)
-    assert pending_rec["run"]["humanWaitMs"] == 300_000, pending_rec["run"]["humanWaitMs"]
-    assert pending_rec["run"]["questionTimeoutMs"] == 0
-    assert pending_rec["run"]["humanWaits"][-1]["stillPending"] is True
-    assert pending_rec["threads"][0]["pendingGate"] is True
+    ct = next(lane for lane in rec["lanes"] if lane["name"] == "thr_ct")
+    assert ct["humanSec"] == 0 and ct["humanWaits"] == [], ct
 
     # M5: the manager's wait is waiting, not manager work
-    mgr = next(t for t in rec["threads"] if t["threadId"] == "thr_mgr")
-    assert mgr["activeMs"] == 220_000 and mgr["waitMs"] == 120_000
-    assert mgr["workMs"] == 100_000, mgr["workMs"]
+    mgr = next(lane for lane in rec["lanes"] if lane["name"] == "thr_mgr")
+    assert mgr["activeSec"] == 220 and mgr["waitSec"] == 120 and mgr["workSec"] == 100, mgr
 
-    # M6: a wait that outlives its turn is not turn work, and a host restart is
-    # downtime, not a thread waiting on a sibling (F3/F4 of the 2026-09-23 retro).
+    # M6: a wait that outlives its turn is not turn work; a host restart is
+    # downtime, not a thread waiting on a sibling
     out_of_turn = [
         ev("client/turn/requested", 0, dict(sonnet, initiator="user", target={"kind": "thread-start"})),
         ev("turn/started", 0),
@@ -956,20 +724,17 @@ def self_test():
         ev("system/thread/interrupted", 100_000, {"reason": "host-daemon-restarted"}),
         ev("agentMessage", 800_000, {}),
     ]
-    infra_rec = assemble_record(
+    infra_rec = record_of(
         [thread("thr_ot", "DOT-11 run", "idle", out_of_turn, is_manager=True),
          thread("thr_rs", "REVIEW 09 · thing", "idle", restarted)],
-        ledger_list, {"managerThreadId": "thr_ot", "project": "bb-plugins"}, pricing)
-    ot = next(t for t in infra_rec["threads"] if t["threadId"] == "thr_ot")
-    assert ot["waitMs"] == 250_000 and ot["waitInTurnMs"] == 50_000, ot
-    assert ot["waitOutOfTurnMs"] == 200_000, ot
-    assert ot["workMs"] == 50_000, ot["workMs"]
-    rs = next(t for t in infra_rec["threads"] if t["threadId"] == "thr_rs")
-    assert rs["infra"] == [[T0 + 100_000, T0 + 800_000]], rs["infra"]
+        ledger_dict, {"managerThreadId": "thr_ot", "project": "bb-plugins"}, pricing)
+    ot = next(lane for lane in infra_rec["lanes"] if lane["name"] == "thr_ot")
+    assert ot["waitSec"] == 250 and ot["waitOutOfTurnSec"] == 200 and ot["workSec"] == 50, ot
+    rs = next(lane for lane in infra_rec["lanes"] if lane["name"] == "thr_rs")
+    assert [list(pair) for pair in rs["infra"]] == [[iso(T0 + 100_000), iso(T0 + 800_000)]], rs["infra"]
     assert rs["infraReasons"] == ["host-daemon-restarted"]
     assert any("host-restart downtime" in f and "thr_rs" in f for f in infra_rec["findings"]), \
         infra_rec["findings"]
-    assert rs["waitingOn"] is None
     assert not any("idle" in f and "waiting on" in f and "thr_rs" in f for f in infra_rec["findings"]), \
         infra_rec["findings"]
 
@@ -983,111 +748,76 @@ def self_test():
         ev("item/started", 200_000, {"item": {"id": "z1", "type": "reasoning"}}),
         ev("turn/completed", 500_000, {"status": "completed"}),
     ]
-    resumed_rec = assemble_record(
-        [thread("thr_rr", "REVIEW 09 · thing", "idle", resumed)],
-        ledger_list, {"managerThreadId": "thr_rr", "project": "bb-plugins"}, pricing)
-    rrow = resumed_rec["threads"][0]
+    rrow = analyse_thread(thread("thr_rr", "REVIEW 09 · thing", "idle", resumed)["meta"], resumed)
     assert rrow["turns"] == 1 and rrow["turnsFailed"] == 1, rrow
-    assert rrow["activeMs"] == 500_000, rrow["activeMs"]
-    assert rrow["idleMs"] == 0, rrow["idleMs"]
+    assert rrow["activeMs"] == 500_000 and rrow["idleMs"] == 0, rrow
 
     # cost provenance: reported is null, estimated populated, basis says estimated
-    c1 = next(t for t in rec["threads"] if t["threadId"] == "thr_c1")
+    c1 = next(lane for lane in rec["lanes"] if lane["name"] == "thr_c1")
     assert c1["cost"]["reported"] is None
     assert abs(c1["cost"]["estimated"] - 0.0022) < 1e-12, c1["cost"]
     assert c1["cost"]["basis"] == "estimated"
-
     # M4: unmeasured != unpriced, and neither is 0.00
-    cw = next(t for t in rec["threads"] if t["threadId"] == "thr_cw")
-    cr = next(t for t in rec["threads"] if t["threadId"] == "thr_cr")
-    assert cw["cost"]["basis"] == "unmeasured" and cw["cost"]["estimated"] is None
-    assert cr["cost"]["basis"] == "unpriced" and cr["cost"]["estimated"] is None
+    cw = next(lane for lane in rec["lanes"] if lane["name"] == "thr_cw")
+    cr = next(lane for lane in rec["lanes"] if lane["name"] == "thr_cr")
+    assert cw["cost"]["basis"] == "unmeasured" and cr["cost"]["basis"] == "unpriced"
     assert cw["cost"]["basis"] != cr["cost"]["basis"]
     assert any("unmeasured" in f for f in rec["findings"])
     assert any("unpriced" in f for f in rec["findings"])
+    assert rec["run"]["cost"]["basis"] == "estimated"
 
-    # M3: an idle finding names what the thread was waiting on, or does not fire
-    assert any("waiting on review thr_cr" in f for f in rec["findings"]), rec["findings"]
-    assert not any(f.startswith("manager ") and "idle" in f for f in rec["findings"])
-    assert not any("span" in f for f in rec["findings"]), rec["findings"]
-    # ...and the same cause is machine-readable on the thread, not only in prose
-    assert all("waitingOn" in t for t in rec["threads"])
-    assert cw["waitingOn"] == "thr_cr", cw["waitingOn"]
-    assert mgr["waitingOn"] is None
+    # M3: an idle finding names what the lane was waiting on, or does not fire
+    assert any("waiting on code-review thr_cr" in f for f in rec["findings"]), rec["findings"]
+    assert not any(f.startswith("coordinator ") and "idle" in f for f in rec["findings"])
+    assert all("waitingOn" in lane for lane in rec["lanes"])
+    assert cw["waitingOn"] == "thr_cr" and mgr["waitingOn"] is None, (cw, mgr)
 
-    # reserved slot and task link
-    assert rec["run"]["skillSha"] is None and rec["run"]["provenance"] == "unavailable"
-    assert rec["run"]["name"] == "DOT-11"
-    assert rec["run"]["taskKey"] == "DOT-11" and rec["run"]["taskResolution"] == "run-name"
-    assert rec["run"]["repos"] == ["bb-plugins"]
-    none_task = assemble_record(threads, ledger_no_task, identity, pricing)
-    assert "taskKey" in none_task["run"] and "taskId" in none_task["run"]
-    assert none_task["run"]["taskKey"] is None and none_task["run"]["taskId"] is None
-    assert none_task["run"]["taskResolution"] == "unresolved"
+    # reserved slot, task link and repos live in extras
+    none_task = record_of(threads, ledger_no_task, identity, pricing)
+    assert none_task["extras"]["taskKey"] is None and none_task["extras"]["taskResolution"] == "unresolved"
+    assert rec["extras"]["taskKey"] == "DOT-11" and rec["extras"]["taskResolution"] == "run-name"
+    assert rec["extras"]["repos"] == ["bb-plugins"]
 
     # a ledger that is not an object at all cannot make the write fail
-    assert assemble_record(threads, [], identity, pricing)["items"] == []
-    assert assemble_record(threads, "garbage", identity, pricing)["items"] == []
+    assert record_of(threads, [], identity, pricing)["items"] == {}
+    assert record_of(threads, "garbage", identity, pricing)["items"] == {}
 
-    # a settled run is not partial; a live thread makes it partial
-    assert rec["partial"] is False
-    live = assemble_record([threads[0], thread("thr_live", "02 · worker", "active", worker_priced)],
-                           ledger_list, identity, pricing)
-    assert live["partial"] is True
+    # a manager-only ORCHESTRATE run is a finding; a dispatched run never fires it
+    solo = thread("thr_solo", "ORCHESTRATE thing", "idle", [
+        ev("client/turn/requested", 0, dict(sonnet, initiator="user", target={"kind": "thread-start"})),
+        ev("turn/started", 0),
+        ev("turn/completed", 60_000, {"status": "completed"}),
+    ], is_manager=True)
+    solo_rec = record_of([solo], {}, {"managerThreadId": "thr_solo", "project": "x"}, pricing)
+    assert any("manager-only run" in f for f in solo_rec["findings"]), solo_rec["findings"]
+    assert not any("manager-only run" in f for f in rec["findings"]), rec["findings"]
 
-    # F5: a RETRO child is the recorder — it is spawned after the run ends and
-    # must not make a terminal run partial or stretch its span
+    # a settled run is not partial; a live lane makes it partial
+    assert rec["run"]["partial"] is False
+    live = record_of(threads + [thread("thr_live", "02 · worker", "active", worker_priced)],
+                     ledger_dict, identity, pricing)
+    assert live["run"]["partial"] is True
+
+    # F5: a RETRO child is the recorder — it must not make a terminal run partial
+    # or stretch its span
     retro = thread("thr_retro", "RETRO · thr_mgr", "active", [
         ev("client/turn/requested", 1_800_000, dict(sonnet)),
         ev("turn/started", 1_800_000),
-        ev("item/started", 1_810_000, {"item": {"id": "c9", "type": "commandExecution",
-                                                 "command": "ls"}}),
+        ev("item/started", 1_810_000, {"item": {"id": "c9", "type": "commandExecution", "command": "ls"}}),
     ])
-    retro_rec = assemble_record(threads + [retro], ledger_list, identity, pricing)
-    assert retro_rec["partial"] is False, retro_rec["partial"]
-    assert retro_rec["run"]["spanMs"] == rec["run"]["spanMs"], retro_rec["run"]["spanMs"]
-    rr = next(t for t in retro_rec["threads"] if t["threadId"] == "thr_retro")
-    assert rr["role"] == "retro" and rr["toolItems"] == 1 and rr["retroInFlight"] is True, rr
+    retro_rec = record_of(threads + [retro], ledger_dict, identity, pricing)
+    assert retro_rec["run"]["partial"] is False, retro_rec["run"]["partial"]
+    assert retro_rec["run"]["spanSec"] == rec["run"]["spanSec"]
+    assert [lane["role"] for lane in retro_rec["retro"]] == ["retro"]
+    assert all(lane["name"] != "thr_retro" for lane in retro_rec["lanes"])
+    assert retro_rec["retro"][0]["toolItems"] == 1 and retro_rec["retro"][0]["retroInFlight"] is True
     assert not any(("turn/open" in f) or ("unmeasured" in f and "thr_retro" in f)
                    for f in retro_rec["findings"]), retro_rec["findings"]
-    assert any(p["role"] == "retro" for p in retro_rec["phases"]), retro_rec["phases"]
 
-    # directory name is the browsable key, stable across invocations
-    name = record_dirname(rec)
-    assert name == record_dirname(assemble_record(threads, ledger_dict, identity, pricing)), name
-    assert name == "2023-11-14-bb-bb-plugins-dot-11", name
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}-bb-[a-z0-9-]+", name)
-
-    row = {"role": "worker", "threadId": "thr_x", "title": "01 · thing", "turnsFailed": 0,
-           "errors": [], "status": "idle", "wallMs": 60_000, "activeMs": 60_000,
-           "idleMs": 0, "models": ["m1", "m2"], "pricingModel": "m1", "_intervals": [[0, 60_000]],
-           "cost": {"reported": None, "estimated": 1.0, "basis": "estimated"}}
-    assert any("2 models" in f for f in build_findings([row], None, None)), build_findings([row], None, None)
-    assert build_findings([dict(row, models=["m1"])], None, None) == []
-
-    # A stopped item is typed by its cause; an untyped or invented one is a finding
-    stopped = {"items": {
-        "01": {"status": "blocked",
-               "cause": {"code": "cap_exhausted", "detail": "three findings rounds"}},
-        "02": {"status": "failed", "cause": {"code": "dispatch_failed", "detail": "spawn refused"}},
-        "03": {"status": "blocked"},
-        "04": {"status": "blocked", "cause": {"code": "made_up", "detail": "x"}},
-        "05": {"status": "done"},
-    }}
-    typed = build_findings([], stopped, None)
-    assert any("cap_exhausted: three findings rounds" in f for f in typed), typed
-    assert any("dispatch_failed: spawn refused" in f for f in typed), typed
-    assert sum("with no cause" in f for f in typed) == 2, typed
-    assert any("no cause (made_up)" in f for f in typed), typed
-    assert not any("— made_up:" in f for f in typed), typed
-    capped = build_findings([], {"items": {"01": {"status": "done", "fixes": [
-        {"pass": 1}, {"pass": 2}, {"pass": 3}]}}}, None)
-    assert any("hit the cap (3)" in f for f in capped), capped
-    park = dict(row, models=["m1"], idleMs=20 * 60_000, start=T0, end=T0 + 1_200_000,
-                _intervals=[[T0, T0 + 60_000]])
-    assert not any("idle" in f for f in build_findings([park], None, None)), build_findings([park], None, None)
+    # the corpus name is the browsable key, stable across invocations
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}-bb-[a-z0-9-]+", rec["record_dirname"]), rec["record_dirname"]
+    assert rec["record_dirname"] == record_of(threads, ledger_dict, identity, pricing)["record_dirname"]
     print("self-test OK")
-
 
 def thread_events(tid):
     try:
@@ -1107,7 +837,7 @@ def children_of(manager_id):
 
 
 def fetch_run(manager_id, chain=()):
-    """The run's managers and every child of each, as `assemble_record` wants them.
+    """The run's managers and every child of each, as `record_of` wants them.
 
     `manager_id` is the run's identity. `chain` is the ledger's
     `executors`: the managers that held this run, oldest first. Every one of
@@ -1170,16 +900,22 @@ def openrouter_pricing(cache_path, enabled):
     return table, {"source": "openrouter", "fetchedAt": iso(int(time.time() * 1000))}
 
 
+def _order(lane):
+    value = parse_ts(lane.get("firstTs"))
+    return value.timestamp() if value else 0.0
+
+
 def print_table(record, no_pricing):
     run = record["run"]
     cost = run["cost"]
-    print(f"RUN {run['managerThreadId']}  name={run['name'] or '-'}  flow={run['flow'] or '-'}  "
-          f"project={run['project'] or '-'}  partial={str(record['partial']).lower()}")
-    print(f"    orchestrator={minutes(run['orchestratorMs'])}  span={minutes(run['spanMs'])}  "
-          f"human={minutes(run['humanExcludedMs'])} excluded  "
-          f"work-window={minutes(run['workWindowMs'])}  "
-          f"manager-wait={minutes(run['managerWaitMs'])}  "
-          f"threads={run['threads']}  turns={run['turns']}")
+    extras = record.get("extras") or {}
+    print(f"RUN {extras.get('managerThreadId')}  name={run['name'] or '-'}  flow={run['flow'] or '-'}  "
+          f"project={run['project'] or '-'}  partial={str(run['partial']).lower()}")
+    print(f"    orchestrator={fmt_seconds(extras.get('orchestratorSec'))}  span={fmt_seconds(run['spanSec'])}  "
+          f"human={fmt_seconds(extras.get('humanExcludedSec'))} excluded  "
+          f"work-window={fmt_seconds(extras.get('workWindowSec'))}  "
+          f"manager-wait={fmt_seconds(extras.get('managerWaitSec'))}  "
+          f"lanes={run['lanes']}  turns={run['turns']}")
     if no_pricing:
         print("    cost: pricing disabled (--no-pricing)")
     elif cost["basis"] == "unmeasured":
@@ -1188,29 +924,33 @@ def print_table(record, no_pricing):
         print("    cost: unavailable (tokens present, no matching price)")
     else:
         print(f"    cost ${cost['estimated'] if cost['basis'] == 'estimated' else cost['reported']:.2f} "
-              f"{cost['basis']} ({cost['threadsPriced']}/{run['threads']} priced; "
-              f"{cost['threadsUnpriced']} unpriced; {cost['threadsUnmeasured']} unmeasured)")
-    print("\nPHASES (work time summed for the manager, waits excluded; phases overlap)")
-    for phase in sorted(record["phases"], key=lambda p: -p["activeMs"]):
-        print(f"    {phase['role']:<10} {minutes(phase['activeMs']):>8}  "
-              f"over {phase['threads']:>2} thread(s), {phase['turns']:>2} turn(s)")
-    print("\nTHREADS  (at = dispatch offset from the run's first event)")
-    starts = [t["start"] for t in record["threads"] if t["start"]]
-    run_start = min(starts) if starts else 0
-    print(f"    {'thread':<16}{'role':<10}{'model':<40}{'turns':>6}{'tools':>6}{'at':>8}{'wall':>8}"
+              f"{cost['basis']} ({cost['lanesPriced']}/{run['lanes']} priced; "
+              f"{cost['lanesUnpriced']} unpriced; {cost['lanesUnmeasured']} unmeasured)")
+    print("\nPHASES (work time summed for the coordinator, waits excluded; phases overlap)")
+    for role, phase in sorted(record["roles"].items(), key=lambda kv: -kv[1]["workSec"]):
+        print(f"    {role:<12} {fmt_seconds(phase['workSec']):>8}  "
+              f"over {phase['agents']:>2} lane(s), {phase['turns']:>2} turn(s)")
+    print("\nLANES  (at = dispatch offset from the run's first activity)")
+    ordered = sorted(record["lanes"], key=_order)
+    run_start = parse_ts(ordered[0]["firstTs"]) if ordered and ordered[0].get("firstTs") else None
+    print(f"    {'lane':<16}{'role':<12}{'model':<40}{'turns':>6}{'tools':>6}{'at':>8}{'span':>8}"
           f"{'active':>8}{'wait':>7}{'idle':>8}{'cost':>10}  errors")
-    for row in sorted(record["threads"], key=lambda r: r["start"] or 0):
-        at = "+" + minutes((row["start"] or run_start) - run_start)
-        print(f"    {row['threadId']:<16}{row['role']:<10}{(row['model'] or '-'):<40}{row['turns']:>6}"
-              f"{row['toolItems']:>6}"
-              f"{at:>8}{minutes(row['wallMs']):>8}{minutes(row['activeMs']):>8}"
-              f"{minutes(row['waitMs']):>7}{minutes(row['idleMs']):>8}{format_cost(row['cost']):>10}  "
-              f"{','.join(row['errors']) or ''}")
-    if any(r.get("tokensSource") == "snapshot" for r in record["threads"]):
+    for lane in ordered:
+        first = parse_ts(lane.get("firstTs"))
+        at = ("+" + fmt_seconds((first - run_start).total_seconds())
+              if first and run_start else "-")
+        print(f"    {lane['name']:<16}{lane['role']:<12}{(lane.get('model') or '-'):<40}"
+              f"{lane.get('turns', 0):>6}{lane.get('toolItems', 0):>6}"
+              f"{at:>8}{fmt_seconds(lane.get('spanSec')):>8}{fmt_seconds(lane.get('activeSec')):>8}"
+              f"{fmt_seconds(lane.get('waitSec')):>7}{fmt_seconds(lane.get('idleSec')):>8}"
+              f"{format_cost(lane.get('cost') or {'basis': 'unmeasured'}):>10}  "
+              f"{','.join(lane.get('errors') or []) or ''}")
+    if any(lane.get("tokensSource") == "snapshot" for lane in record["lanes"]):
         print("    tokens: pi's token event is one request per turn, not a turn total —"
               " the cost above is a floor (see the tools column)")
     print("\nFINDINGS")
     print("\n".join(f"    - {f}" for f in record["findings"]) or "    (none)")
+    print(f"\ncorpus dirname: runs/{record['record_dirname']}")
 
 
 def main():
@@ -1244,10 +984,10 @@ def main():
     manager_meta = threads[0]["meta"]
     pricing, pricing_meta = openrouter_pricing(os.path.join(data_dir, "cache", "openrouter-models.json"),
                                                not args.no_pricing)
-    record = assemble_record(threads, ledger,
-                             {"managerThreadId": args.manager,
-                              "project": project_name(manager_meta.get("projectId"))},
-                             pricing, pricing_meta)
+    record = record_of(threads, ledger,
+                       {"managerThreadId": args.manager,
+                        "project": project_name(manager_meta.get("projectId"))},
+                       pricing, pricing_meta)
 
     if args.output_dir:
         os.makedirs(args.output_dir, exist_ok=True)
@@ -1260,6 +1000,7 @@ def main():
         print(json.dumps(record, indent=2))
         return
     print_table(record, args.no_pricing)
+
 
 
 if __name__ == "__main__":

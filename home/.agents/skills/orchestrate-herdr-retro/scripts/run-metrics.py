@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Read a Herdr orchestration run's records into numbers.
+"""Read a Herdr orchestration run's records into numbers (adapter).
 
-Source of truth: the run ledger (`$RUNDIR/orchestration.json`) plus the pi
-session transcripts it names. A pi session transcript is JSONL; every
-`message` event carries a timestamp, and every assistant message carries the
-model and `usage` (tokens plus pi's own computed cost). Herdr keeps no turn
-telemetry of its own, so this script reads nothing from it.
+This script is Herdr's **telemetry adapter**: Herdr keeps no turn telemetry of
+its own, so the facts come from the run ledger (`$RUNDIR/orchestration.json`)
+plus the pi session transcripts it names. Each ledger agent's transcript is
+read into one **lane**, and `orchestrate-core/scripts/ledger_read.py` owns the
+record — the figures, the role vocabulary and the output schema, which is the
+same one BB's adapter emits.
+
+A pi session transcript is JSONL; every event carries a timestamp, and every
+assistant message carries the model and `usage` (tokens plus pi's own computed
+cost).
 
 Read-only, stdlib-only, safe to re-run.
 
@@ -20,41 +25,17 @@ Usage:
 import argparse
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 
 DEFAULT_RUNDIR = "."
-
-# The cause vocabulary's single machine copy lives in orchestrate-core/scripts,
-# so the three readers cannot drift from cause-contract.md.
-sys.path.insert(
-    0,
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                 "orchestrate-core", "scripts"),
-)
-from orchestrate_common import CAUSE_CODES, corpus_dirname, ponytail_passes  # noqa: E402
-
-# A session whose messages pause longer than this is not working: it is waiting on
-# another agent, or the machine was suspended under it.
 QUIET_GAP_SEC = 600
-# How far a ledger interval may differ from the agent's own session window before
-# the retro calls it drift rather than rounding.
-DRIFT_TOLERANCE_SEC = 120
 
-
-def parse_ts(text):
-    """Parse an ISO-8601 timestamp into an aware datetime, or None."""
-    if not text or not isinstance(text, str):
-        return None
-    try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-
-def slug(text):
-    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9_-]+", "-", text.lower())).strip("-")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))), "orchestrate-core", "scripts"))
+from ledger_read import (  # noqa: E402
+    agents_from_ledger, corpus_dirname, fmt_seconds, parse_ts, read_run,
+)
 
 
 def interval_union(intervals):
@@ -75,80 +56,22 @@ def interval_union(intervals):
 
 
 def quiet_seconds(times, gap=QUIET_GAP_SEC):
-    """Seconds of a session's span that hold no message for longer than `gap`.
-
-    A session's span is first→last message. For a worker re-prompted for a fix
-    round, or a session that outlived a host suspend, that span contains hours
-    that are not work; this is the honest denominator for "how long was this
-    agent on".
-    """
+    """Seconds of a session's span that hold no message for longer than `gap`."""
     ordered = sorted(t for t in times if t)
     return sum((b - a).total_seconds() for a, b in zip(ordered, ordered[1:])
                if (b - a).total_seconds() > gap)
 
 
-def unique_by_session(sessions):
-    """One row per transcript: a fix round re-prompts the worker's own session.
-
-    The ledger records that fix as its own entry (role `fix`), so the same
-    transcript appears twice and would otherwise be priced, timed and covered
-    twice.
-    """
+def unique_by_session(lanes):
+    """One lane per transcript: a fix round re-prompts the worker's own session."""
     seen, unique = set(), []
-    for metrics in sessions:
-        path = metrics.get("session")
+    for lane in lanes:
+        path = lane.get("session")
         if path and path in seen:
             continue
         seen.add(path)
-        unique.append(metrics)
+        unique.append(lane)
     return unique
-
-
-def ledger_drift(sessions):
-    """Ledger intervals its own transcripts contradict.
-
-    The retro is the only reader that holds both sides — the ledger's written
-    interval and the session's real messages — so the assertion lives here.
-    """
-    drift = []
-    for metrics in sessions:
-        where = "%s (%s)" % (metrics["name"], metrics["role"])
-        # The ledger's own row, so it is read before the transcript gate: a
-        # coordinator with no `endedAt` has no upper bound, and this reader's
-        # fallback (the session's last message) absorbs its wind-down into run
-        # time instead of reporting it — which is what `endedAt` exists to stop
-        # (orchestrate-herdr-threads/SKILL.md, *The run's record*).
-        if metrics.get("role") == "coordinator" and not metrics.get("endedAt"):
-            drift.append({"agent": metrics["name"], "role": metrics["role"],
-                          "kind": "no-upper-bound",
-                          "detail": "%s: no endedAt — the coordinator's window has no upper "
-                                    "bound, so its wind-down reads as run work" % where})
-        if not metrics.get("exists"):
-            continue
-        start, end = parse_ts(metrics.get("startedAt")), parse_ts(metrics.get("endedAt"))
-        first, last = parse_ts(metrics["firstTs"]), parse_ts(metrics["lastTs"])
-        if start and end and end < start:
-            drift.append({"agent": metrics["name"], "role": metrics["role"],
-                          "kind": "backwards",
-                          "detail": "%s: ledger has endedAt %s before startedAt %s"
-                                    % (where, metrics["endedAt"], metrics["startedAt"])})
-        if start and first and (first - start).total_seconds() > DRIFT_TOLERANCE_SEC:
-            drift.append({"agent": metrics["name"], "role": metrics["role"],
-                          "kind": "before-session",
-                          "detail": "%s: ledger startedAt %s is %s before its own session's "
-                                    "first message %s"
-                                    % (where, metrics["startedAt"],
-                                       fmt_seconds((first - start).total_seconds()),
-                                       metrics["firstTs"])})
-        if end and last and (end - last).total_seconds() > DRIFT_TOLERANCE_SEC:
-            drift.append({"agent": metrics["name"], "role": metrics["role"],
-                          "kind": "after-session",
-                          "detail": "%s: ledger endedAt %s is %s after its own session's "
-                                    "last message %s"
-                                    % (where, metrics["endedAt"],
-                                       fmt_seconds((end - last).total_seconds()),
-                                       metrics["lastTs"])})
-    return drift
 
 
 def session_metrics(path):
@@ -156,9 +79,7 @@ def session_metrics(path):
     result = {
         "session": path, "exists": bool(path and os.path.exists(path)),
         "firstTs": None, "lastTs": None, "spanSec": None, "messages": 0,
-        "activeSec": None, "quietSec": None, "runSec": None,
-        "outsideRunSec": None, "duplicateOf": None,
-        "startedAt": None, "endedAt": None,
+        "activeSec": None, "quietSec": None,
         "tokens": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0,
                    "reasoning": 0, "totalTokens": 0},
         "costUsd": 0.0, "models": [],
@@ -209,111 +130,50 @@ def session_metrics(path):
     return result
 
 
-def agents_from_ledger(ledger):
-    """Every dispatched agent in the run, with its role and item."""
-    agents = []
-    for executor in ledger.get("executors") or []:
-        agents.append({"name": executor.get("id", "coordinator"), "role": "coordinator",
-                       "item": None, "session": executor.get("session"),
-                       "startedAt": executor.get("startedAt"),
-                       "endedAt": executor.get("endedAt")})
-    retro = ledger.get("retro") or {}
-    if retro.get("id") or retro.get("session"):
-        agents.append({"name": retro.get("id") or "retro", "role": "retro",
-                       "item": None, "session": retro.get("session"),
-                       "startedAt": retro.get("startedAt"),
-                       "endedAt": retro.get("endedAt")})
-    for item_id, item in sorted((ledger.get("items") or {}).items()):
-        worker = item.get("worker") or {}
-        if worker.get("id"):
-            agents.append({"name": worker["id"], "role": "worker",
-                           "item": item_id, "session": worker.get("session"),
-                           "startedAt": item.get("startedAt"),
-                           "endedAt": worker.get("endedAt")})
-        for review in item.get("reviews") or []:
-            agents.append({"name": review.get("agent") or review.get("id")
-                           or "review-%s" % item_id,
-                           "role": "code-review", "item": item_id,
-                           "session": review.get("session"),
-                           "startedAt": review.get("startedAt"),
-                           "endedAt": review.get("endedAt")})
-        for fix in item.get("fixes") or []:
-            agents.append({"name": fix.get("agent") or fix.get("id")
-                           or "fix-%s" % item_id,
-                           "role": "fix", "item": item_id,
-                           "session": fix.get("session"),
-                           "startedAt": fix.get("startedAt"),
-                           "endedAt": fix.get("endedAt")})
-    for pass_ in ponytail_passes(ledger):
-        agents.append({"name": pass_["id"], "role": "ponytail",
-                       "item": None, "session": pass_.get("session"),
-                       "startedAt": pass_.get("startedAt"),
-                       "endedAt": pass_.get("endedAt")})
-        fix = pass_.get("fix") or {}
-        if fix.get("id") or fix.get("session"):
-            agents.append({"name": fix.get("id") or "fix-ponytail", "role": "fix",
-                           "item": None, "session": fix.get("session"),
-                           "startedAt": fix.get("startedAt"),
-                           "endedAt": fix.get("endedAt")})
-        review = fix.get("review") or {}
-        if review.get("id") or review.get("session"):
-            agents.append({"name": review.get("id") or "review-ponytail",
-                           "role": "code-review", "item": None,
-                           "session": review.get("session"),
-                           "startedAt": review.get("startedAt"),
-                           "endedAt": review.get("endedAt")})
-    return agents
+def cost_of(metrics):
+    """(`basis`, usd) for one lane. pi records its own cost; a $0.00 with tokens
+    is unpriced, not free, and no usage at all is unmeasured."""
+    if metrics.get("costUsd"):
+        return "reported", metrics["costUsd"]
+    if (metrics.get("tokens") or {}).get("totalTokens"):
+        return "unpriced", None
+    return "unmeasured", None
 
 
-def cause_rollup(items):
-    """Blocks by code, plus every stopped item the ledger left untyped.
-
-    The codes are the cause contract's; an item stopped without one, or with a
-    code outside the set, is what the retro reports under *What to fix*.
-    """
-    codes, untyped = {}, []
-    for item_id, item in sorted(items.items()):
-        if item.get("status") not in ("blocked", "failed"):
-            continue
-        code = (item.get("cause") or {}).get("code")
-        if code in CAUSE_CODES:
-            codes.setdefault(code, []).append(item_id)
-        else:
-            untyped.append(item_id)
-    return {"codes": codes, "untyped": untyped}
-
-
-def human_wait(gate):
-    """Seconds between a gate's request and its approval, or None."""
-    if not gate:
-        return None
-    start = parse_ts(gate.get("requestedAt"))
-    end = parse_ts(gate.get("approvedAt"))
-    if not start or not end:
-        return None
-    return (end - start).total_seconds()
-
-
-def record_dirname(ledger):
-    """The corpus directory name: `<date>-herdr-<project>-<feature>`."""
-    started = parse_ts(ledger.get("startedAt")) or datetime.now(timezone.utc)
-    rundir = str(ledger.get("rundir") or "")
-    root = rundir.split("/.herdr-runs/")[0]
-    project = os.path.basename(root.rstrip("/")) or "project"
-    return corpus_dirname(started.strftime("%Y-%m-%d"), "herdr", project,
-                          ledger.get("feature") or "run")
+def lane_of(agent, executor):
+    """One ledger agent + its transcript -> one lane, in the shared shape."""
+    metrics = session_metrics(agent.get("session"))
+    basis, usd = cost_of(metrics)
+    start, end = parse_ts(metrics["firstTs"]), parse_ts(metrics["lastTs"])
+    lane = {
+        "name": agent["name"], "role": agent["role"], "item": agent.get("item"),
+        "session": agent.get("session"), "exists": metrics["exists"],
+        "startedAt": agent.get("startedAt"), "endedAt": agent.get("endedAt"),
+        "firstTs": metrics["firstTs"], "lastTs": metrics["lastTs"],
+        "spanSec": metrics["spanSec"], "activeSec": metrics["activeSec"],
+        "quietSec": metrics["quietSec"], "workSec": metrics["activeSec"],
+        "turns": metrics["messages"], "messages": metrics["messages"],
+        "models": metrics["models"], "tokens": metrics["tokens"],
+        "costUsd": metrics["costUsd"],
+        "cost": {"basis": basis, "reported": usd, "estimated": None},
+        "intervals": [],
+    }
+    # The coordinator's pi session outlives the run: the ledger's own two ends
+    # bound it, and the part outside is reported rather than absorbed.
+    if lane["role"] == "coordinator" and start and end:
+        begun = parse_ts(executor.get("startedAt")) or start
+        done = parse_ts(executor.get("endedAt")) or end
+        start, end = max(start, min(begun, end)), min(end, max(done, start))
+        lane["runSec"] = (end - start).total_seconds()
+        lane["outsideRunSec"] = (lane["spanSec"] or 0.0) - lane["runSec"]
+    if start and end:
+        lane["intervals"] = [[start.isoformat(), end.isoformat()]]
+    return lane
 
 
-def split_recorder(sessions):
-    """The run's sessions, and the retro's own — which is never a lane of it.
-
-    BB spawns its retro as the plan thread's sibling and counts it nowhere, so
-    the two runtimes' numbers only stay comparable if this one does the same:
-    the ledger's `retro` row names the agent, and the record reports it on its
-    own line instead of folding it into `covered`/`roles`/`costByModel`.
-    """
-    return ([m for m in sessions if m["role"] != "retro"],
-            [m for m in sessions if m["role"] == "retro"])
+def project_of(rundir, ledger):
+    root = str(ledger.get("rundir") or rundir or "").split("/.herdr-runs/")[0]
+    return os.path.basename(root.rstrip("/")) or "project"
 
 
 def build_record(rundir):
@@ -322,166 +182,61 @@ def build_record(rundir):
         raise SystemExit("no ledger at %s" % ledger_path)
     with open(ledger_path, encoding="utf-8") as handle:
         ledger = json.load(handle)
-    # A pre-list ledger holds `items` as a list. Every reader here keys it by item
-    # id, and one that meets the list stops reading the whole record — bb's
-    # normalise_items tolerates it, so this one does too.
-    if isinstance(ledger, dict) and not isinstance(ledger.get("items") or {}, dict):
-        ledger["items"] = {}
-
-    sessions = []
-    for agent in agents_from_ledger(ledger):
-        metrics = session_metrics(agent.get("session"))
-        metrics.update({"name": agent["name"], "role": agent["role"],
-                        "item": agent["item"], "startedAt": agent.get("startedAt"),
-                        "endedAt": agent.get("endedAt")})
-        sessions.append(metrics)
-
-    # One transcript can serve several ledger rows (a fix round re-prompts the
-    # worker's own session), so every sum below counts it once.
-    seen_paths = {}
-    for metrics in sessions:
-        path = metrics.get("session")
-        metrics["duplicateOf"] = seen_paths.get(path) if path else None
-        seen_paths.setdefault(path, metrics["name"])
-    unique = unique_by_session(sessions)
-    run_sessions, retro = split_recorder(unique)
     executor = (ledger.get("executors") or [{}])[0]
-
-    def window(metrics):
-        """A session's interval as *this run* owns it.
-
-        The coordinator's pi session outlives the run — it may already have been
-        open on an earlier run, and its last turns are the run's wind-down — so
-        the ledger's own two ends bound it here, and the part outside is
-        reported instead of absorbed into `covered`.
-        """
-        start, end = parse_ts(metrics["firstTs"]), parse_ts(metrics["lastTs"])
-        if metrics["role"] != "coordinator" or not (start and end):
-            return (start, end)
-        begun = parse_ts(executor.get("startedAt")) or start
-        done = parse_ts(executor.get("endedAt")) or end
-        clipped = (max(start, min(begun, end)), min(end, max(done, start)))
-        metrics["runSec"] = (clipped[1] - clipped[0]).total_seconds()
-        metrics["outsideRunSec"] = (metrics["spanSec"] or 0.0) - metrics["runSec"]
-        return clipped
-
-    intervals = [i for i in (window(m) for m in run_sessions) if i[0] and i[1]]
-
-    started = parse_ts(ledger.get("startedAt"))
-    finished = parse_ts(ledger.get("finishedAt"))
-    run_span = ((finished - started).total_seconds()
-                if started and finished else None)
-    active_sum = sum(m["spanSec"] or 0.0 for m in run_sessions)
-    work_sum = sum(m["activeSec"] or 0.0 for m in run_sessions)
-    covered = interval_union(intervals)
-    rows_per_role = {}
-    for metrics in run_sessions:
-        rows_per_role[metrics["role"]] = rows_per_role.get(metrics["role"], 0) + 1
-    roles = {}
-    models = {}
-    for metrics in run_sessions:
-        entry = roles.setdefault(metrics["role"], {"agents": rows_per_role.get(metrics["role"], 0),
-                                                    "sessions": 0, "spanSec": 0.0,
-                                                    "workSec": 0.0, "costUsd": 0.0})
-        entry["sessions"] += 1
-        entry["spanSec"] += metrics["spanSec"] or 0.0
-        entry["workSec"] += metrics["activeSec"] or 0.0
-        entry["costUsd"] += metrics["costUsd"]
-        for model in metrics["models"]:
-            entry = models.setdefault(model, {"agents": 0, "costUsd": 0.0,
-                                              "totalTokens": 0})
-            entry["agents"] += 1
-            entry["costUsd"] += metrics["costUsd"]
-            entry["totalTokens"] += metrics["tokens"]["totalTokens"]
-
-    gates = ledger.get("gates") or {}
-    return {
-        "feature": ledger.get("feature"),
-        "flow": ledger.get("flow"),
-        "tracker": ledger.get("tracker"),
-        "rundir": rundir,
-        "ledger": ledger_path,
-        "record_dirname": record_dirname(ledger),
-        "startedAt": ledger.get("startedAt"),
-        "finishedAt": ledger.get("finishedAt"),
-        "spanSec": run_span,
-        "activeSumSec": active_sum,
-        "workSumSec": work_sum,
-        "quietSumSec": active_sum - work_sum,
-        "coveredSec": covered,
-        "overlapSec": active_sum - covered,
-        "sessionsCounted": len(run_sessions),
-        "ledgerRows": len(sessions),
-        "ledgerDrift": ledger_drift(sessions),
-        "models": ledger.get("models") or {},
-        "gates": {
-            "plan": {"requestedAt": (gates.get("plan") or {}).get("requestedAt"),
-                     "approvedAt": (gates.get("plan") or {}).get("approvedAt"),
-                     "waitSec": human_wait(gates.get("plan"))},
-            "commit": {"requestedAt": (gates.get("commit") or {}).get("requestedAt"),
-                       "approvedAt": (gates.get("commit") or {}).get("approvedAt"),
-                       "waitSec": human_wait(gates.get("commit"))},
-        },
-        "items": {item_id: {"status": item.get("status"),
-                            "reviewCount": len(item.get("reviews") or []),
-                            "prUrl": item.get("prUrl"),
-                            "cause": item.get("cause")}
-                  for item_id, item in (ledger.get("items") or {}).items()},
-        "causes": cause_rollup(ledger.get("items") or {}),
-        "roles": roles,
-        "costByModel": models,
-        "sessions": run_sessions,
-        "retro": retro,
-    }
-
-
-def fmt_seconds(value):
-    if value is None:
-        return "unmeasured"
-    return "%dh%02dm%02ds" % (int(value) // 3600, (int(value) % 3600) // 60,
-                              int(value) % 60)
+    lanes = unique_by_session([lane_of(agent, executor)
+                               for agent in agents_from_ledger(ledger)])
+    run_lanes = [lane for lane in lanes if lane["role"] != "retro"]
+    retro = [lane for lane in lanes if lane["role"] == "retro"]
+    # Everything ledger-derived and every rollup is the shared reader's; the
+    # adapter only supplies lanes and the runtime's project/feature identity.
+    record = read_run(ledger, run_lanes + retro, "herdr",
+                      feature=ledger.get("feature"),
+                      project=project_of(rundir, ledger),
+                      fallback_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    record["run"]["sessionsCounted"] = len(run_lanes)
+    record["run"]["ledgerRows"] = len(agents_from_ledger(ledger))
+    return record
 
 
 def print_human(record):
-    print("Run: %s  flow %s  %s" % (record["feature"], record["flow"],
-                                    record["tracker"]))
-    print("  span          %s  (%s → %s)" % (fmt_seconds(record["spanSec"]),
-                                             record["startedAt"],
-                                             record["finishedAt"]))
+    run = record["run"]
+    print("Run: %s  flow %s  %s" % (run["feature"], run["flow"], run["tracker"]))
+    print("  span          %s  (%s → %s)" % (fmt_seconds(run["spanSec"]),
+                                             run["startedAt"], run["endedAt"]))
     print("  active (sum)  %s   covered %s   overlap %s"
-          % (fmt_seconds(record["activeSumSec"]),
-             fmt_seconds(record["coveredSec"]),
-             fmt_seconds(record["overlapSec"])))
+          % (fmt_seconds(run["activeSumSec"]), fmt_seconds(run["coveredSec"]),
+             fmt_seconds(run["overlapSec"])))
     print("  work (sum)    %s   quiet %s   (%d sessions, %d ledger rows%s)"
-          % (fmt_seconds(record["workSumSec"]), fmt_seconds(record["quietSumSec"]),
-             record["sessionsCounted"], record["ledgerRows"],
-             " + retro" if record.get("retro") else ""))
-    for metrics in record["sessions"]:
-        if metrics.get("outsideRunSec") is not None:
+          % (fmt_seconds(run["workSumSec"]), fmt_seconds(run["quietSumSec"]),
+             run.get("sessionsCounted", len(record["lanes"])), run.get("ledgerRows", 0),
+             " + retro" if record["retro"] else ""))
+    for lane in record["lanes"]:
+        if lane.get("outsideRunSec") is not None:
             print("  coordinator   %s of its %s span predates `startedAt` or follows "
-                  "`finishedAt`" % (fmt_seconds(metrics["outsideRunSec"]),
-                                     fmt_seconds(metrics["spanSec"])))
+                  "`finishedAt`" % (fmt_seconds(lane["outsideRunSec"]),
+                                    fmt_seconds(lane["spanSec"])))
     print("  gate waits    plan %s   commit %s"
           % (fmt_seconds((record["gates"]["plan"] or {}).get("waitSec")),
              fmt_seconds((record["gates"]["commit"] or {}).get("waitSec"))))
-    def row(metrics):
-        if not metrics["exists"]:
-            print("  %-18s %-13s no transcript" % (metrics["name"], metrics["role"]))
+
+    def row(lane):
+        if not lane.get("exists"):
+            print("  %-18s %-13s no transcript" % (lane["name"], lane["role"]))
             return
-        note = ("   same session as %s" % metrics["duplicateOf"]) if metrics.get("duplicateOf") else ""
-        print("  %-18s %-13s %-9s %6d msgs  %10d tok  $%.6f  %s%s"
-              % (metrics["name"], metrics["role"],
-                 fmt_seconds(metrics["spanSec"]), metrics["messages"],
-                 metrics["tokens"]["totalTokens"], metrics["costUsd"],
-                 ",".join(metrics["models"]) or "no model recorded", note))
+        note = ("   same session as %s" % lane["duplicateOf"]) if lane.get("duplicateOf") else ""
+        print("  %-18s %-13s %-9s %6d msgs  %10d tok  %s  %s%s"
+              % (lane["name"], lane["role"], fmt_seconds(lane["spanSec"]),
+                 lane.get("messages") or 0, (lane.get("tokens") or {}).get("totalTokens") or 0,
+                 "$%.6f" % lane["costUsd"] if lane["costUsd"] else (lane.get("cost") or {}).get("basis"),
+                 ",".join(lane["models"]) or "no model recorded", note))
 
     print("\nSessions:")
-    for metrics in record["sessions"]:
-        row(metrics)
-    if record.get("retro"):
+    for lane in record["lanes"]:
+        row(lane)
+    if record["retro"]:
         print("\nRetro (the run's recorder — outside the totals above):")
-        for metrics in record["retro"]:
-            row(metrics)
+        for lane in record["retro"]:
+            row(lane)
     print("\nBy model:")
     for model, entry in sorted(record["costByModel"].items()):
         print("  %-46s %2d agents  %10d tok  $%.6f"
@@ -490,115 +245,75 @@ def print_human(record):
     for item_id, item in record["items"].items():
         print("  %-4s %-8s reviews=%s  %-18s %s"
               % (item_id, item.get("status"), item.get("reviewCount"),
-                 (item.get("cause") or {}).get("code") or "",
-                 item.get("prUrl") or ""))
-    blocks = record.get("causes") or {}
+                 (item.get("cause") or {}).get("code") or "", item.get("prUrl") or ""))
+    blocks = record["causes"]
     if blocks.get("codes") or blocks.get("untyped"):
         print("\nBlocks by cause:")
-        for code, ids in sorted((blocks.get("codes") or {}).items()):
+        for code, ids in sorted(blocks["codes"].items()):
             print("  %-18s %s" % (code, ", ".join(ids)))
         if blocks.get("untyped"):
             print("  %-18s %s   <- a finding: cause-contract.md"
                   % ("no cause", ", ".join(blocks["untyped"])))
-    if record["ledgerDrift"]:
+    if record["drift"]:
         print("\nLedger drift (ledger interval vs its own transcript):")
-        for drift in record["ledgerDrift"]:
+        for drift in record["drift"]:
             print("  [%s] %s" % (drift["kind"], drift["detail"]))
+    print("\nFINDINGS")
+    print("\n".join("    - %s" % f for f in record["findings"]) or "    (none)")
     print("\ncorpus dirname: runs/%s" % record["record_dirname"])
 
 
-def self_test():
+def self_test(tmp=None):
+    """Assert the adapter: transcript reading, cost basis, window, one schema."""
+    import tempfile
     start = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     end = datetime(2026, 1, 1, 12, 10, 0, tzinfo=timezone.utc)
-    assert interval_union([(start, end)]) == 600
-    assert interval_union([(start, end), (start, end)]) == 600  # overlap counts once
     second = datetime(2026, 1, 1, 12, 5, 0, tzinfo=timezone.utc)
     third = datetime(2026, 1, 1, 12, 20, 0, tzinfo=timezone.utc)
+    assert interval_union([(start, end)]) == 600
     assert interval_union([(start, end), (second, third)]) == 1200
-    assert human_wait({"requestedAt": start.isoformat(),
-                       "approvedAt": second.isoformat()}) == 300
-    assert human_wait({"requestedAt": None, "approvedAt": second.isoformat()}) is None
-    assert slug("#42: Fix Cache!") == "42-fix-cache"
-    assert ponytail_passes({"ponytail": []}) == []
-    assert ponytail_passes({}) == []
-    assert [p["id"] for p in ponytail_passes(
-        {"ponytail": [{"id": "ponytail-1"}, {"id": "ponytail-2"}]})] == \
-        ["ponytail-1", "ponytail-2"]
-    assert [p["id"] for p in ponytail_passes(
-        {"ponytail": {"id": "ponytail"}})] == ["ponytail"]
-    # The retro is an agent of the run: an unrecorded one is unpriced, and a
-    # review row named from the wrong field cannot be matched to its start log.
-    assert [a["name"] for a in agents_from_ledger(
-        {"executors": [{"id": "coordinator", "session": "/tmp/c.jsonl"}],
-         "retro": {"id": "retro-x", "session": "/tmp/r.jsonl"},
-         "items": {"01": {"reviews": [{"id": "review-01-r1", "session": "/tmp/b.jsonl"}]}},
-         "ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl"}]})] == \
-        ["coordinator", "retro-x", "review-01-r1", "ponytail"]
-    # A ponytail pass carries the round it opened and the review of that round's
-    # delta; a reader that stops at the pass prices neither.
-    assert [(a["name"], a["role"]) for a in agents_from_ledger(
-        {"ponytail": [{"id": "ponytail", "session": "/tmp/p.jsonl",
-                       "fix": {"id": "fix-ponytail-f1", "session": "/tmp/f.jsonl",
-                               "review": {"id": "review-ponytail-r1",
-                                          "session": "/tmp/v.jsonl"}}}]})] == \
-        [("ponytail", "ponytail"), ("fix-ponytail-f1", "fix"),
-         ("review-ponytail-r1", "code-review")]
-    # A fix that skipped the fresh-eyes review is a pass and a fix, nothing more.
-    assert [a["role"] for a in agents_from_ledger(
-        {"ponytail": [{"id": "ponytail",
-                       "fix": {"id": "f", "session": "/tmp/f.jsonl"}}]})] == \
-        ["ponytail", "fix"]
-    # The retro is the run's recorder, not a lane of it: it is named in the
-    # ledger and reported outside the run's totals, as BB's is.
-    assert split_recorder([{"name": "item-01", "role": "worker"},
-                           {"name": "retro-x", "role": "retro"}]) == \
-        ([{"name": "item-01", "role": "worker"}],
-         [{"name": "retro-x", "role": "retro"}])
-    # A span is not work: a session re-prompted across a suspended host keeps its
-    # quiet hours out of `workSec`.
     stamps = [start, datetime(2026, 1, 1, 12, 2, 0, tzinfo=timezone.utc),
               datetime(2026, 1, 1, 22, 0, 0, tzinfo=timezone.utc),
               datetime(2026, 1, 1, 22, 5, 0, tzinfo=timezone.utc)]
-    assert quiet_seconds(stamps, gap=600) == 35880  # 12:02 → 22:00 only
-    assert quiet_seconds([start, second], gap=600) == 0
-    rows = [{"name": "item-01", "session": "/tmp/a.jsonl", "role": "worker"},
-            {"name": "item-01", "session": "/tmp/a.jsonl", "role": "fix"},
-            {"name": "review-01-r1", "session": "/tmp/b.jsonl", "role": "code-review"}]
+    assert quiet_seconds(stamps, gap=600) == 35880
+    rows = [{"name": "item-01", "session": "/tmp/a.jsonl"},
+            {"name": "item-01", "session": "/tmp/a.jsonl"},
+            {"name": "review-01-r1", "session": "/tmp/b.jsonl"}]
     assert [r["name"] for r in unique_by_session(rows)] == ["item-01", "review-01-r1"]
-    drift = ledger_drift([{"name": "review-15-r1", "role": "code-review", "exists": True,
-                           "startedAt": second.isoformat(), "endedAt": start.isoformat(),
-                           "firstTs": third.isoformat(), "lastTs": third.isoformat()}])
-    assert {d["kind"] for d in drift} == {"backwards", "before-session"}, drift
-    # A coordinator row with no endedAt is reported even when its transcript is
-    # missing: the finding is about the ledger's bound, not the transcript.
-    unbounded = ledger_drift([{"name": "coordinator", "role": "coordinator", "exists": False,
-                               "startedAt": start.isoformat(), "endedAt": None,
-                               "firstTs": None, "lastTs": None}])
-    assert [d["kind"] for d in unbounded] == ["no-upper-bound"], unbounded
-    assert ledger_drift([{"name": "coordinator", "role": "coordinator", "exists": True,
-                          "startedAt": start.isoformat(), "endedAt": end.isoformat(),
-                          "firstTs": start.isoformat(), "lastTs": end.isoformat()}]) == []
-    assert ledger_drift([{"name": "x", "role": "worker", "exists": True,
-                          "startedAt": start.isoformat(), "endedAt": end.isoformat(),
-                          "firstTs": datetime(2026, 1, 1, 12, 0, 30,
-                                              tzinfo=timezone.utc).isoformat(),
-                          "lastTs": end.isoformat()}]) == []
-    assert record_dirname({"startedAt": start.isoformat(),
-                           "rundir": "/tmp/repo/.herdr-runs/My Feature",
-                           "feature": "My Feature"}) == "2026-01-01-herdr-repo-my-feature"
-    # Blocks are read by code, and an item the run stopped on without one is a
-    # finding rather than an empty cell.
-    assert cause_rollup({"01": {"status": "blocked", "cause": {"code": "cap_exhausted"}},
-                         "02": {"status": "failed", "cause": {"code": "dispatch_failed"}},
-                         "03": {"status": "blocked"},
-                         "04": {"status": "done"},
-                         "05": {"status": "blocked", "cause": {"code": "made_up"}}}) == \
-        {"codes": {"cap_exhausted": ["01"], "dispatch_failed": ["02"]}, "untyped": ["03", "05"]}
-    assert cause_rollup({}) == {"codes": {}, "untyped": []}
-    print("record_dirname:", record_dirname(
-        {"startedAt": start.isoformat(), "rundir": "/tmp/repo/.herdr-runs/x",
-         "feature": "x"}))
-    print("self-test: ok")
+    assert cost_of({}) == ("unmeasured", None)
+    assert cost_of({"tokens": {"totalTokens": 5}}) == ("unpriced", None)
+    assert cost_of({"costUsd": 0.25, "tokens": {"totalTokens": 5}}) == ("reported", 0.25)
+
+    with tempfile.TemporaryDirectory() as rundir:
+        session = os.path.join(rundir, "item-01.jsonl")
+        with open(session, "w") as handle:
+            for stamp, text in [("2026-01-01T12:05:00Z", "a"), ("2026-01-01T12:15:00Z", "b")]:
+                handle.write(json.dumps({"type": "message", "timestamp": stamp,
+                                         "message": {"role": "assistant", "provider": "vendor",
+                                                     "model": "worker", "usage": {
+                                                         "totalTokens": 10,
+                                                         "cost": {"total": 0.25}}}}) + "\n")
+        ledger = {
+            "runtime": "herdr", "feature": "demo", "tracker": "scratch demo", "flow": "A",
+            "mode": "gated", "rundir": rundir + "/.herdr-runs/demo",
+            "startedAt": "2026-01-01T12:00:00Z", "finishedAt": "2026-01-01T12:30:00Z",
+            "gates": {"plan": {"requestedAt": "2026-01-01T11:58:00Z",
+                               "approvedAt": "2026-01-01T12:00:00Z"}},
+            "executors": [{"id": "coordinator", "session": None}],
+            "items": {"01": {"status": "done", "worker": {"id": "item-01", "session": session}}},
+        }
+        with open(os.path.join(rundir, "orchestration.json"), "w") as handle:
+            json.dump(ledger, handle)
+        record = build_record(rundir)
+        assert record["schemaVersion"] == 2 and record["runtime"] == "herdr"
+        assert record["run"]["spanSec"] == 1800
+        assert record["run"]["humanWaitSec"] == 120
+        assert record["record_dirname"] == corpus_dirname(
+            "2026-01-01", "herdr", os.path.basename(rundir), "demo")
+        assert record["costByModel"]["vendor/worker"]["totalTokens"] == 20
+        assert any(lane["role"] == "worker" for lane in record["lanes"])
+        assert [lane["role"] for lane in record["retro"]] == []
+    print("run-metrics (herdr) self-test: ok")
 
 
 def main(argv=None):

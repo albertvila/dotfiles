@@ -161,31 +161,35 @@ Herdr keeps no turn telemetry, so nothing is read from it after the run.
   Agent names encode the same convention
   (`item-<slug>`, `review-<slug>-r<n>`, `fix-<slug>-f<n>`, `ponytail`, the
   ponytail fix's own handle), so an
-  agent that fits neither means the run went off-script.
-- **A stopped item is typed by its `cause`.** `items[].cause.code` comes from the
+  agent that fits neither means the run went off-script. The vocabulary is the
+  shared one — `orchestrate-core/scripts/ledger_read.py` owns the schema
+  (`schemaVersion` 2) and the roles (`coordinator`, `worker`, `code-review`,
+  `fix`, `ponytail`, `retro`), so a Herdr record and a BB record of the same
+  ledger are comparable field for field.
+- **A stopped item is typed by its `cause`.** `items[<id>].cause.code` comes from the
   closed set in `../orchestrate-core/cause-contract.md`, which also gives
   the operator's move for each code; the script rolls them up under *Blocks by
   cause*. An item the run stopped on with no cause, or with a code outside the
   set, is reported under *What to fix* — never repeated as if it were a code.
 - **Overlap is design, not waste**: in a shared-worktree run reviews run beside
-  the next worker. `activeSumSec` − `coveredSec` is that overlap — computed over
-  **unique sessions**, because a fix round re-prompts the worker's own session and
-  counting that transcript once per role would double its time *and* its price;
-  the coordinator is clipped to the ledger's own `startedAt`/`endedAt`, with the
-  part outside the run reported as `coordinatorRunSec`/`outsideRunSec` rather
-  than absorbed into `covered`.
-- **A span is not work, and the script says which is which.** `workSumSec` is
-  per-session span minus gaps > 10m, deduped; `quietSumSec` is what that removes
-  — a host suspend, or the hours between a re-prompted worker's turns. `ledgerDrift`
-  lists every ledger interval its own transcript contradicts (backwards, before
-  the session's first message, after its last), plus a coordinator row with no
-  `endedAt` — no upper bound, so its wind-down would otherwise read as run work.
-  Quote it instead of re-deriving it
-  by hand: a drifted row is a finding, not arithmetic to redo.
+  the next worker. `run.activeSumSec` − `run.coveredSec` is that overlap —
+  computed over **unique sessions**, because a fix round re-prompts the worker's
+  own session and counting that transcript once per role would double its time
+  *and* its price; the coordinator is clipped to the ledger's own
+  `startedAt`/`endedAt`, with the part outside the run reported as the lane's
+  `runSec`/`outsideRunSec` rather than absorbed into `covered`.
+- **A span is not work, and the script says which is which.** `run.workSumSec` is
+  per-session span minus gaps > 10m, deduped; `run.quietSumSec` is what that
+  removes — a host suspend, or the hours between a re-prompted worker's turns.
+  The record's `drift` lists every ledger interval its own transcript contradicts
+  (backwards, before the session's first message, after its last), plus a
+  coordinator row with no `endedAt` — no upper bound, so its wind-down would
+  otherwise read as run work. Quote it instead of re-deriving it by hand: a
+  drifted row is a finding, not arithmetic to redo.
 - **Gate waits** come from the ledger's `gates.plan` / `gates.commit`
-  `requestedAt` → `approvedAt` pairs (in a Flow B run, each item's own
-  `commitGate`). A gate with a request and no approval in a finished run is a
-  finding.
+  `requestedAt` → `approvedAt` pairs, reported as `gates.*.waitSec` (in a Flow B
+  run, each item's own `commitGate`). A gate with a request and no approval in a
+  finished run is a finding.
 - **A ledger that disagrees with the transcripts is a finding in itself** — an
   item `done` with no clean review, a worker session path that never existed, a
   `finishedAt` while an item is still `running`.

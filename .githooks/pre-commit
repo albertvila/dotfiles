@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The repo's own tests, run before every commit: they cover invariants a diff
 # never shows — the setup symlink tree, the cask config, the permission gate's
-# decision function, and the orchestrate skill body budget.
+# decision function, the orchestrate skill body budget, and the orchestrate
+# scripts' own self-tests (tests/orchestrate_test.sh).
 #
 # It runs all of them rather than picking by changed path. The whole set takes
 # seconds, and a path-based filter is how the orchestrate bodies got a budget

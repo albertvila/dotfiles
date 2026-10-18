@@ -4,7 +4,10 @@ One record, written by both runtimes. The storage path is the runtime's own — 
 writes `<dataDir>/thread-storage/<executors[0].id>/orchestration.json`, Herdr
 writes `<worktree>/.herdr-runs/<feature>/orchestration.json` — and the contents
 are this shape. A reader never needs to know which runtime wrote it, and no
-older shape is read: there is no back-compat.
+older shape is read: there is no back-compat. The one reader is
+`scripts/ledger_read.py`: a ledger plus each runtime's telemetry lanes become
+the shared run record (`schemaVersion` 2), so a BB record and a Herdr record are
+comparable field for field.
 
 The write invariants (write-as-you-go, the typed cause, the `done` rule,
 `finishedAt`) are [threads.md](threads.md#the-ledger); the cause codes are
