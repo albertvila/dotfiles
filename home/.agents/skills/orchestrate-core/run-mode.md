@@ -57,6 +57,11 @@ An item with `blockedBy` stays `todo` until those items' PRs are merged to the t
 
 `gated` asks for the commit message and waits. `land` and `unattended` do not ask. The message is a conventional commit built from the item titles, written into the ledger. Then commit and push. Flow A creates the run branch before anything is pushed: a bare push of `HEAD` lands the commit on the base.
 
+**A question is not a go.** When the operator's message is a question
+("shouldn't we use X?" / "thoughts?"), answer it and wait: do not dispatch or
+commit the change it implies until the operator answers with a direction. A
+question read as consent is a gate opened for them.
+
 **`land` and `unattended` open their PRs as drafts titled `[AI-DRAFT] <subject>`; `gated` does neither.** A draft cannot be merged, so nothing lands before the operator's verification. Each runtime's create step carries it — `gh pr create --draft --title "[AI-DRAFT] …"`, and on an environment whose PR BB opened itself, `gh pr edit <url> --title "[AI-DRAFT] …"`. A PR that came out ready is put back in draft — `bb environment pull-request draft <env-id>` on BB, otherwise the `convertPullRequestToDraft` mutation through `gh api graphql`, with the node id from `gh pr view <url> --json id -q .id`. Read the pair back (`gh pr view <url> --json isDraft,title`): `isDraft: false`, or a title without the prefix, is a write error to fix before that PR counts as open.
 
 Record `reviewedHead` as the sha just pushed. Only `gated` Flow B merges, and only when `gh pr view --json headRefOid` equals that sha, checks are green net of `ciBaseline`, and the PR is not a draft (`gh pr ready` if it is).

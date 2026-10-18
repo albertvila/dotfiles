@@ -71,6 +71,20 @@ disagreement to spend a third round on, and it stops the item the same way. A
 retro reads both of these as the run's failure to hold one story about the
 change, which is a plan problem, not a fix-round problem.
 
+## What the loop records
+
+Every completed review pass appends a `reviews` entry to its item, and the
+findings rounds are the review rounds that opened a `fixes` entry — the cap reads
+off those ([ledger.md](ledger.md)). A pass that ends with no verdict is
+re-prompted once in the same reviewer and adds no entry.
+
+The review brief carries the finding contract above verbatim and lists every
+`<class>` already in the run's `classFixes`, so a finding of a known class reuses
+the recorded slug instead of coining a second one. A fix round is recorded on the
+item's `fixes`; a ponytail fix round and the fresh-eyes review of its delta are
+recorded under the pass that opened them — `ponytail[].fix` and
+`ponytail[].fix.review` — and never in `items[].fixes`.
+
 ## A findings round ends in code, a refutation, or a stop
 
 A fix round is dispatched with the findings, and it has three outcomes. The

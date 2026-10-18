@@ -71,6 +71,18 @@ every unblocked item moves.
 
 Workers never talk to each other; all coordination goes through the coordinator.
 
+### Item scope
+
+An item's file scope is the manifest's, and the worktree is where it is checked.
+Before an item's first review, the files its lane actually changed are compared
+with the item's manifest `files`: a path outside that scope is a finding of its
+own — the lane went past its scope — and it is resolved before the review is
+spawned, by reverting it or re-scoping it through the plan. A freeze scoped to
+the item's files cannot see a stray path (it filters it out by construction), so
+an unchecked stray file ships unreviewed or is reverted by accident. A stray file
+that belongs to another item reopens that item: freeze and re-review *its* diff
+too.
+
 ## Models
 
 Three roles: **worker**, **code-review**, **ponytail**. Each runtime names the

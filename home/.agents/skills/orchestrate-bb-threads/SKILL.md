@@ -90,16 +90,14 @@ An id present in the catalog can still be blocked by an OpenRouter workspace
 guardrail; only a turn reveals that, so "absent from the catalog" and
 "blocked at runtime" are different failures with the same stop-and-ask ending.
 
-**Write the receipt beside the request.** `models` is what the run asked for;
-`served` is what the thread's own log named — `bb thread log <id> --json`, its
-`execution.model` — read when the role's first lane settles, and on a single lane
-when that lane diverges from its role. A log naming no model, or several, leaves
-`served` out, and a role with none reads as unverified
-([threads.md](../orchestrate-core/threads.md#models)).
+**Write the receipt beside the request.** `served` sits beside `models` per
+[threads.md](../orchestrate-core/threads.md#models); this runtime reads it from
+`bb thread log <id> --json` and its `execution.model`.
 
 ## Review loops
 
-What a review is, when it ends, how deep it goes and how a fix round is capped:
+What a review is, when it ends, how deep it goes, what it records and how a fix
+round is capped:
 [review-contract.md](../orchestrate-core/review-contract.md). A worker's DONE is a claim, not proof.
 This section carries only the BB mechanics.
 
@@ -111,59 +109,19 @@ This section carries only the BB mechanics.
   or a bounded path only, and an unlocatable criterion is unverifiable.
 - **The brief carries the finding contract and the run's classes.** Every finding
   is asked for as `<file>:<line> · <class> · <what breaks> · "<the quoted code>"`,
-  and the brief lists every `<class>` already in the run's `classFixes` so a
-  finding of a known class reuses the recorded slug instead of coining a second
-  one. A claim with no quotation is a nit: it opens no round and goes to the
-  operator with the rest ([review-contract.md](../orchestrate-core/review-contract.md)).
-- **A class the run has already diagnosed is not diagnosed again.** When a
-  finding's `<class>` matches a `classFixes` entry, reuse that entry's `brief`
-  verbatim, append the item id to its `items`, and run **one** repair round for
-  the class in the worktree the affected items share — recording that lane's `id`
-  on each affected item's `fixes` round, which both retros price once. Items that
-  share no worktree (Flow B) still share the brief, each running its own repair
-  from it. Each affected item still gets its own re-review of the repair's delta:
-  a verdict is never shared.
+  with the run's `classFixes` classes listed so a known class reuses its slug
+  ([review-contract.md](../orchestrate-core/review-contract.md)).
 - Findings loop back to the **same worker**: queue them as a follow-up message
   (`bb thread queue create <id> "<findings>"`, then `bb thread queue send`); if
   the thread is dead, respawn the item's worker with the findings in the prompt.
   **Flow B respawn:** when the worker's thread is dead, respawn with
   `--environment "<worker-env-id>"` (the item's recorded environment from
   the ledger), **never** `--new-environment worktree` — a fresh worktree
-  would orphan the item's branch and desync the ledger's `envId`.
-  The queued message carries the `REFUTED:` outcome: a finding that does not
-  hold is answered by naming it and quoting the code that disproves it, never by
-  changing code to make the complaint go away. A refutation with no quotation is
-  not one — the round is `artifact_unchanged` and the finding stands.
-- **A finding that contradicts the spec is not a fix round.** Before spawning
-  fix round n, read the finding against the manifest's acceptance line and the
-  tracker spec: when it quotes, or contradicts a clause of, either one, quote
-  the finding and the clause into the ledger, record it as a follow-up, and
-  block the item with `cause.code: spec_conflict` — do not spend a round
-  changing code the ticket says must not change. `cap_exhausted` tells the
-  operator to adjudicate the disagreement; `spec_conflict` tells them to
-  adjudicate the spec. Only one of those is true, and the ledger must say which.
-- **A re-review waits on the artifact, not on the fix's word.** Before spawning
-  review pass n+1, freeze the diff again to `diffs/<item-id>-r<n+1>.diff` (or
-  `snapshots/post-<item-id>-r<n+1>/`) and compare it with **every freeze this item
-  has read** — `cmp -s` against each `diffs/<item-id>-r*.diff`, `diff -rq`
-  against each snapshot. Identical to the one the previous pass read is
-  `cause.code: artifact_unchanged`; identical to an **earlier** one is
-  `cause.code: nonconvergent`, because the rounds are bouncing the diff. Either
-  way the item stops, its findings are surfaced, and the frontier keeps moving.
-  Changed bytes are the delta the re-review is scoped to, and the brief names it.
-- **`REFUTED:` and a returning finding are stops, not rounds.** A fix round that
-  returns `REFUTED:` with the disproving code quoted adds no re-review: write
-  `refutation: {finding, evidence}` on that round's `fixes` entry and block the
-  item with `cause.code: finding_refuted`. The same finding — same file, line and
-  normalized title — in two consecutive findings rounds is `cause.code:
-  nonconvergent` before a third is spawned. Both rules are
-  [review-contract.md](../orchestrate-core/review-contract.md); this runtime owes
-  the write and the stop.
+  would orphan the item's branch and desync the ledger's `envId`. A round that
+  returns `REFUTED:` is recorded and stopped per
+  [review-contract.md](../orchestrate-core/review-contract.md).
 - A ponytail fix runs as a **new** child thread on the worker model, titled
   `FIX · <finding>` — a `PONYTAIL …` title is reserved for a ponytail pass.
-- Append a `reviews` entry for every completed pass and a `fixes` entry for
-  every findings round; the cap reads off the `fixes` rounds. A non-verdict
-  completion is re-prompted once in the same thread and adds no `reviews` entry.
 
 ## Flow A — single shared PR
 
@@ -265,14 +223,11 @@ manager that never dispatched, whatever it shipped.
 4. **Fresh-eyes review per item, from a frozen diff.** When a worker
    reports DONE, two checks come first.
 
-   **The item's files.** `git diff --name-only HEAD` lists every file the worker
-   touched. A path outside the item's manifest `files` is a finding of its own —
-   the worker went past its scope — and it is resolved before the review is
-   spawned: revert it, or re-scope it through the plan. The freeze below cannot
-   see it (`git diff HEAD -- <item files>` filters it out by construction), so an
-   unchecked stray file ships unreviewed or gets reverted by accident. A stray
-   file that belongs to another item also reopens that item: freeze and re-review
-   *that* item's diff too.
+   **The item's files.** The scope check is
+   [`threads.md#item-scope`](../orchestrate-core/threads.md#item-scope): compare
+   the files the worker changed with the item's manifest `files` before the
+   review is spawned, and resolve a stray path — revert it, or re-scope it
+   through the plan — first.
 
    **The validation.** [run-mode.md](../orchestrate-core/run-mode.md) §
    *Validation* must already show the item's command green on a base-sha
@@ -436,10 +391,9 @@ manager that never dispatched, whatever it shipped.
    An operator-directed change after the PR is open still runs through a worker
    thread, a frozen diff, and a fresh review before the commit.
 
-   **A question is not a go.** When the operator's message is a question
-   ("shouldn't we use X?" / "thoughts?"), answer it in that turn and wait. Do
-   not dispatch or commit the change it implies until the operator answers with
-   a direction; a question read as consent is a gate opened for them.
+   **A question is not a go.** Handled by
+   [run-mode.md](../orchestrate-core/run-mode.md) (*Commit and merge*): a question
+   is answered, not read as consent.
 
    Write the body with the `pr` skill (see *PR body*).
 
@@ -578,20 +532,12 @@ happened before the next dispatch, report or write.
 
 ## Ticket write-back
 
-Dispatch on the manifest's `tracker:` value:
-
-- `tracker: scratch` (work list from `.scratch/<feature>/issues/NN-*.md`) —
-  the manager keeps those ticket files in sync with the ledger as items
-  settle; see [TICKET-WRITE-BACK.md](../orchestrate-core/TICKET-WRITE-BACK.md).
-- `tracker: github <owner/repo>#<parent>` — claim at dispatch (assignee, drop
-  `ready-for-agent` only); item settlement is comments only, never a close, never
-  any other label — the parent spec is closed by the run after the merge, not
-  here ([run-mode.md](../orchestrate-core/run-mode.md), *After the operator
-  merges*, step 5). A change after settlement that contradicts a posted comment
-  (an operator-directed run-as switch, say) gets a correcting comment as part
-  of the landing step — writeback is append-only, so the correction is a new
-  comment, never an edit, and it is not optional. See
-  [TICKET-WRITE-BACK-GITHUB.md](../orchestrate-core/TICKET-WRITE-BACK-GITHUB.md).
+Dispatch on the manifest's `tracker:` value: `scratch <feature>` follows
+[TICKET-WRITE-BACK.md](../orchestrate-core/TICKET-WRITE-BACK.md), `github
+<owner/repo>#<parent>` follows
+[TICKET-WRITE-BACK-GITHUB.md](../orchestrate-core/TICKET-WRITE-BACK-GITHUB.md).
+Both are reached here, and the claim commands are in *Flow A* above. The manager
+owns these writes.
 
 The task record is orthogonal to the tracker value: when the manifest also
 names a BB Task, the Task identity line adds the task record on top of the
@@ -601,7 +547,7 @@ the commit+PR approval gate, not after the PR merges; the run waiting on a
 human is exactly the state `in_review` exists for, and when the PR merges,
 set the task to `done`.
 
-The manager owns these writes. The plan thread makes one write of its own —
+The plan thread makes one write of its own —
 the Task's `in_progress` at spawn, only when a Task is in play — and writes
 nothing after that.
 

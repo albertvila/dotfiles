@@ -24,6 +24,12 @@ from re-deriving it. The run's **excluded** issues — closed tickets, tickets i
 another repository, anything else the approval message named — are **never
 written to**: the run never touched them, so they accrue no run metadata.
 
+**Post every comment body by file** (`gh issue comment <n> --body-file`), never
+an inline heredoc: a quoting error merges one item's body into another item's
+comment, and the wrong text is visible until someone patches it. Writeback is
+append-only — a change that contradicts a posted comment gets a new correcting
+comment, never an edit to the old one.
+
 - Item settles `done` (worker DONE + clean review) → post **exactly one**
   comment on its own issue — the sub-issue or the parented ticket the item names
   — naming the item's coordinator, the outcome, and the PR URL once it exists.
