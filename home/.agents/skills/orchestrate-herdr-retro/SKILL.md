@@ -138,6 +138,12 @@ Every figure comes from two sources: the ledger
 (`$RUNDIR/orchestration.json`) and the pi session transcripts the ledger names.
 Herdr keeps no turn telemetry, so nothing is read from it after the run.
 
+- **The run's span is the ledger's own window.** `run.spanSec` is
+  `startedAt` → `finishedAt`, falling back to the sessions' own bounds when the
+  ledger has neither; a session active outside that window (the coordinator's
+  wind-down) keeps its own `runSec`/`outsideRunSec` rather than stretching the
+  span.
+
 - **The transcript** is JSONL at the path `herdr agent start` reported as
   `agent_session.value`. Every `message` event carries a timestamp; every
   assistant message carries `model`, `provider` and `usage` —

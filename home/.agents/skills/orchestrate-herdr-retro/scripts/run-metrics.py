@@ -150,7 +150,10 @@ def lane_of(agent, executor):
         "session": agent.get("session"), "exists": metrics["exists"],
         "startedAt": agent.get("startedAt"), "endedAt": agent.get("endedAt"),
         "firstTs": metrics["firstTs"], "lastTs": metrics["lastTs"],
-        "spanSec": metrics["spanSec"], "activeSec": metrics["activeSec"],
+        # The shared reader's `activeSumSec` is the sum of session spans, so a
+        # lane's `activeSec` is its span; `workSec` is span minus the quiet gaps
+        # > 10m, which is what "how long was this agent on" means here.
+        "spanSec": metrics["spanSec"], "activeSec": metrics["spanSec"],
         "quietSec": metrics["quietSec"], "workSec": metrics["activeSec"],
         "turns": metrics["messages"], "messages": metrics["messages"],
         "models": metrics["models"], "tokens": metrics["tokens"],
@@ -313,6 +316,27 @@ def self_test(tmp=None):
         assert record["costByModel"]["vendor/worker"]["totalTokens"] == 20
         assert any(lane["role"] == "worker" for lane in record["lanes"])
         assert [lane["role"] for lane in record["retro"]] == []
+
+    # A span is not work: a lane's `activeSec` is its span (what `activeSumSec`
+    # sums), and `workSec` is span minus the quiet gaps > 10m. Getting this
+    # backwards corrupts activeSumSec and overlapSec — the bug a real run caught.
+    with tempfile.TemporaryDirectory() as rundir:
+        session = os.path.join(rundir, "slow.jsonl")
+        with open(session, "w") as handle:
+            for stamp in ("2026-01-01T12:00:00Z", "2026-01-01T12:02:00Z", "2026-01-01T22:00:00Z"):
+                handle.write(json.dumps({"type": "message", "timestamp": stamp,
+                                         "message": {"role": "assistant", "provider": "vendor",
+                                                     "model": "worker"}}) + "\n")
+        lane = lane_of({"name": "item-99", "role": "worker", "item": "99",
+                        "session": session, "startedAt": None, "endedAt": None}, {})
+        assert lane["spanSec"] == 36000, lane["spanSec"]
+        assert lane["quietSec"] == 35880, lane["quietSec"]
+        assert lane["workSec"] == 120, lane["workSec"]
+        assert lane["activeSec"] == lane["spanSec"], lane
+        rec = read_run({}, [lane], "herdr", feature="x", project="p")
+        assert rec["run"]["activeSumSec"] == 36000, rec["run"]["activeSumSec"]
+        assert rec["run"]["workSumSec"] == 120, rec["run"]["workSumSec"]
+        assert rec["run"]["quietSumSec"] == 35880, rec["run"]["quietSumSec"]
     print("run-metrics (herdr) self-test: ok")
 
 

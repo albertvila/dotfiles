@@ -203,6 +203,12 @@ documents the shapes.
   the ledger's gate waits, so the two agree when the ledger carried the gates
   and `extras` carries the event-derived figure the recipe reads. Span stays the
   wall clock. Do not quote span as how long the orchestrator took.
+- **The run's span is the ledger's own window.** `run.spanSec` is
+  `startedAt` → `finishedAt`; when the ledger has neither, it falls back to the
+  lanes' first and last activity. A lane that ran past `finishedAt` — a wind-down
+  turn, or the retro — is therefore outside the span, not folded into it. The
+  retro lane is reported under `record["retro"]`, outside the run's lanes and
+  totals, so both runtimes' spans agree.
 - **Roles come from titles** — `REVIEW …`, `PONYTAIL …`, `RETRO …`,
   everything else a worker. Those titles are `/orchestrate-bb-threads`' own
   convention, so a thread that fits none of them means the run went off-script.
