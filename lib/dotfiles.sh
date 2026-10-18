@@ -159,14 +159,17 @@ function _install_dotfiles() {
   local targetFile
 
   # Merge dirs: symlink each file inside (mkdir parents), never the dir itself.
+  # __pycache__ and app lock files (e.g. Herdr's .config.toml.gpui-lock) are
+  # regenerable runtime artifacts: prune them, never link them.
+  # Keep comments out of the <(...) body below: bash 3.2 (macOS /bin/bash, the
+  # shell the setup.sh shebang picks) reads an apostrophe in a comment as a
+  # quote and then fails the whole install with "bad substitution".
   while IFS= read -r -d '' sourceFile; do
     relative="${sourceFile#$DOTFILES_DIR/home/}"
     targetFile="$HOME/$relative"
     mkdir -p "$(dirname "$targetFile")"
     _symbolic_link "$sourceFile" "$targetFile"
   done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
-    # __pycache__ and app lock files (e.g. Herdr's .config.toml.gpui-lock) are
-    # regenerable runtime artifacts: prune them, never link them.
     _is_merge_dir "$(basename "$d")" && find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0
   done)
 
