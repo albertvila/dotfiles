@@ -38,3 +38,12 @@ inline = false
 [status_bar]
 usage = "detailed"
 theme = "label"
+
+# The default rewrite of Shift-Enter to Alt-Enter (Esc CR) is meant for panes
+# without the Kitty keyboard protocol. pi enables it, so the rewrite only
+# produces a bare CR there, which submits instead of inserting a newline.
+# cmd-enter is aliased to it because herdr drops super chords that the pane's
+# protocol flags do not cover.
+[pane_keys]
+"shift-enter" = ""
+"cmd-enter" = "shift-enter"
