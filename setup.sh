@@ -12,6 +12,7 @@ source ./lib/utils.sh
 source ./lib/dotfiles.sh
 source ./lib/os.sh
 source ./lib/fish.sh
+source ./lib/bb.sh
 
 # Parameters
 #  -u to define a user
@@ -66,39 +67,6 @@ function install_bb_cli_skills() {
   fi
   bot "Installing bb CLI skills for external agents ..."
   bb skill install-cli-skills || warn "bb skill install-cli-skills failed, run it manually once bb is running"
-  ok
-}
-
-# bb plugins from bb-plugins.txt: one source per line (git:/npm:/path:), path:
-# entries relative to this repo. Idempotent: skips sources bb already has.
-function install_bb_plugins() {
-  if ! command -v bb &>/dev/null; then
-    warn "bb CLI not on PATH (install the bb cask, or link a get-bb/bb checkout's apps/cli/bin/bb), skipping bb plugins install"
-    return
-  fi
-  local manifest="$DOTFILES_DIR/bb-plugins.txt"
-  if [[ ! -f $manifest ]]; then
-    warn "bb-plugins.txt not found, skipping bb plugins install"
-    return
-  fi
-  bot "Installing bb plugins ..."
-  local line source
-  local installed
-  installed=$(bb plugin list --json 2>/dev/null | jq -r '.plugins[].source')
-  while IFS= read -r line; do
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
-    [[ -z $line || $line == \#* ]] && continue
-    source=$line
-    # bb records resolved absolute paths, so a relative manifest entry with a
-    # `..` segment would never match without canonicalizing it.
-    [[ $line == path:* ]] && source="path:$(realpath "$DOTFILES_DIR/${line#path:}" 2>/dev/null || echo "$DOTFILES_DIR/${line#path:}")"
-    if grep -qxF "$source" <<< "$installed"; then
-      ok "bb plugin already installed: $line"
-    else
-      execute "bb plugin install --yes ${source#path:}" "bb plugin: $line"
-    fi
-  done < "$manifest"
   ok
 }
 

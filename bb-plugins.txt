@@ -3,6 +3,9 @@
 # After installing/removing third-party plugins, refresh with:
 #   bb plugin list --json | jq -r '.plugins[] | select(.provenance != "builtin" and .enabled) | .source' | grep -v '^path:'
 # (path: lines are yours — the jq snapshot can't reproduce them, keep them by hand.)
+# A git:/npm: line only ever installs on a host that does not have the plugin yet, so
+# when bb moves a plugin past its range (it records the wider ref it resolved), copy
+# the new source in here: setup warns about the drift, it cannot reinstall over bb.
 git:https://github.com/yusuf8834/bb-sidebar.git@semver:^0.2.0
 path:../bb-plugins/plugins/activity-overview
 path:../bb-plugins/plugins/cmd-click-external
