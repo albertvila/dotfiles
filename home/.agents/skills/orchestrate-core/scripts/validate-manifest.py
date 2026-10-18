@@ -155,7 +155,7 @@ def _headers(header, items):
 
     mode = header.get("mode")
     if not mode:
-        errors.append("no `mode:` line — never omitted; the executor reads a missing line as gated")
+        errors.append("no `mode:` line — never omitted; the coordinator reads a missing line as gated")
     elif mode[1] not in MODES:
         errors.append("%d: mode %r is not one of %s" % (mode[0], mode[1], ", ".join(MODES)))
 

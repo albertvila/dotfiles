@@ -55,7 +55,7 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   // Runtime extensions, in this shape, never merged in:
   //   bb: "task" (BB Task key), "pr", "runBranch" (Flow A),
   //       "retro" {id, session, startedAt} when the manager spawned one,
-  //       "notes" [one line per plan-time note the executor carries],
+  //       "notes" [one line per plan-time note the coordinator carries],
   //       "wholeTree" {at, suites, scope} (run-mode.md § Validation)
   //   herdr: "rundir", "retro" {id,session,tab,startedAt},
   //          "pr" {number,url,mergedAt,mergeCommit,base}, "prs" [...],
@@ -136,7 +136,7 @@ The field name does not: everything around it is identical.
   affected item's `fixes` round still names the lane that ran — a shared lane is
   named by several items and priced once, since both retros count a session once.
 - `dispatchAttempt` is the one write that **precedes** the action it records: the
-  executor writes `{at, role, label}` before it spawns, so a manager that dies
+  coordinator writes `{at, role, label}` before it spawns, so a manager that dies
   between the spawn and the lane's own write leaves a record naming what it may
   already have started ([threads.md](threads.md#the-ledger)). It is not cleared —
   it is the item's last dispatch, and a reader compares it with the lanes beside

@@ -166,7 +166,7 @@ def self_test():
             "is not an item")
     rejects("a class fix run by the manager",
             lambda l: l["classFixes"][0].update(id="manager-1"),
-            "is an executor")
+            "is the coordinator")
 
     # The `done` rule, and the round a FINDINGS verdict says happened.
     rejects("done with no reviews",
@@ -217,23 +217,23 @@ def self_test():
     rejects("a retro entry with no session",
             lambda l: l.update(retro={"id": "retro-1", "startedAt": "2026-09-27T12:00:00Z"}),
             "a lane no retro can price")
-    rejects("a retired executor with no endedAt",
+    rejects("a retired coordinator with no endedAt",
             lambda l: l["executors"].insert(0, {"id": "manager-0", "startedAt": None}),
             "handed over with no endedAt")
 
-    # Who acted: the executor never implements, and a worker does not review itself.
+    # Who acted: the coordinator never implements, and a worker does not review itself.
     rejects("the manager implemented the item",
             lambda l: l["items"]["01"]["worker"].update(id="manager-1"),
-            "is an executor")
+            "is the coordinator")
     rejects("the manager reviewed the run",
             lambda l: l["items"]["01"]["reviews"][0].update(id="manager-1"),
-            "is an executor")
+            "is the coordinator")
     rejects("an item reviewed by its own worker",
             lambda l: l["items"]["01"]["reviews"][0].update(id="item-01"),
             "is this item's own worker")
     rejects("the manager ran the ponytail pass",
             lambda l: l["ponytail"][0].update(id="manager-1"),
-            "is an executor")
+            "is the coordinator")
 
     # Stamps are read, never typed.
     rejects("backwards review",
@@ -274,7 +274,7 @@ def self_test():
     rejects("a second copy of the plan gate",
             lambda l: l.update(planGate={"requestedAt": None, "approvedAt": None}),
             "drift, not shape")
-    rejects("the old executor field",
+    rejects("the old manager field",
             lambda l: l.update(managerChain=["manager-1"]),
             "drift, not shape")
 

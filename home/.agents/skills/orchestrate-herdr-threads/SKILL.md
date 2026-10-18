@@ -7,7 +7,7 @@ description: "Execute an approved orchestration plan as the coordinator of this 
 
 Execute an approved plan. **This pane is the coordinator**: it dispatches one pi
 agent per work unit into its own Herdr tab, keeps the ledger, routes review
-findings, and lands the run. [`threads.md#the-executors-job`](../orchestrate-core/threads.md#the-executors-job)
+findings, and lands the run. [`threads.md#the-coordinators-job`](../orchestrate-core/threads.md#the-coordinators-job)
 owns the job, the manifest rule and the dispatch-before-touching rule; this file
 owns the Herdr mechanics.
 

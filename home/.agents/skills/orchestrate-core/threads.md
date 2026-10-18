@@ -6,11 +6,11 @@ runtime's skill owns its mechanics — how it dispatches, waits, collects,
 releases and gets a worktree — plus its own ledger shape, field names and
 commands.
 
-## The executor's job
+## The coordinator's job
 
 Execute an approved plan: dispatch one agent per item, keep the ledger, route
-review findings, and land the run. The executor does not plan, and it never
-implements an item itself — an item implemented in the executor's own context
+review findings, and land the run. The coordinator does not plan, and it never
+implements an item itself — an item implemented in the coordinator's own context
 has no worker, no ledger entry and no reviewer it can honestly claim.
 
 **The manifest is the approved plan.** Start from it immediately: never
@@ -24,8 +24,8 @@ instruction to run the threads skill, and the threads skill still applies. The
 first turn writes the ledger and dispatches wave 1 **before any item's file is
 opened to change it**. A single-item manifest whose notes list the exact files
 to touch is context for the worker you are about to dispatch — it is not the
-executor's own scope. A run whose record has one agent, no children and no ledger
-is an executor that never dispatched, whatever it shipped.
+coordinator's own scope. A run whose record has one agent, no children and no ledger
+is an coordinator that never dispatched, whatever it shipped.
 
 ## Flow shapes
 
@@ -33,7 +33,7 @@ The manifest's `flow:` names the run's shape, and a run is never written as a
 shape it is not.
 
 - **`A`** — one shared worktree, one PR. Workers run in the same worktree, leave
-  their changes **uncommitted**, and never commit or push; the executor
+  their changes **uncommitted**, and never commit or push; the coordinator
   accumulates the combined diff and makes exactly one commit and one PR at the
   end.
 - **`B`** — one worktree, branch and PR per item. Items with no `blockedBy`
@@ -69,7 +69,7 @@ returns findings, let the running worker finish, then run N's fix round and
 re-review before dispatching anything new. Shape `B` has no file-overlap gating —
 every unblocked item moves.
 
-Workers never talk to each other; all coordination goes through the executor.
+Workers never talk to each other; all coordination goes through the coordinator.
 
 ## Models
 
@@ -79,7 +79,7 @@ role's default model and the flag that passes it; this file owns the policy.
 A per-run override is the manifest's model line — "workers on X, reviewers on
 Y". Ponytail keeps its own role default; only a ponytail **fix** runs on the
 worker model, because a fix is authoring, not review. The operator sets the
-override at plan time and the manifest carries it; the executor
+override at plan time and the manifest carries it; the coordinator
 keeps the syntax and the dispatch-time decisions, not the choice.
 
 **No gate reviews its author's family.** `code-review` and the ponytail pass are
@@ -119,12 +119,12 @@ request as if it were the fact ([ledger.md](ledger.md)).
 ## Liveness
 
 A dispatched lane has a heartbeat: the pi session transcript on Herdr, the
-thread record on BB. The executor reads that lane's last-activity signal and
+thread record on BB. The coordinator reads that lane's last-activity signal and
 compares it with now.
 
 `STALE_GAP_SEC` is **900** seconds. An open turn — the lane's status still
 working — whose activity has not moved for longer than that is a **stale
-candidate, never a verdict**: the executor reads the agent (Herdr `agent read`,
+candidate, never a verdict**: the coordinator reads the agent (Herdr `agent read`,
 BB `thread log`/`output`) before acting. A single tool call writes nothing until
 it returns, so a test suite longer than the gap is the expected false positive;
 that is why the check confirms and does not kill.
@@ -132,7 +132,7 @@ that is why the check confirms and does not kill.
 A confirmed stall — a turn that ended with no report — is the runtime's
 stalled-turn recovery: re-prompt that same agent once, then record `turn_stalled`
 on the second stall ([cause-contract.md](cause-contract.md)). Liveness never
-restarts an agent the executor did not start, and never reads a quiet transcript
+restarts an agent the coordinator did not start, and never reads a quiet transcript
 as proof of death.
 
 ## Escalation
@@ -142,7 +142,7 @@ escalates: it stops its turn and reports `ESCALATE:` with **exactly one
 question**, the options it sees, and the one it recommends. Never guess, never
 wait. This is a decision handed up, not a failure.
 
-The executor answers from the approved manifest when the manifest answers; the
+The coordinator answers from the approved manifest when the manifest answers; the
 answer is routed back into the **same worker** (BB: `bb thread queue create` then
 `queue send`; Herdr: prompt the same agent), and the item stays `running`. Only
 when the manifest does not answer it does the item become `blocked` with
@@ -284,7 +284,7 @@ sections with the intent block, and nothing after them.
 ## Rules
 
 - One item per agent, one agent per item.
-- The executor never implements items itself — it dispatches, waits, routes
+- The coordinator never implements items itself — it dispatches, waits, routes
   findings, and unblocks.
 - Worker changes are committed only at the approved commit gate; the run's own
   storage (thread storage or run directory) is never committed.

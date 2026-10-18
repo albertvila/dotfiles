@@ -203,7 +203,7 @@ def ledger_errors(ledger):
         problems.append("run: finishedAt %s precedes startedAt %s"
                         % (ledger["finishedAt"], ledger["startedAt"]))
 
-    # WHO acted is checkable, and it is the half of "the executor never implements
+    # WHO acted is checkable, and it is the half of "the coordinator never implements
     # items itself" and "a worker reviewing its own work does not count" that a
     # single snapshot can hold (threads.md#rules).
     executors = [e for e in (ledger.get("executors") or []) if isinstance(e, dict)]
@@ -224,7 +224,7 @@ def ledger_errors(ledger):
         if not fix.get("id"):
             problems.append("%s: no id — a lane no retro can price" % where)
         elif fix["id"] in executor_ids:
-            problems.append("%s: %r is an executor — the executor never repairs the classes its own "
+            problems.append("%s: %r is the coordinator — the coordinator never repairs the classes its own "
                             "run produced (threads.md#rules)" % (where, fix["id"]))
         typed(fix.get("startedAt"), where + ".startedAt")
         typed(fix.get("endedAt"), where + ".endedAt")
@@ -235,10 +235,10 @@ def ledger_errors(ledger):
         for member in fix.get("items") or []:
             if str(member) not in {str(i) for i in known_items}:
                 problems.append("%s.items: %s is not an item" % (where, member))
-    # A retired executor — one that handed over to a successor — has ended by
+    # A retired coordinator — one that handed over to a successor — has ended by
     # definition. The last one may not have: threads.md lets the manager finish its
     # own handover acts after `finishedAt`, so a snapshot cannot tell a live
-    # executor from one at rest. This check stops at the retiree for that reason.
+    # coordinator from one at rest. This check stops at the retiree for that reason.
     for index, executor in enumerate(executors[:-1]):
         if not executor.get("endedAt"):
             problems.append("executors[%d]: %r handed over with no endedAt"
@@ -266,7 +266,7 @@ def ledger_errors(ledger):
                   where + ".worker")
         worker_id = (item.get("worker") or {}).get("id")
         if worker_id and worker_id in executor_ids:
-            problems.append("%s.worker.id: %r is an executor — the executor dispatches and never "
+            problems.append("%s.worker.id: %r is the coordinator — the coordinator dispatches and never "
                             "implements items itself (threads.md#rules)" % (where, worker_id))
 
         # The write that precedes the spawn, so a resume can find the lane
@@ -331,7 +331,7 @@ def ledger_errors(ledger):
                 continue
             review_id = review["id"]
             if review_id in executor_ids:
-                problems.append("%s.reviews[pass %s]: %r is an executor — the executor never "
+                problems.append("%s.reviews[pass %s]: %r is the coordinator — the coordinator never "
                                 "reviews the run it executes (threads.md#rules)"
                                 % (where, review.get("pass"), review_id))
             elif worker_id and review_id == worker_id:
@@ -420,7 +420,7 @@ def ledger_errors(ledger):
         if not pass_.get("id"):
             problems.append("%s: no id — a lane no retro can price" % where)
         elif pass_["id"] in executor_ids:
-            problems.append("%s: %r is an executor — the executor never runs the pass that "
+            problems.append("%s: %r is the coordinator — the coordinator never runs the pass that "
                             "checks its own run" % (where, pass_["id"]))
         backwards(pass_.get("startedAt"), pass_.get("endedAt"), where)
         if pass_.get("verdict") and not pass_.get("endedAt"):

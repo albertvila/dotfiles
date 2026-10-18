@@ -7,7 +7,7 @@ description: "Execute an approved orchestration plan as the manager thread: disp
 
 Execute an approved plan. This thread is the manager: it dispatches one visible
 child thread per item, keeps the ledger, routes review findings, and lands the
-run. [`threads.md#the-executors-job`](../orchestrate-core/threads.md#the-executors-job)
+run. [`threads.md#the-coordinators-job`](../orchestrate-core/threads.md#the-coordinators-job)
 owns the job, the manifest rule and the dispatch-before-touching rule; this file
 owns the BB mechanics.
 

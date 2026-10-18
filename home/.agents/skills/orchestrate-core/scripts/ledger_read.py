@@ -46,7 +46,7 @@ SCHEMA_VERSION = 2
 # The one role vocabulary. `manager`/`review` were BB's spellings; the ledger
 # and both records now use these.
 RUN_ROLES = ("coordinator", "worker", "code-review", "fix", "ponytail", "retro")
-# The roles `models`/`served` are keyed by (ledger.md#models): the executor is
+# The roles `models`/`served` are keyed by (ledger.md#models): the coordinator is
 # not a model-bearing role.
 REQUEST_ROLES = ("worker", "code-review", "ponytail")
 ROLE_ALIASES = {

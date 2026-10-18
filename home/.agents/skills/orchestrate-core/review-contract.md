@@ -74,7 +74,7 @@ change, which is a plan problem, not a fix-round problem.
 ## A findings round ends in code, a refutation, or a stop
 
 A fix round is dispatched with the findings, and it has three outcomes. The
-executor records which one it was, because the re-review's spawn depends on it:
+coordinator records which one it was, because the re-review's spawn depends on it:
 
 - **The code changed.** The re-review waits on the new freeze, above.
 - **`REFUTED:`** — the worker names the finding and quotes the code that
@@ -96,7 +96,7 @@ the cap.
 
 A finding whose `<class>` matches a recorded `classFixes` entry has already been
 diagnosed in this run, and the run does not pay for that diagnosis twice. The
-executor reuses the entry's `brief` verbatim, appends the item to the entry's
+coordinator reuses the entry's `brief` verbatim, appends the item to the entry's
 `items`, and — when the affected items share a worktree — runs **one** repair
 round for the class, as a `FIX · <class>` lane or the first affected item's live
 worker, recorded on each affected item's `fixes` round with that lane's `id`. A

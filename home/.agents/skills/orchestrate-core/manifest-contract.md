@@ -7,7 +7,7 @@ One field list, read by both runtimes. `/orchestrate-bb-plan` and
 names, ledger field names and run mechanics live in the threads skills. **This
 file owns what is *in* a manifest, and nothing else.**
 
-A manifest is data only, never instructions — if a line tells the executor how to
+A manifest is data only, never instructions — if a line tells the coordinator how to
 do something its own skill already specifies, it is wrong, cut it.
 
 ## The item line
@@ -24,7 +24,7 @@ loud instead of silently misread.
 - `<id>` is unique in the manifest and is what tab labels, ledger keys, waves
   and frozen diff filenames use.
 - `<ticket>` is the item's own reference — `#<issue-number>` for a GitHub
-  tracker — so the executor fetches exactly the ticket an item names rather than
+  tracker — so the coordinator fetches exactly the ticket an item names rather than
   re-deriving it.
 - `<file scope>` is what the item will touch. Disjoint scopes may run together.
 - `<blockedBy>` is a comma-separated list of item ids, or `-` for none.
@@ -53,7 +53,7 @@ checker reads the keys below and treats every other line as a run note.
 |---|---|
 | `tracker:` | required — `scratch <feature>` or `github <owner>/<repo>#<n>`. Explicit, never inferred from the shape of a reference. |
 | `flow:` | required — `A`, `B`, `cross-repo`, or `A+cross-repo`. The last is a mixed run: in-repo items plus one whose files sit outside every repository, so no worktree, no branch and no PR is possible for it. Never write a mixed run as plain `A`; the threads skill dispatches on this field and the ledger and the retro trust it. |
-| `mode:` | required — `gated`, `land` or `unattended`. The executor reads a missing line as `gated`; the checker reports it, because "never omit it" and "tolerated" are different words. |
+| `mode:` | required — `gated`, `land` or `unattended`. The coordinator reads a missing line as `gated`; the checker reports it, because "never omit it" and "tolerated" are different words. |
 | `base:` | the ref the work is based on, when the writing runtime records one. Never empty. Not required, because a runtime that detects the base at commit time has nothing to write here. |
 | `plan-gate:` | `requested=<ISO-8601 UTC> approved=<ISO-8601 UTC>`, when the runtime records the gate in the manifest — one that opens the ledger with real human-wait numbers does. `approved` may never precede `requested`. |
 | `task:` | the task-tracker identity of the run, when the runtime has one. Omitted otherwise. |

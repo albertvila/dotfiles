@@ -2,12 +2,12 @@
 
 Reached from the threads phase skill (`/orchestrate-bb-threads` or
 `/orchestrate-herdr-threads`) when the work list comes from
-`.scratch/<feature>/issues/NN-*.md` files. The executor keeps those ticket
+`.scratch/<feature>/issues/NN-*.md` files. The coordinator keeps those ticket
 files in sync with the ledger as items settle:
 
 - Item settles `done` (worker DONE + clean review) → set the ticket's
   `**Status:**` line to `done` and append a line under `## Comments` naming
-  the settled item's executor and a one-line summary. At the end of the run,
+  the settled item's coordinator and a one-line summary. At the end of the run,
   once the PR exists, append its URL to each done ticket's comments.
 - Item settles `blocked` → leave the status line alone; append a
   `## Comments` line with the blocker so the next triage pass sees it.

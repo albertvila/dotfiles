@@ -38,7 +38,7 @@ translation layer.
 
 **Exclusions.** Closed tickets are read, excluded from the item list, and counted
 as satisfied blockers. A ticket in another repository is excluded outright — a
-plan never claims scope the executor cannot read code for. Every excluded issue
+plan never claims scope the coordinator cannot read code for. Every excluded issue
 is named by number in the approval message, under the `tickets in → items out`
 line.
 
@@ -76,7 +76,7 @@ line.
    survive review: the reviewer proves the assumption wrong, the worker cannot
    fix it, and the run ends at the findings cap with the wrong cause and the
    wrong operator instruction.
-6. Flag the special handling so the executor and its reviewers start with the
+6. Flag the special handling so the coordinator and its reviewers start with the
    facts: run-alone resets, items ending in a push or merge, approval gates
    (commit plans, force-pushes), and any acceptance criterion reaching into
    another plugin or repo — list that path.
@@ -101,12 +101,12 @@ assignments.
 `gated` and `land` do not continue until the operator's yes; `unattended` does
 not ask and writes the plan record with both gate timestamps equal to now and
 `auto: true`, then continues. Nothing is dispatched before that record exists,
-and the executor never re-asks what was approved here. The runtime skill names
+and the coordinator never re-asks what was approved here. The runtime skill names
 the exact record and what a yes starts.
 
 ## The manifest
 
-The executor's prompt is a **manifest**: data only, no instructions. The field
+The coordinator's prompt is a **manifest**: data only, no instructions. The field
 list, the item line and wave line formats, and what every header line means are
 [manifest-contract.md](manifest-contract.md) — that file owns the shape, and the
 shape is the same in both runtimes. What goes in it:
@@ -115,19 +115,19 @@ shape is the same in both runtimes. What goes in it:
 - the tracker, explicit and never inferred from the shape of a reference
 - the flow — `A`, `B`, or `A+cross-repo` when the items mix an in-repo item with
   one whose files sit outside every repository. Never write a mixed run as plain
-  `A`: the executor dispatches on this field, and the ledger and the retro trust
+  `A`: the coordinator dispatches on this field, and the ledger and the retro trust
   it
 - the `mode` line, never omitted
 - the items, each naming its own ticket — `#<issue-number>` for GitHub, so the
-  executor fetches exactly the ticket an item names rather than re-deriving it —
+  coordinator fetches exactly the ticket an item names rather than re-deriving it —
   with its acceptance and out-of-scope lines one line each, verbatim from the
-  plan discussion: the executor quotes them in the worker prompt, the review
+  plan discussion: the coordinator quotes them in the worker prompt, the review
   brief and the PR body, and never substitutes the ticket's own wording
 - the waves, and any run note the tickets cannot supply: cross-repo paths,
   run-alone handling, approval gates
 - a model line only when the operator overrode the role defaults
 
-The test for inclusion is procedural: **does this line tell the executor how to
+The test for inclusion is procedural: **does this line tell the coordinator how to
 do something its own skill already specifies?** If yes, it is wrong — cut it.
 Role models, dispatch flags, review loops and ledger mechanics live in the
 threads skill and are never restated here. Intent is not mechanics: an item's

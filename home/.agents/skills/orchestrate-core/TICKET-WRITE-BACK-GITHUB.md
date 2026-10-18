@@ -10,7 +10,7 @@ issue. Not an excluded issue. The commands are in the threads phase skill
 No other label, no close. Claim once per issue; repeating the commands is
 harmless.
 
-**Settlement is comments only.** The executor never closes an *item* issue, and
+**Settlement is comments only.** The coordinator never closes an *item* issue, and
 never adds, removes, or repurposes a label at settlement — the claim already
 dropped `ready-for-agent`, and this write does not touch labels again. Closing
 an item is the PR's job — the PR body carries the closing lines (see *PR body*
@@ -26,7 +26,7 @@ written to**: the run never touched them, so they accrue no run metadata.
 
 - Item settles `done` (worker DONE + clean review) → post **exactly one**
   comment on its own issue — the sub-issue or the parented ticket the item names
-  — naming the item's executor, the outcome, and the PR URL once it exists.
+  — naming the item's coordinator, the outcome, and the PR URL once it exists.
   Until the PR exists (Flow A opens it at the end) leave the URL out and edit
   that same comment to add it — one comment, never a second.
 - Item settles `blocked` → comment the blocker on that item's own issue, so
