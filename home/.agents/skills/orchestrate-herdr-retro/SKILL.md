@@ -53,10 +53,16 @@ number it printed, and did it end in an edit someone can make.
 5. **Write the report** to `$RUNDIR/reports/retro-<feature>.md`, in the sections
    under *Report*, and summarise it in the chat: the numbers that moved, what
    broke, and the proposals. The report is done when every finding is explained
-   or marked unexplained, and every proposal names the section of
-   `/orchestrate-herdr-threads` it would change plus the evidence behind it.
+   or marked unexplained, and every proposal names the section (or corpus
+   record) it would change plus the evidence behind it and the check that
+   decides it landed.
 
-6. **Propose the edits, then ask.** Rank the proposals by the cost or time they
+6. **Propose the edits, then ask.** Read [`retro.md` § *What earns a
+   proposal*](../orchestrate-core/retro.md#what-earns-a-proposal) first: default
+   to none, dedupe every candidate against the corpus records before proposing
+   it, attach each proposal's check and its saving, and keep the ranked list to
+   three. A class an earlier record already proposed is a recurrence reported
+   against that record, never a new proposal. Rank by the cost or time each
    would have saved in *this* run — that ordering is the one the evidence
    supports. Show them as concrete edits to named sections of the main skill,
    then **end the turn** and wait for a yes before touching it. Applying them is
