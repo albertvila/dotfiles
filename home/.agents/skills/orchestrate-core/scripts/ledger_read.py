@@ -387,18 +387,27 @@ def read_run(ledger, lanes, runtime, feature=None, project=None, extras=None,
             "lanesPriced": 0, "lanesUnpriced": 0, "lanesUnmeasured": 0}
     reported, estimated = [], []
     for lane in work:
-        basis = ((lane.get("cost") or {}).get("basis")
-                 or lane.get("costBasis") or "unmeasured")
-        value = (lane.get("cost") or {}).get("reported", lane.get("costUsd"))
-        if basis == "reported" and value is not None:
+        block = lane.get("cost") or {}
+        claimed = block.get("basis") or lane.get("costBasis") or "unmeasured"
+        # an estimate lives beside `reported`, never in it: reading only
+        # `reported` counted every estimated lane as unmeasured and left the
+        # run total null.
+        value = block.get(claimed) if claimed in ("reported", "estimated") else None
+        if value is None and not block:
+            value, claimed = lane.get("costUsd"), "estimated"
+        # a basis no value backs is not a basis the run achieved: counting it
+        # anyway would upgrade the run's basis and print a null total.
+        basis = claimed if value is not None else (
+            "unpriced" if claimed == "unpriced" else "unmeasured")
+        if basis == "reported":
             reported.append(value)
-        elif basis == "estimated" and value is not None:
+        elif basis == "estimated":
             estimated.append(value)
         elif basis == "unpriced":
             cost["lanesUnpriced"] += 1
         else:
             cost["lanesUnmeasured"] += 1
-        if basis_rank.get(basis, 0) > basis_rank.get(cost["basis"], 0):
+        if basis_rank[basis] > basis_rank[cost["basis"]]:
             cost["basis"] = basis
     if reported:
         cost["reported"] = sum(reported)
@@ -717,6 +726,29 @@ def self_test():
     assert run["humanWaitSec"] == 120 and run["orchestratorSec"] == 1680
     assert run["cost"]["basis"] == "reported" and run["cost"]["reported"] == 0.5
     assert run["cost"]["lanesUnpriced"] == 1 and run["cost"]["lanesUnmeasured"] == 1
+    # an estimated lane is priced, not unmeasured: its estimate is the total
+    est = read_run(_fixture_ledger("bb"),
+                   [{"name": "item-01", "role": "worker", "status": "idle",
+                     "firstTs": start, "lastTs": second, "spanSec": 60, "activeSec": 60,
+                     "workSec": 60, "intervals": [[start, second]], "turns": 1,
+                     "models": ["vendor/worker"],
+                     "cost": {"basis": "estimated", "estimated": 0.25},
+                     "costUsd": 0.25, "tokens": {"totalTokens": 100}}],
+                   "bb", project="repo")
+    assert est["run"]["cost"]["basis"] == "estimated", est["run"]["cost"]
+    assert est["run"]["cost"]["estimated"] == 0.25, est["run"]["cost"]
+    assert est["run"]["cost"]["lanesPriced"] == 1
+    assert est["run"]["cost"]["lanesUnmeasured"] == 0
+    # a lane claiming a basis it carries no value for does not upgrade the run's
+    empty = read_run(_fixture_ledger("bb"),
+                     [{"name": "item-01", "role": "worker", "status": "idle",
+                       "firstTs": start, "lastTs": second, "spanSec": 60, "activeSec": 60,
+                       "workSec": 60, "intervals": [[start, second]], "turns": 1,
+                       "models": ["vendor/worker"], "cost": {"basis": "estimated"}}],
+                     "bb", project="repo")
+    assert empty["run"]["cost"] == {"reported": None, "estimated": None, "basis": "unmeasured",
+                                    "lanesPriced": 0, "lanesUnpriced": 0,
+                                    "lanesUnmeasured": 1}, empty["run"]["cost"]
     assert set(record["roles"]) == {"coordinator", "worker", "code-review"}, record["roles"]
     assert record["costByModel"]["vendor/worker"]["agents"] == 2
     assert record["items"]["01"]["status"] == "done" and record["items"]["02"]["reviewCount"] == 0
