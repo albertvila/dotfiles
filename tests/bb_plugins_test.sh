@@ -61,7 +61,7 @@ check() { if eval "$2"; then echo "ok   - $1"; else echo "FAIL - $1"; fail=1; fi
 
 same() { [[ "$(bb_source_identity "$1")" == "$(bb_source_identity "$2")" ]]; }
 
-check "a drifted semver range is the same plugin" 'same git:https://x/y.git@semver:^0.2.0 git:https://x/y.git@semver:>=0.3.0'
+check "a drifted semver range is the same plugin" 'same "git:https://x/y.git@semver:^0.2.0" "git:https://x/y.git@semver:>=0.3.0"'
 check "one monorepo's tag prefixes stay distinct" '! same git:https://x/y.git@semver:follow-up/:^0.3.0 git:https://x/y.git@semver:thread-badges/:^0.1.0'
 check "a drifted npm version is the same package" 'same npm:@scope/pkg@1.0.0 npm:@scope/pkg@2.0.0'
 check "an unversioned npm source keeps its scope" '[ "$(bb_source_identity npm:@scope/pkg)" = "npm:@scope/pkg" ]'
