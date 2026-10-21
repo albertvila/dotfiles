@@ -97,6 +97,9 @@ def self_test():
             "a settlement with no status")
     rejects("unknown status", lambda l: l["items"]["04"].update(status="settled"),
             "is not one of todo, running, done, failed, blocked")
+    rejects("a top-level key outside the run schema",
+            lambda l: l.update(**{"#5": {"dispatchAttempt": {}}}),
+            "is not in the ledger schema")
 
     # The block vocabulary is closed and paired with the status it belongs to.
     rejects("blocked with no cause",

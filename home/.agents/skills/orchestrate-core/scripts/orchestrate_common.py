@@ -37,6 +37,20 @@ REQUIRED_RUN_FIELDS = ("runtime", "feature", "flow", "mode", "startedAt", "execu
 # holds, so their presence is drift and not shape.
 LEGACY_RUN_FIELDS = ("planGate", "managerChain")
 LEGACY_ITEM_FIELDS = ("reviewCount", "reviewThreadId", "fixRounds", "attempts")
+# The documented Run shape (ledger.md § Run): the base fields plus each runtime's
+# extensions. A key outside this set is drift a reader cannot place — most often
+# an item field written at the top level, which then reads as a field of the run
+# and is invisible to the reader that looks for it under `items`.
+RUN_FIELDS = frozenset((
+    "runtime", "feature", "project", "tracker", "flow", "mode",
+    "startedAt", "finishedAt", "models", "served", "ciBaseline",
+    "validationBaseline", "executors", "gates", "items", "classFixes", "ponytail",
+    # bb runtime extensions
+    "task", "pr", "runBranch", "retro", "notes", "wholeTree",
+    "commitMessage", "postRun",
+    # herdr runtime extensions
+    "rundir", "prs", "postMerge", "reopenRounds",
+))
 
 CONTRACT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cause-contract.md")
 
@@ -127,6 +141,10 @@ def ledger_errors(ledger):
     for field in LEGACY_RUN_FIELDS:
         if field in ledger:
             problems.append("run: %r is drift, not shape (ledger.md)" % field)
+    for key in ledger:
+        if key not in RUN_FIELDS:
+            problems.append("run: %r is not in the ledger schema (ledger.md) — a key outside it "
+                            "is drift a reader cannot place" % key)
 
     def typed(value, where):
         if value and not stamp(value):

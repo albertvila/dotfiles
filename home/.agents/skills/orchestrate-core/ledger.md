@@ -56,10 +56,14 @@ The write invariants (write-as-you-go, the typed cause, the `done` rule,
   //   bb: "task" (BB Task key), "pr", "runBranch" (Flow A),
   //       "retro" {id, session, startedAt} when the manager spawned one,
   //       "notes" [one line per plan-time note the coordinator carries],
-  //       "wholeTree" {at, suites, scope} (run-mode.md § Validation)
+  //       "wholeTree" {at, suites, scope} (run-mode.md § Validation),
+  //       "commitMessage" (the gate's conventional message),
+  //       "postRun" [{at, what}] (post-PR work the operator directed)
   //   herdr: "rundir", "retro" {id,session,tab,startedAt},
   //          "pr" {number,url,mergedAt,mergeCommit,base}, "prs" [...],
   //          "postMerge" {branchDeleted,tabsReleased,tabsKept,pending}, "reopenRounds" [...]
+  //   A key outside the base fields and these extensions is drift a reader
+  //   cannot place — validate-ledger.py refuses it by name.
   //   `gates.plan` owns the plan gate. A second top-level copy of it (an old run
   //   wrote `planGate`) is drift, not shape — a reader cannot tell which one is
   //   authoritative, and both can be right.
