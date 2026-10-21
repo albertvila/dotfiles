@@ -23,7 +23,10 @@ A finding is **evidenced and classified**, and both are on the report line:
   every class already recorded in the run's `classFixes`
   ([ledger.md](ledger.md)), and a finding of one of those classes reuses the
   recorded spelling: a class written under two slugs is a class the run pays to
-  diagnose twice.
+  diagnose twice. The slug names the **mechanism**, not a category:
+  `unrecorded-invite-guard` is a class, `contract-gap` and `bug` are not — a slug
+  broad enough to hold two unrelated defects costs the run a wrong `brief` (see
+  *One class fix, one diagnosis*).
 - Two findings with the same file, line and normalized title are **one finding**.
 
 **Four things are not findings**, whatever they are called, and none of them
@@ -115,6 +118,14 @@ coordinator reuses the entry's `brief` verbatim, appends the item to the entry's
 round for the class, as a `FIX · <class>` lane or the first affected item's live
 worker, recorded on each affected item's `fixes` round with that lane's `id`. A
 shared lane is priced once, because both runtimes' retros count a session once.
+
+**A reused slug is a claim, and the `brief` is what proves it.** When the
+finding's mechanism does not match the recorded entry's `brief` — the same name
+over a different defect — it is **not** that class: the coordinator coins a new
+slug and records a new `classFixes` entry, rather than repairing the item from a
+brief that does not describe it. A class whose entry lists one item while a
+second affected item's fix round carries its own separately derived brief is the
+record contradicting itself, and every retro pays to find it.
 
 Each affected item still gets its own re-review of the repair's delta: a CLEAN
 verdict is about an item, not about a class. What is shared is the diagnosis and
