@@ -26,7 +26,7 @@ enabled = false
 #
 # No `machine` token: it prints "Local" on every row, and no row here is remote.
 [ui.sidebar.agents]
-rows = [["state_icon", "workspace", "tab"], ["agent"], ["state_text"]]
+rows = [["state_icon", "workspace", "tab"], ["agent"]]
 
 [experimental]
 pane_history = true

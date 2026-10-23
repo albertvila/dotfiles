@@ -12,6 +12,8 @@ theme = "Ghostty Default Style Dark"
 # Agents section below Spaces.
 show_agents = true
 confirm_close_pane = false
+status_icons = "dots"
+remove_merged_worktrees = true
 
 [layout]
 mode = "normal-rounded"
@@ -30,10 +32,7 @@ fallback = ["Symbols Nerd Font Mono"]
 
 [usage]
 show = true
-# false: the GUI draws its own sidebar layouts (comfortable-rounded, orca,
-# superset, devices) with its own pull-request badges and diff counts, instead
-# of honouring the daemon's [ui.sidebar] rows and plugin tokens.
-inline = false
+inline = true
 
 [status_bar]
 usage = "detailed"
