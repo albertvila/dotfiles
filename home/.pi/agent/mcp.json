@@ -4,6 +4,10 @@
       "url": "https://mcp.atlassian.com/v1/mcp",
       "description": "Jira and Confluence"
     },
+    "atlassian-v2": {
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "description": "Atlassian MCP v2, including Atlassian Artifacts"
+    },
     "databricks-sql-prod": {
       "url": "https://lm-atlas.cloud.databricks.com/api/2.0/mcp/sql",
       "headers": { "Authorization": "Bearer ${DATABRICKS_MCP_PAT}" },
