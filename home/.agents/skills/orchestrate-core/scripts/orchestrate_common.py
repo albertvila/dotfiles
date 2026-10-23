@@ -412,8 +412,15 @@ def ledger_errors(ledger):
                                 % (where, (reviews[-1] or {}).get("verdict")))
             if not item.get("endedAt"):
                 problems.append("%s: status done with no endedAt — a settlement is stamped" % where)
-        if finished and status not in TERMINAL_STATUSES:
-            problems.append("%s: status %r under finishedAt %s"
+        # A parked item is not live work: a `todo` that was never dispatched is a
+        # wait on a blocker PR that has not merged, which run-mode.md keeps `todo`
+        # and names in the verification ask, and threads.md sets `finishedAt` over
+        # it. A `todo` carrying a worker or a `startedAt` is refused above anyway,
+        # and a `running` item is live work, so neither is parked.
+        parked = status == "todo" and not item.get("worker") and not item.get("startedAt")
+        if finished and status not in TERMINAL_STATUSES and not parked:
+            problems.append("%s: status %r under finishedAt %s — only a `todo` that was never "
+                            "dispatched may stand there (run-mode.md)"
                             % (where, status, finished))
         if finished and stamp(item.get("endedAt")) and finished < stamp(item.get("endedAt")):
             problems.append("%s: endedAt %s after finishedAt %s — a terminal marker standing "

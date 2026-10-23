@@ -260,6 +260,17 @@ def self_test():
                        l["items"]["04"].update(status="running", startedAt="2026-09-27T10:00:00Z",
                                                worker={"id": "item-04"})),
             "under finishedAt")
+    # A parked item is not live work: a `todo` that was never dispatched may stand
+    # under `finishedAt` (run-mode.md keeps a blocker-unmerged item `todo` and names
+    # it in the verification ask). It reads clean, and a dispatched one does not.
+    parked = fixture()
+    parked["finishedAt"] = "2026-09-27T11:00:00Z"
+    assert ledger_errors(parked) == [], ledger_errors(parked)
+    rejects("a dispatched todo under finishedAt",
+            lambda l: (l.update(finishedAt="2026-09-27T11:00:00Z"),
+                       l["items"]["04"].update(worker={"id": "item-04"},
+                                               startedAt="2026-09-27T10:00:00Z")),
+            "under finishedAt")
     rejects("a ponytail pass with no verdict",
             lambda l: (l.update(finishedAt="2026-09-27T11:00:00Z",
                                 items={k: v for k, v in l["items"].items()

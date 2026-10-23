@@ -192,8 +192,13 @@ runtimes:
   agent's own session, is a write error, not a rounding artefact.
 - `finishedAt` is an **ISO-8601 UTC timestamp**, not a marker or a sentence, and
   the run corpus reads it as data. It is set only when the run is done: every
-  item terminal, every `done` item's PR open or merged and handed over, and the
-  blocked items surfaced. A turn that runs after `finishedAt` reopens the run —
+  item terminal or **parked**, every `done` item's PR open or merged and handed
+  over, and the blocked items surfaced. A parked item is a `todo` that was never
+  dispatched — a wait on a blocker PR that has not merged, which
+  [run-mode.md](run-mode.md) keeps `todo` and names in the verification ask. A
+  `todo` carrying a worker or a `startedAt` is not parked, and neither is a
+  `running` item: those are live work, and `finishedAt` may not stand over them.
+  A turn that runs after `finishedAt` reopens the run —
   clear it, and set it again only when the run is terminal once more. One
   exception: the runtime's own handover acts after it — the retro spawn, the
   verification ask, and the post-merge cleanup the operator's reply resumes — are
