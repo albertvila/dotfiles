@@ -34,7 +34,7 @@ type Pattern = { pattern: string; regex?: boolean; flags?: string; description: 
 // Jev middle-band tuning. Threshold, timeout, and alias live here and nowhere else.
 const JEV_PASS_AT = 0.9;
 const JEV_TIMEOUT_MS = 1_500;
-const JEV_MODEL = "~typesafe/jev-latest";
+const JEV_MODEL = "typesafe/jev-1.13";
 const JEV_ENDPOINT = "https://openrouter.ai/api/v1/systemone";
 /** A guardrail block belongs to the key, not to the command, so one is enough for the process. */
 let jevBlocked = false;

@@ -14,7 +14,7 @@ export GATE_FILE
 # the alias, threshold, and timeout in one place.
 grep -q "Xavier" "$GATE_FILE"
 grep -q "cannot be fetched" "$GATE_FILE"
-[ "$(grep -c '~typesafe/jev-latest' "$GATE_FILE")" = "1" ]
+[ "$(grep -c 'typesafe/jev-1.13' "$GATE_FILE")" = "1" ]
 grep -q "JEV_PASS_AT = 0.9" "$GATE_FILE"
 grep -q "JEV_TIMEOUT_MS = 1_500" "$GATE_FILE"
 
