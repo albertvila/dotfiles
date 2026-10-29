@@ -20,12 +20,13 @@ grep -q "JEV_TIMEOUT_MS = 1_500" "$GATE_FILE"
 
 node --input-type=module <<'EOF'
 import { pathToFileURL } from "node:url";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, appendFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { homedir, tmpdir } from "node:os";
 
 // The test imports the extension's real decision functions. It must not
 // re-implement the order or the middle-band rules.
-const { default: registerGate, evaluate, isJevEligible, parseJevDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
+const { default: registerGate, evaluate, isJevEligible, parseJevDecision, bashRules, repoDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
 
 let failed = 0;
 const check = (label, actual, expected) => {
@@ -194,7 +195,46 @@ const payloads = [
 
 for (const [expected, payload] of payloads) check(`Jev parse ${JSON.stringify(payload)}`, parseJevDecision(payload), expected);
 
-// Exercise the real adapter: BB can have neither an exported key nor a classifier
+// --- Repo rules from <cwd>/.claude/settings.json --------------------------
+const repoDir = mkdtempSync(`${tmpdir()}/jev-repo-`);
+const rulesFile = `${repoDir}/settings.json`;
+writeFileSync(
+  rulesFile,
+  JSON.stringify({
+    permissions: {
+      allow: [
+        "Bash(python3 .github/scripts/pytest_targets.py *)",
+        "Bash(direnv allow)",
+        "Bash(pytest)",
+        "Bash(pytest *)",
+        "Bash(databricks bundle validate *)",
+        "Bash(git diff:*)",
+        "Read(./secrets.env)",
+        "Bash(sudo *)",
+        "Bash(rm -rf /tmp/scratch)",
+      ],
+      deny: ["Bash(databricks bundle deploy*)", "Bash(pytest slow *)"],
+    },
+  }),
+);
+const rules = bashRules(rulesFile);
+check("repo rules: Bash entries only", rules.allow.length + rules.deny.length, 10);
+check("repo rules: non-Bash entry ignored", rules.allow.includes("Read(./secrets.env)"), false);
+check("repo rules: legacy cmd:* normalised", rules.allow.includes("git diff*"), true);
+check("repo rules: missing file", JSON.stringify(bashRules(`${repoDir}/nope.json`)), '{"allow":[],"deny":[]}');
+writeFileSync(`${repoDir}/bad.json`, "{not json");
+check("repo rules: malformed JSON", JSON.stringify(bashRules(`${repoDir}/bad.json`)), '{"allow":[],"deny":[]}');
+check("repo allow: exact", repoDecision("direnv allow", rules), "allow");
+check("repo allow: exact does not match extra args", repoDecision("direnv allow --verbose", rules), undefined);
+check("repo allow: glob with space", repoDecision("pytest -x tests/", rules), "allow");
+check("repo allow: bare command via its own entry", repoDecision("pytest", rules), "allow");
+check("repo allow: prefix glob without space", repoDecision("databricks bundle validate --target prod", rules), "allow");
+check("repo allow: legacy prefix form", repoDecision("git diff --stat", rules), "allow");
+check("repo deny: prefix glob", repoDecision("databricks bundle deploy --target prod", rules), "block");
+check("repo deny beats repo allow", repoDecision("pytest slow tests/", rules), "block");
+check("repo rules: unrelated command", repoDecision("ls -la", rules), undefined);
+
+
 // catalog. Use only the dedicated key, without changing chat authentication.
 let handler;
 registerGate({ on: (event, fn) => { if (event === "tool_call") handler = fn; } });
@@ -210,6 +250,70 @@ const fakeFetch = async (url, options) => {
   request = { url, options };
   return { ok: true, json: async () => ({ answers: { read_only: { type: "noul", noul: probability } } }) };
 };
+
+// --- Handler honours repo rules, but not for unoverridable denials ---------
+const projectDir = mkdtempSync(`${tmpdir()}/jev-project-`);
+mkdirSync(`${projectDir}/.claude`);
+writeFileSync(
+  `${projectDir}/.claude/settings.json`,
+  JSON.stringify({
+    permissions: {
+      allow: ["Bash(databricks bundle run *)", "Bash(sudo *)", "Bash(rm -rf /tmp/scratch)"],
+      deny: ["Bash(databricks bundle validate *)"],
+    },
+  }),
+);
+const projectCtx = { hasUI: false, cwd: projectDir };
+const repoAllowCalls = calls;
+const gitIn = (...args) =>
+  execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "-C", projectDir, ...args], { stdio: "ignore" });
+check(
+  "untracked repo rules are ignored",
+  (await invoke("databricks bundle run --target prod", projectCtx))?.block,
+  true,
+);
+gitIn("init", "-q");
+gitIn("add", ".claude/settings.json");
+check(
+  "staged-but-uncommitted repo rules are ignored",
+  (await invoke("databricks bundle run --target prod", projectCtx))?.block,
+  true,
+);
+gitIn("commit", "-qm", "settings");
+check(
+  "repo allow runs a command the gate blocks",
+  await invoke("databricks bundle run --target prod", projectCtx),
+  undefined,
+);
+check("repo allow skips Jev", calls, repoAllowCalls);
+check(
+  "repo deny blocks a command the allowlist allows",
+  (await invoke("databricks bundle validate --target prod", projectCtx))?.reason,
+  "Blocked: listed in .claude/settings.json deny",
+);
+check(
+  "repo allow cannot unlock rm -rf",
+  (await invoke("rm -rf /tmp/scratch", projectCtx))?.reason,
+  "Blocked: Recursive force delete",
+);
+check(
+  "repo allow cannot unlock sudo",
+  (await invoke("sudo aws s3 ls", projectCtx))?.block,
+  true,
+);
+check("repo rules never call Jev", calls, repoAllowCalls);
+appendFileSync(`${projectDir}/.claude/settings.json`, "\n");
+check(
+  "a dirty settings file is ignored",
+  (await invoke("databricks bundle run --target prod", projectCtx))?.block,
+  true,
+);
+check(
+  "a dirty settings file drops its deny too",
+  (await invoke("databricks bundle validate --target prod", projectCtx)),
+  undefined,
+);
+rmSync(projectDir, { recursive: true, force: true });
 try {
   process.env.HOME = home;
   delete process.env.JEV_OPENROUTER_API_KEY;
@@ -274,6 +378,7 @@ try {
   for (const key of Object.keys(process.env)) if (!(key in savedEnv)) delete process.env[key];
   Object.assign(process.env, savedEnv);
   rmSync(home, { recursive: true, force: true });
+  rmSync(repoDir, { recursive: true, force: true });
 }
 
 process.exit(failed);

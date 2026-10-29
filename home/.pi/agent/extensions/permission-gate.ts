@@ -21,10 +21,20 @@
  * `pi-extensions` package, recovered from his public dotfiles history on
  * 2026-09-27. That package is private and cannot be fetched from this machine,
  * so this file is the only copy; do not look for the upstream.
+ *
+ * Repo rules: `<cwd>/.claude/settings.json` `permissions.allow` / `.deny`
+ * `Bash(...)` entries are honoured before Jev and before the allowlist. Deny
+ * wins over allow. Destructive hard denials and prompt-class matches stay
+ * unoverridable, so a repo file cannot unlock `rm -rf`, `sudo`, or `chmod 777`.
+ * The file only counts when it is tracked by git and unmodified: the gate does
+ * not cover the write tools, so an uncommitted file would let an agent write
+ * itself an allow rule. Uncommitted, untracked, or non-repo means no rules.
  */
 
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { join } from "node:path";
 import { parseEnv } from "node:util";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
@@ -112,6 +122,56 @@ export function evaluate(command: string): Decision {
 	if (autoDenyPatterns.some((p) => matches(command, p))) return "block";
 	if (promptPatterns.some((p) => matches(command, p))) return "prompt";
 	return "allow";
+}
+
+type RepoRules = { allow: string[]; deny: string[] };
+const NO_RULES: RepoRules = { allow: [], deny: [] };
+
+/**
+ * `permissions.allow` / `permissions.deny` `Bash(...)` entries from a Claude
+ * settings file. Anything unreadable or malformed means no rules at all.
+ */
+export function bashRules(settingsPath: string): RepoRules {
+	let json: unknown;
+	try {
+		json = JSON.parse(readFileSync(settingsPath, "utf8"));
+	} catch {
+		return NO_RULES;
+	}
+	const permissions = (json as { permissions?: Record<string, unknown> })?.permissions ?? {};
+	const read = (key: "allow" | "deny") => {
+		const entries = Array.isArray(permissions[key]) ? (permissions[key] as unknown[]) : [];
+		return entries.flatMap((entry) => {
+			const inner = typeof entry === "string" ? /^Bash\((.*)\)$/.exec(entry.trim()) : null;
+			// `cmd:*` is Claude's older prefix form; both forms mean "any suffix".
+			return inner ? [inner[1].replace(/:?\*$/, "*")] : [];
+		});
+	};
+	return { allow: read("allow"), deny: read("deny") };
+}
+
+/** Repo deny beats repo allow; no match means the gate's own policy decides. */export function repoDecision(command: string, rules: RepoRules): Decision | undefined {
+	const trimmed = command.trim();
+	const hit = (patterns: string[]) =>
+		patterns.some((p) => new RegExp(`^${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\*/g, ".*")}$`).test(trimmed));
+	if (hit(rules.deny)) return "block";
+	if (hit(rules.allow)) return "allow";
+	return undefined;
+}
+
+const SETTINGS = join(".claude", "settings.json");
+
+/**
+ * Rules for a checkout, read only from a committed, unmodified settings file.
+ * A dirty or untracked file is ignored, so an agent cannot authorize itself.
+ */
+export function trackedRules(cwd: string): RepoRules {
+	const path = join(cwd, SETTINGS);
+	if (!existsSync(path)) return NO_RULES;
+	const git = (...args: string[]) => spawnSync("git", ["-C", cwd, ...args], { stdio: "ignore", timeout: 1_000 }).status === 0;
+	if (!git("ls-files", "--error-unmatch", "--", SETTINGS)) return NO_RULES;
+	if (!git("diff", "--quiet", "HEAD", "--", SETTINGS)) return NO_RULES;
+	return bashRules(path);
 }
 
 // A middle-band command needs a read-shaped token and no write or export token.
@@ -219,6 +279,14 @@ export default function (pi: ExtensionAPI) {
 		if (event.toolName !== "bash") return undefined;
 		const command = (event.input as { command?: unknown }).command;
 		if (typeof command !== "string") return undefined;
+
+		// Unoverridable gate rules first, so a repo settings file cannot unlock them.
+		const unoverridable = destructiveDenyPatterns.some((p) => matches(command, p)) || promptPatterns.some((p) => matches(command, p));
+		if (!unoverridable) {
+			const repo = repoDecision(command, ctx.cwd ? trackedRules(ctx.cwd) : NO_RULES);
+			if (repo === "block") return { block: true, reason: "Blocked: listed in .claude/settings.json deny" };
+			if (repo === "allow") return undefined;
+		}
 
 		const decision = evaluate(command);
 		if (decision === "allow") return undefined;
