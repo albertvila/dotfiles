@@ -18,6 +18,10 @@ Enforced by linter where configured — the module-alias form is banned project-
 - Bugs are fixed autonomously end-to-end: logs, errors, failing CI — no hand-holding requested.
 - Replacements delete what they replace: no compat layers, fallbacks, or dead paths left behind.
 - Broken windows: lint errors, test failures, and flakiness get fixed on sight, even when unrelated to the current task.
+- Before you add code for a race condition or security edge case that is unlikely or purely hypothetical, tell me exactly what would go wrong, how likely that is, and how much complexity the extra code adds, in words a 10-year-old could understand. Then wait for my OK. Don't quietly widen the scope to guard against problems that only exist in theory.
+
+## Ports
+- `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running: never kill it, by pid, port or name (`lsof -ti tcp:8765 | xargs kill` takes it down and looks like a crash); kill your own preview server by the pid you started, or use a free port.
 
 ## Git
 

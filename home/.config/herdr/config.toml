@@ -30,3 +30,7 @@ rows = [["state_icon", "workspace", "tab"], ["agent"]]
 
 [experimental]
 pane_history = true
+
+[theme]
+name = "catppuccin"
+auto_switch = false

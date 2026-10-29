@@ -2,7 +2,7 @@
   "lastChangelogVersion": "1.4.0",
   "theme": "dark",
   "defaultProvider": "openrouter",
-  "defaultModel": "deepseek/deepseek-v4.1-flash",
+  "defaultModel": "deepseek/deepseek-v4.1-flash-1017",
   "defaultProjectTrust": "always",
   "defaultThinkingLevel": "max",
   "hideThinkingBlock": true,
