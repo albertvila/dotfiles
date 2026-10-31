@@ -18,13 +18,16 @@ source ./lib/bb.sh
 #  -u to define a user
 #  -f to force and do not ask for confirmation at the beginning
 #  -o with -u to install only that user's config, and nothing else
-while getopts ":u:fo" opt; do
+#  -c to report drift in the symlink tree and exit, installing nothing
+while getopts ":u:foc" opt; do
   case $opt in
     u) USER_PARAM="$OPTARG"
     ;;
     f) FORCE=1
     ;;
     o) USER_ONLY=1
+    ;;
+    c) CHECK_ONLY=1; FORCE=1
     ;;    \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
@@ -133,6 +136,13 @@ start
 if ! is_osx; then
   error "Operating System not supported"
   exit;
+fi
+
+# -c: report drift and exit, no installs and no prompts. Meant for a converged
+# machine (or CI against a fake HOME), so it always exits, never falls through.
+if [[ $CHECK_ONLY ]]; then
+  check_dotfiles
+  exit
 fi
 
 # Default pass: the config.sh lists, then the machine-wide setup. -o skips all

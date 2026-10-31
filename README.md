@@ -34,6 +34,8 @@ $ sh ./setup.sh
 
 If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules. Add `-o` (`./setup.sh -uXXX -o`) to install only that custom config and skip everything else — no default list, no osx defaults/dotfiles/fish/git hooks, no agent tooling — which makes it the quick refresh.
 
+To ask whether this machine still matches the repo, run `./setup.sh -c`: it reports every missing or foreign link in the home mirror and exits non-zero on drift, installing nothing and prompting for nothing.
+
 ## Update
 Just run `./setup.sh` from time to time to automatically update all modules and applications. Use the `-f` option to avoid being asked for a confirmation.
 

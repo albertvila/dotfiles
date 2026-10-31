@@ -8,6 +8,19 @@ function install_dotfiles() {
   _setup_vim
 }
 
+# Reports every target that is missing or points somewhere else, and changes
+# nothing. Same walk as _install_dotfiles, so the drift report and the install
+# can never disagree about what should be linked.
+function check_dotfiles() {
+  bot "Checking the symlink tree under $HOME"
+  DOTFILES_DRIFT=0
+  _each_managed_target _check_target
+  if [ $DOTFILES_DRIFT -eq 0 ]; then
+    ok "no drift"
+  fi
+  return $DOTFILES_DRIFT
+}
+
 # It does a cleanup every 30 days
 function cleanup() {
   export LC_ALL=C
@@ -86,12 +99,17 @@ function _setup_vim() {
 function _symbolic_link() {
   sourceFile=$1
   targetFile=$2
+  local state
+  state=$(_link_state "$sourceFile" "$targetFile")
 
-  if [ ! -e "$targetFile" ] && [ ! -L "$targetFile" ]; then
+  case $state in
+  missing)
     execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
-  elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
+  ;;
+  linked)
     ok "Link already exists for $targetFile"
-  else
+  ;;
+  foreign)
     ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
     if answer_is_yes; then
       rm -rf "$targetFile"
@@ -99,7 +117,8 @@ function _symbolic_link() {
     else
       error "$targetFile → $sourceFile"
     fi
-  fi
+  ;;
+  esac
 }
 
 function _backup_existing_dotfiles() {
@@ -151,37 +170,68 @@ function _is_no_link() {
   esac
 }
 
+# How a target sits relative to its source: linked, missing, or foreign (a real
+# file or a link to something else). Both install and check branch on this.
+function _link_state() {
+  local sourceFile=$1 targetFile=$2
+  if [ ! -e "$targetFile" ] && [ ! -L "$targetFile" ]; then
+    echo missing
+  elif [ "$(readlink "$targetFile")" == "$sourceFile" ]; then
+    echo linked
+  else
+    echo foreign
+  fi
+}
+
+# Every managed target, handed to $1 as (source, relative) in install order:
+# merge-dir files first, then wholesale entries. Both _install_dotfiles and
+# check_dotfiles walk this, so the drift report cannot disagree with the install.
+# Keep comments out of the <(...) body below: bash 3.2 (macOS /bin/bash, the
+# shell the setup.sh shebang picks) reads an apostrophe in a comment as a
+# quote and then fails the whole install with "bad substitution".
+function _each_managed_target() {
+  local handler=$1
+  local sourceFile
+  local relative
+  while IFS= read -r -d '' sourceFile; do
+    relative="${sourceFile#$DOTFILES_DIR/home/}"
+    "$handler" "$sourceFile" "$relative"
+  done < <(
+    find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
+      if _is_merge_dir "$(basename "$d")"; then
+        find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0
+      fi
+    done
+    find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -not -name '.DS_Store' -print0 | while IFS= read -r -d '' entry; do
+      if _is_merge_dir "${entry#$DOTFILES_DIR/home/}" || _is_no_link "${entry#$DOTFILES_DIR/home/}"; then
+        continue
+      fi
+      printf '%s\0' "$entry"
+    done
+  )
+}
+
+function _install_target() {
+  local targetFile="$HOME/$2"
+  mkdir -p "$(dirname "$targetFile")"
+  _symbolic_link "$1" "$targetFile"
+}
+
+function _check_target() {
+  local targetFile="$HOME/$2"
+  local state
+  state=$(_link_state "$1" "$targetFile")
+  if [ "$state" = linked ]; then
+    return 0
+  fi
+  error "drift: $targetFile is $state, want a link to $1"
+  DOTFILES_DRIFT=1
+}
+
 function _install_dotfiles() {
   bot "Creating symbolic links for config files if needed"
 
-  local entry
-  local relative
-  local targetFile
-
-  # Merge dirs: symlink each file inside (mkdir parents), never the dir itself.
-  # __pycache__ and app lock files (e.g. Herdr's .config.toml.gpui-lock) are
-  # regenerable runtime artifacts: prune them, never link them.
-  # Keep comments out of the <(...) body below: bash 3.2 (macOS /bin/bash, the
-  # shell the setup.sh shebang picks) reads an apostrophe in a comment as a
-  # quote and then fails the whole install with "bad substitution".
-  while IFS= read -r -d '' sourceFile; do
-    relative="${sourceFile#$DOTFILES_DIR/home/}"
-    targetFile="$HOME/$relative"
-    mkdir -p "$(dirname "$targetFile")"
-    _symbolic_link "$sourceFile" "$targetFile"
-  done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
-    _is_merge_dir "$(basename "$d")" && find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0
-  done)
-
-  # Everything else: symlink wholesale so subdir trees (e.g. .vim) stay intact.
-  while IFS= read -r -d '' entry; do
-    relative="${entry#$DOTFILES_DIR/home/}"
-    if _is_merge_dir "$relative" || _is_no_link "$relative"; then
-      continue
-    fi
-    targetFile="$HOME/$relative"
-    _symbolic_link "$entry" "$targetFile"
-  done < <(find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -not -name '.DS_Store' -print0)
+  _each_managed_target _install_target
 
   ok
 }
