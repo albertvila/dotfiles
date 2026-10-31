@@ -42,6 +42,13 @@ function result() {
   [ $1 -eq 0 ] && ok "$2" || error "$2"
 }
 
+# One line per thing that does not match the repo. Every caller sets
+# DOTFILES_DRIFT so setup.sh -c can exit non-zero without re-reading the output.
+function _drift() {
+  error "drift: $1"
+  DOTFILES_DRIFT=1
+}
+
 function ask() {
   printf "$COL_YELLOW [?]$COL_RESET $1"
 }

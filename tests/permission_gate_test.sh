@@ -24,6 +24,14 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, appendFileSync } from "n
 import { execFileSync } from "node:child_process";
 import { homedir, tmpdir } from "node:os";
 
+// A pre-commit hook hands its child the caller's absolute GIT_DIR and
+// GIT_INDEX_FILE. Inherited here they make the gate's HEAD lookup and the
+// fixture repo below read and commit into the real repo instead of this
+// sandbox. A sandbox that only works when run by hand is not a sandbox.
+for (const key of Object.keys(process.env)) {
+  if (key.startsWith("GIT_")) delete process.env[key];
+}
+
 // The test imports the extension's real decision functions. It must not
 // re-implement the order or the middle-band rules.
 const { default: registerGate, evaluate, isJevEligible, parseJevDecision, bashRules, repoDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);

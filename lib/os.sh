@@ -211,3 +211,80 @@ function _install_npm() {
   ok
 }
 
+
+# The name a manifest line declares, as the tool reports it. Brew keeps its
+# version suffix — `openssl@3` and `openjdk@11` are the installed names — so only
+# a tap prefix comes off. npm and pip pins (`pkg@2`, `isort<8.0.0`) come off too.
+function _package_name() {
+  local pkg=$1
+  printf '%s' "${pkg##*/}"
+}
+
+function _versioned_name() {
+  local name
+  name=$(_package_name "$1")
+  name="${name%%[<>=]*}"
+  printf '%s' "${name%@*}"
+}
+
+# Read-only: does this machine have everything the active config declares? Mirrors
+# the installers above, so a package becomes a drift line exactly when setup would
+# have installed it. One tool invocation per package manager, not per package.
+function check_packages() {
+  bot "Checking declared packages"
+  local pkg name installed
+
+  # A missing tool is one drift line, not one per package it would have installed.
+  if command -v brew &>/dev/null; then
+    installed=$(brew list --formula -1 2>/dev/null)
+    for pkg in "${BREW_APPS[@]}"; do
+      name=$(_package_name "$pkg")
+      grep -qxF "$name" <<< "$installed" || _drift "brew formula not installed: $pkg"
+    done
+    installed=$(brew list --cask -1 2>/dev/null)
+    for pkg in "${BREW_CASK_APPS[@]}"; do
+      name=$(_package_name "$pkg")
+      grep -qxF "$name" <<< "$installed" || _drift "brew cask not installed: $pkg"
+    done
+  else
+    _drift "brew is not installed, so no declared brew package can be present"
+  fi
+
+  if [ ${#NPM_PACKAGES[@]} -gt 0 ]; then
+    if command -v npm &>/dev/null; then
+      installed=$(npm ls -g --depth=0 2>/dev/null)
+      for pkg in "${NPM_PACKAGES[@]}"; do
+        name=$(_versioned_name "$pkg")
+        grep -qF "$name@" <<< "$installed" || _drift "npm package not installed globally: $pkg"
+      done
+    else
+      _drift "npm is not installed, so no declared npm package can be present"
+    fi
+  fi
+
+  if [ ${#PIP_APPS[@]} -gt 0 ]; then
+    if command -v pip &>/dev/null; then
+      installed=$(pip list --user 2>/dev/null | tr 'A-Z' 'a-z')
+      for pkg in "${PIP_APPS[@]}"; do
+        name=$(_versioned_name "$pkg" | tr 'A-Z' 'a-z')
+        grep -qE "^${name}[[:space:]]" <<< "$installed" || _drift "pip package not installed: $pkg"
+      done
+    else
+      _drift "pip is not installed, so no declared pip package can be present"
+    fi
+  fi
+}
+
+# The README manual steps that leave a file or a key behind. The rest (github
+# keys, twg login, Alfred shortcuts) need a human and a browser, so they stay
+# manual: a check that cannot see the answer must not claim one.
+function check_manual_steps() {
+  bot "Checking the manual steps that leave a trace"
+
+  [ -f "$HOME/.gitconfig-user" ] ||
+    _drift "missing ~/.gitconfig-user (git user + signing key, see README)"
+  gpg --list-secret-keys --with-colons 2>/dev/null | grep -q '^sec' ||
+    _drift "no gpg secret key, so signed commits cannot be made (see README)"
+  [ -f "$HOME/.aws/credentials" ] ||
+    _drift "missing ~/.aws/credentials (run aws configure, see README)"
+}

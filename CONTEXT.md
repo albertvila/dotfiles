@@ -40,6 +40,10 @@ _Avoid_: Shell, terminal setup
 The program that runs an executable script, fixed by its shebang line. Changing the login shell never changes it.
 _Avoid_: Shell script runtime
 
+**Drift**:
+One way this machine no longer matches the repo: a managed target missing from `$HOME` or pointing somewhere else, a declared package that is not installed, or a manual step whose trace is absent. Reported one line per case by `setup.sh -c`, never repaired by it.
+_Avoid_: Mismatch, out of sync
+
 ## Permission gate
 
 **Read-only allowlist**:
