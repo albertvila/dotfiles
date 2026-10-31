@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Is the AWS session this repo needs still usable?
+#
+# Temp AWS creds expire silently. When they do, direnv's CodeArtifact token and
+# the pre-push hook both fail with messages that never say "your session is
+# stale", so a thread retries the same push instead of asking for a refresh.
+# This answers that question in one line, for the profile the repo itself
+# declares in its .envrc.
+#
+# exit 0 = STS answered   1 = stale, refresh it   2 = cannot tell (no aws CLI)
+set -uo pipefail
+
+profile="${AWS_PROFILE:-}"
+if [ -z "$profile" ]; then
+  dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/.envrc" ]; then
+      # `AWS_PROFILE=x` or `export AWS_PROFILE=x`, with optional quotes.
+      raw=$(sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}AWS_PROFILE=//p' "$dir/.envrc" | head -1)
+      raw="${raw%\"}"; raw="${raw#\"}"; raw="${raw%\'}"; raw="${raw#\'}"
+      profile="${raw%%[[:space:]]*}"
+      break
+    fi
+    dir=$(dirname "$dir")
+  done
+fi
+profile="${profile:-default}"
+
+if ! command -v aws >/dev/null 2>&1; then
+  echo "aws-check: no aws CLI on PATH, cannot verify '$profile'" >&2
+  exit 2
+fi
+
+if out=$(aws sts get-caller-identity --profile "$profile" \
+      --cli-connect-timeout 5 --cli-read-timeout 5 2>&1); then
+  account=$(printf '%s' "$out" | sed -n 's/.*"Account"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  echo "aws OK    profile='$profile'${account:+ account=$account}"
+  exit 0
+fi
+
+echo "aws STALE profile='$profile' — refresh it in Strider, then retry" >&2
+exit 1

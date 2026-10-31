@@ -60,7 +60,9 @@ Open the PR against that branch, not the assumed default.
 
 ### AWS Credentials / Git Push
 
-If `git push` fails with `AWS credentials: Missing suitable credentials`, stop and ask the user to refresh AWS credentials with **Stripe**, our in-house tool, before retrying.
+AWS sessions expire silently, and when they do `direnv`, the repo hooks and the push all fail with messages that never name the cause. Before pushing — or committing in a repo that has an `.envrc` — run `~/.agents/scripts/aws-check`. Exit 1 means the session for that repo's `AWS_PROFILE` is stale: stop and ask the user to refresh it in **Strider**, our in-house tool, then retry. Exit 2 means it could not tell: push and report the real error.
+
+The same refresh applies when `git push` fails with `AWS credentials: Missing suitable credentials`.
 
 ## Grill Sessions
 
