@@ -16,6 +16,7 @@ declare -a BREW_APPS=(
   jq
   nodenv # Node version manager — use `nodenv install <version>` to install Node
   openssl@3
+  php # Alfred workflows and the github workflow shell out to php
   pinentry-mac
   pre-commit
   ripgrep
