@@ -10,14 +10,12 @@ declare -a BREW_APPS=(
   git
   gnupg # To generate GPG keys for github (https://help.github.com/articles/generating-a-new-gpg-key/)
   gradle
-  gradle-completion
   openjdk
   openjdk@11
   jenv
   jq
   nodenv # Node version manager — use `nodenv install <version>` to install Node
   openssl@3
-  perltidy
   pinentry-mac
   pre-commit
   ripgrep
@@ -32,7 +30,6 @@ declare -a BREW_CASK_APPS=(
   dropbox
   firefox
   google-chrome
-  leapp
   orbstack # Docker https://orbstack.dev/
   rectangle
   slack

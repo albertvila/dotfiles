@@ -78,8 +78,6 @@ If the problem still persist, enable the git Trace mode to properly see the erro
 - If you get issues with gpg, first check the current key is not expired using `gpg --list-secret`. If expired, you can change the expiratoin time using `gpg --edit-key XXX` and then using the `expire` command within the shell.
 Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more information [here](https://www.gnupg.org/(it)/documentation/manuals/gnupg/Common-Problems.html)
 
-- If some Alfred workflows does not work it may be because they need the `php` command.
-
 ## Chrome extensions
 > Automatically sync
 
