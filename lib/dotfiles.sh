@@ -224,8 +224,7 @@ function _check_target() {
   if [ "$state" = linked ]; then
     return 0
   fi
-  error "drift: $targetFile is $state, want a link to $1"
-  DOTFILES_DRIFT=1
+  _drift "$targetFile is $state, want a link to $1"
 }
 
 function _install_dotfiles() {

@@ -6,19 +6,24 @@
 # Skip brew's interactive install/upgrade confirmation prompts (non-interactive script run)
 export HOMEBREW_NO_ASK=1
 
-source ./config.sh
-source ./lib/echos.sh
-source ./lib/utils.sh
-source ./lib/dotfiles.sh
-source ./lib/os.sh
-source ./lib/fish.sh
-source ./lib/bb.sh
+# Get current dir first: every file this script sources must come from this
+# checkout, not from whatever directory it was invoked in.
+DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "$DOTFILES_DIR/config.sh"
+source "$DOTFILES_DIR/lib/echos.sh"
+source "$DOTFILES_DIR/lib/utils.sh"
+source "$DOTFILES_DIR/lib/dotfiles.sh"
+source "$DOTFILES_DIR/lib/os.sh"
+source "$DOTFILES_DIR/lib/fish.sh"
+source "$DOTFILES_DIR/lib/bb.sh"
 
 # Parameters
 #  -u to define a user
 #  -f to force and do not ask for confirmation at the beginning
 #  -o with -u to install only that user's config, and nothing else
-#  -c to report drift in the symlink tree and exit, installing nothing
+#  -c to report drift and exit, installing nothing: symlinks, declared
+#     packages, and the manual steps that leave a file or key behind
 while getopts ":u:foc" opt; do
   case $opt in
     u) USER_PARAM="$OPTARG"
@@ -38,8 +43,7 @@ if [[ $USER_ONLY && ! $USER_PARAM ]]; then
   exit 1
 fi
 
-# Get current dir (so run this script from anywhere)
-DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# The default pass runs without a user config; -u replaces this below.
 DOTFILES_USER="default"
 
 # The bb app ships its CLI in the bundle; link it so setup and agents can
@@ -140,9 +144,19 @@ fi
 
 # -c: report drift and exit, no installs and no prompts. Meant for a converged
 # machine (or CI against a fake HOME), so it always exits, never falls through.
+# -u is honoured: the package lists it declares belong to the machine too.
 if [[ $CHECK_ONLY ]]; then
+  if [[ $USER_PARAM ]]; then
+    if [[ ! -f "$DOTFILES_DIR/config_$USER_PARAM.sh" ]]; then
+      error "Config file not found: config_${USER_PARAM}.sh"
+      exit 1
+    fi
+    source "$DOTFILES_DIR/config_$USER_PARAM.sh"
+  fi
   check_dotfiles
-  exit
+  check_packages
+  check_manual_steps
+  exit $DOTFILES_DRIFT
 fi
 
 # Default pass: the config.sh lists, then the machine-wide setup. -o skips all

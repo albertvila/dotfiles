@@ -11,7 +11,7 @@ Check `config.sh` file if you want to know all packages/modules to install and t
 The `config.sh` file contains the default packages/modules, it can be extend with a custom file per user, for example I also use the `config_albert.sh` file.
 
 Recap
-- Setup dotfiles (Note that the first time you ran the setup script it may throw some errors, just run the script twice)
+- Setup dotfiles (idempotent: `tests/setup_converge_test.sh` runs it twice against a fake `$HOME` and requires the second run to change nothing)
 - Install osx dev packages for brew/pip/npm/brew cask and osx defaults
 - Install fish as shell (https://fishshell.com/)
 - Shell Starship (https://starship.rs/)
@@ -34,7 +34,13 @@ $ sh ./setup.sh
 
 If you have a custom file like `config_XXX.sh` then you should use the `./setup -uXXX` command, it will install the default and the custom packages/modules. Add `-o` (`./setup.sh -uXXX -o`) to install only that custom config and skip everything else — no default list, no osx defaults/dotfiles/fish/git hooks, no agent tooling — which makes it the quick refresh.
 
-To ask whether this machine still matches the repo, run `./setup.sh -c`: it reports every missing or foreign link in the home mirror and exits non-zero on drift, installing nothing and prompting for nothing.
+To ask whether this machine still matches the repo, run `./setup.sh -c` (add `-uXXX` to include that user's package lists). It reports, and exits non-zero on, every place the machine has drifted:
+
+- a missing or foreign link in the home mirror
+- a package the active config declares that is not installed (brew formula, brew cask, npm, pip) — one line per missing package manager when the manager itself is absent
+- a manual step that leaves a trace: `~/.gitconfig-user`, a gpg secret key, `~/.aws/credentials`
+
+It installs nothing and prompts for nothing. The manual steps that need a browser or a human — github and ssh keys, `twg setup`, the Alfred and Rectangle logins — stay manual, because a check that cannot see the answer must not claim one.
 
 ## Update
 Just run `./setup.sh` from time to time to automatically update all modules and applications. Use the `-f` option to avoid being asked for a confirmation.
