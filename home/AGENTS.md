@@ -18,7 +18,9 @@ Enforced by linter where configured — the module-alias form is banned project-
 - Bugs are fixed autonomously end-to-end: logs, errors, failing CI — no hand-holding requested.
 - Replacements delete what they replace: no compat layers, fallbacks, or dead paths left behind.
 - Broken windows: lint errors, test failures, and flakiness get fixed on sight, even when unrelated to the current task.
+- Corrected twice on the same mistake → run the `correct` skill. One correction is a fix, two is a class.
 - Before you add code for a race condition or security edge case that is unlikely or purely hypothetical, tell me exactly what would go wrong, how likely that is, and how much complexity the extra code adds, in words a 10-year-old could understand. Then wait for my OK. Don't quietly widen the scope to guard against problems that only exist in theory.
+- End any turn that reports on long-running or delegated work with a short status: **Goal**, **Done**, **Next**, **Needs you** (or "nothing").
 
 ## Ports
 - `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running: never kill it, by pid, port or name (`lsof -ti tcp:8765 | xargs kill` takes it down and looks like a crash); kill your own preview server by the pid you started, or use a free port.
@@ -58,7 +60,7 @@ Open the PR against that branch, not the assumed default.
 
 ### AWS Credentials / Git Push
 
-If `git push` fails with `AWS credentials: Missing suitable credentials`, stop and ask the user to connect their **Leapp** app to refresh AWS credentials before retrying.
+If `git push` fails with `AWS credentials: Missing suitable credentials`, stop and ask the user to refresh AWS credentials with **Stripe**, our in-house tool, before retrying.
 
 ## Grill Sessions
 
