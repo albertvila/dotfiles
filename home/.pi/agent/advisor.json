@@ -1,0 +1,17 @@
+{
+  "alwaysOn": true,
+  "advisorOutcomeLogging": true,
+  "advisor": "openrouter/~z-ai/glm-flash-latest",
+  "advisorEffort": "high",
+  "advisorPlanGate": false,
+  "advisorFailureGate": true,
+  "advisorCompletionGate": true,
+  "gateFailureMode": "warn-and-continue",
+  "advisorBlockOnBlocked": false,
+  "advisorAutoLoopGate": true,
+  "advisorLoopThreshold": 3,
+  "advisorMaxCallsPerSession": 3,
+  "advisorRedactSecrets": true,
+  "simpleMode": false,
+  "advisorScoutEnabled": false
+}

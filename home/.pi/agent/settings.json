@@ -19,7 +19,8 @@
     "npm:pi-clarify",
     "npm:pi-powerline-footer",
     "npm:pi-rewind",
-    "npm:pi-web-access@0.35.0"
+    "npm:pi-web-access@0.35.0",
+    "npm:pi-advisor-flow"
   ],
   "powerline": {
     "welcome": false,
