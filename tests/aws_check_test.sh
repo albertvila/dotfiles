@@ -48,8 +48,28 @@ check "a live session reports the account" \
 OUT=$(cd "$REPO_DIR" && PATH="$BIN:$PATH" AWS_PROFILE=discover-prod bash "$CHECK" 2>&1) || true
 check "the exported AWS_PROFILE wins over .envrc" \
   "[ \"\$(cat "$WORK/asked")\" = 'discover-prod' ]"
+check "a declared profile is not marked as assumed" \
+  "printf '%s\n' \"\$OUT\" | grep -q \"profile='discover-prod' account\""
 
-# 4. No aws CLI: cannot tell, and says so instead of inventing an answer.
+# 4. Nothing declares a profile: atlas-staging wins while ~/.aws knows it,
+#    then aws's own fallback.
+BARE="$WORK/bare"
+FAKEHOME="$WORK/home"
+mkdir -p "$BARE" "$FAKEHOME/.aws"
+printf 'echo hello\n' > "$BARE/.envrc"
+printf '[profile atlas-staging]\nregion=eu-west-1\n\n[default]\nregion=eu-west-1\n' > "$FAKEHOME/.aws/config"
+OUT=$(cd "$BARE" && PATH="$BIN:$PATH" HOME="$FAKEHOME" AWS_PROFILE= bash "$CHECK" 2>&1) || true
+check "with nothing declared, atlas-staging is preferred" \
+  "[ \"\$(cat "$WORK/asked")\" = 'atlas-staging' ]"
+check "a guessed profile is marked as assumed" \
+  "printf '%s\n' \"\$OUT\" | grep -q \"profile='atlas-staging' (assumed)\""
+
+printf '[profile discover-prod]\nregion=eu-west-1\n' > "$FAKEHOME/.aws/config"
+OUT=$(cd "$BARE" && PATH="$BIN:$PATH" HOME="$FAKEHOME" AWS_PROFILE= bash "$CHECK" 2>&1) || true
+check "with no atlas-staging in ~/.aws, default is used" \
+  "[ \"\$(cat "$WORK/asked")\" = 'default' ]"
+
+# 5. No aws CLI: cannot tell, and says so instead of inventing an answer.
 OUT=$(cd "$REPO_DIR" && PATH=/usr/bin:/bin AWS_PROFILE= bash "$CHECK" 2>&1) && code=0 || code=$?
 check "a missing aws CLI exits 2" "[ $code -eq 2 ]"
 check "a missing aws CLI is not reported as stale" \

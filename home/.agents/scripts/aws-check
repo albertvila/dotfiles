@@ -5,12 +5,14 @@
 # the pre-push hook both fail with messages that never say "your session is
 # stale", so a thread retries the same push instead of asking for a refresh.
 # This answers that question in one line, for the profile the repo itself
-# declares in its .envrc.
+# declares in its .envrc. When the repo declares nothing, atlas-staging is what
+# gets checked (nearly every repo here uses it) and the line says "(assumed)".
 #
 # exit 0 = STS answered   1 = stale, refresh it   2 = cannot tell (no aws CLI)
 set -uo pipefail
 
 profile="${AWS_PROFILE:-}"
+assumed=""
 if [ -z "$profile" ]; then
   dir="$PWD"
   while [ "$dir" != "/" ]; do
@@ -24,7 +26,22 @@ if [ -z "$profile" ]; then
     dir=$(dirname "$dir")
   done
 fi
-profile="${profile:-default}"
+# Nothing declared a profile. aws itself would use 'default', but that session
+# is refreshed rarely, so prefer atlas-staging (what almost every repo here
+# uses) when ~/.aws knows about it.
+if [ -z "$profile" ]; then
+  known=$( {
+    [ -f "$HOME/.aws/config" ] && sed -n 's/^\[\(profile[[:space:]]\{1,\}\)\{0,1\}\([^]]*\)\].*/\2/p' "$HOME/.aws/config"
+    [ -f "$HOME/.aws/credentials" ] && sed -n 's/^\[\([^]]*\)\].*/\1/p' "$HOME/.aws/credentials"
+  } )
+  if printf '%s\n' "$known" | grep -qx 'atlas-staging'; then
+    profile=atlas-staging
+  else
+    profile=default
+  fi
+  # Nothing named this profile, so the answer may not be the one the repo uses.
+  assumed=" (assumed)"
+fi
 
 if ! command -v aws >/dev/null 2>&1; then
   echo "aws-check: no aws CLI on PATH, cannot verify '$profile'" >&2
@@ -34,9 +51,9 @@ fi
 if out=$(aws sts get-caller-identity --profile "$profile" \
       --cli-connect-timeout 5 --cli-read-timeout 5 2>&1); then
   account=$(printf '%s' "$out" | sed -n 's/.*"Account"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-  echo "aws OK    profile='$profile'${account:+ account=$account}"
+  echo "aws OK    profile='$profile'$assumed${account:+ account=$account}"
   exit 0
 fi
 
-echo "aws STALE profile='$profile' — refresh it in Strider, then retry" >&2
+echo "aws STALE profile='$profile'$assumed — refresh it in Strider, then retry" >&2
 exit 1
