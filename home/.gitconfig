@@ -30,3 +30,5 @@
 	helper = !/usr/bin/env gh auth git-credential
 [include]
     path = ~/.gitconfig-user
+[http]
+	sslCAInfo = /opt/homebrew/etc/ca-certificates/cert.pem
