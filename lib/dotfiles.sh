@@ -104,7 +104,7 @@ function _symbolic_link() {
 
   case $state in
   missing)
-    execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
+    execute "ln -fsn $sourceFile $targetFile" "$targetFile → $sourceFile"
   ;;
   linked)
     ok "Link already exists for $targetFile"
@@ -113,7 +113,7 @@ function _symbolic_link() {
     ask_for_confirmation "'$targetFile' already exists, do you want to overwrite it?"
     if answer_is_yes; then
       rm -rf "$targetFile"
-      execute "ln -fs $sourceFile $targetFile" "$targetFile → $sourceFile"
+      execute "ln -fsn $sourceFile $targetFile" "$targetFile → $sourceFile"
     else
       error "$targetFile → $sourceFile"
     fi
@@ -170,6 +170,22 @@ function _is_no_link() {
   esac
 }
 
+# Parents (relative to $HOME) whose direct children are linked as one symlink
+# each, never file by file: Herdr reads a mod from
+# ~/.config/herdr-app/mods/<name> and refuses a module that resolves outside
+# that folder, so a mod has to stay a folder of its own. Add a mod by dropping
+# its folder in; nothing here changes.
+WHOLE_PARENTS=".config/herdr-app/mods"
+
+# True for a path inside a folder linked whole (see WHOLE_PARENTS).
+function _under_whole_dir() {
+  local base
+  for base in $WHOLE_PARENTS; do
+    case "$1" in "$base"/*) return 0 ;; esac
+  done
+  return 1
+}
+
 # How a target sits relative to its source: linked, missing, or foreign (a real
 # file or a link to something else). Both install and check branch on this.
 function _link_state() {
@@ -184,7 +200,7 @@ function _link_state() {
 }
 
 # Every managed target, handed to $1 as (source, relative) in install order:
-# merge-dir files first, then wholesale entries. Both _install_dotfiles and
+# whole-dir links first, then merge-dir files, then wholesale entries. Both _install_dotfiles and
 # check_dotfiles walk this, so the drift report cannot disagree with the install.
 # Keep comments out of the <(...) body below: bash 3.2 (macOS /bin/bash, the
 # shell the setup.sh shebang picks) reads an apostrophe in a comment as a
@@ -197,9 +213,16 @@ function _each_managed_target() {
     relative="${sourceFile#$DOTFILES_DIR/home/}"
     "$handler" "$sourceFile" "$relative"
   done < <(
+    for base in $WHOLE_PARENTS; do
+      [ -d "$DOTFILES_DIR/home/$base" ] || continue
+      find "$DOTFILES_DIR/home/$base" -mindepth 1 -maxdepth 1 -print0
+    done
     find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
       if _is_merge_dir "$(basename "$d")"; then
-        find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0
+        find "$d" \( -name __pycache__ -o -name '*.gpui-lock' \) -prune -o \( -type f -o -type l \) -print0 |
+          while IFS= read -r -d '' f; do
+            _under_whole_dir "${f#$DOTFILES_DIR/home/}" || printf '%s\0' "$f"
+          done
       fi
     done
     find "$DOTFILES_DIR/home" -mindepth 1 -maxdepth 1 -not -name '.DS_Store' -print0 | while IFS= read -r -d '' entry; do

@@ -19,12 +19,15 @@ mkdir -p "$HOME/.cache/huggingface"
 mkdir -p \
   "$DOTFILES_DIR/home/.cache/huggingface" \
   "$DOTFILES_DIR/home/.config/app" \
+  "$DOTFILES_DIR/home/.config/wholeparent/one/inner" \
   "$DOTFILES_DIR/home/.vim/bundle" \
   "$DOTFILES_DIR/home/.agents/skills/demo/scripts/__pycache__"
 touch \
   "$DOTFILES_DIR/home/.cache/huggingface/blob" \
   "$DOTFILES_DIR/home/.config/app/conf" \
   "$DOTFILES_DIR/home/.config/app/.conf.gpui-lock" \
+  "$DOTFILES_DIR/home/.config/wholeparent/one/a.js" \
+  "$DOTFILES_DIR/home/.config/wholeparent/one/inner/b.js" \
   "$DOTFILES_DIR/home/.vimrc" \
   "$DOTFILES_DIR/home/.vim/bundle/plug" \
   "$DOTFILES_DIR/home/.agents/skills/demo/scripts/demo.py" \
@@ -34,6 +37,9 @@ touch \
 source "$REPO/lib/echos.sh"
 source "$REPO/lib/utils.sh"
 source "$REPO/lib/dotfiles.sh"
+
+# The real list is Herdr's mods; this fixture proves the rule with its own.
+WHOLE_PARENTS=".config/wholeparent"
 
 fail=0
 check() { if eval "$2"; then echo "ok   - $1"; else echo "FAIL - $1"; fail=1; fi; }
@@ -56,5 +62,11 @@ check "merge file beside a pruned cache still linked" "[ -L '$HOME/.agents/skill
 check "__pycache__ never linked" "[ ! -e '$HOME/.agents/skills/demo/scripts/__pycache__/demo.cpython-310.pyc' ]"
 check "wholesale file still linked" "[ -L '$HOME/.vimrc' ]"
 check "wholesale dir still linked" "[ -L '$HOME/.vim' ]"
+check "one child of a whole parent is one target ($(_each_managed_target echo | grep -c 'wholeparent') target)" \
+  "[ \"\$(_each_managed_target echo | grep -c 'wholeparent')\" = 1 ]"
+check "that child is linked as a folder" \
+  "[ \"\$(readlink '$HOME/.config/wholeparent/one')\" = '$DOTFILES_DIR/home/.config/wholeparent/one' ]"
+check "its files are not linked one by one" \
+  "[ ! -L '$HOME/.config/wholeparent/one/a.js' ] && [ ! -L '$HOME/.config/wholeparent/one/inner/b.js' ]"
 
 exit "$fail"

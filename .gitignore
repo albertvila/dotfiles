@@ -1,6 +1,10 @@
 home/.vim/bundle/*
 home/.vim/.netrwhist
 *.gpui-lock
+# Herdr mods are linked whole, so the app writes its per-mod editor files
+# inside this tree; they are the app's, not ours.
+home/.config/herdr-app/mods/*/gpui-kit.d.ts
+home/.config/herdr-app/mods/*/jsconfig.json
 get-pip.py
 __pycache__/
 experiments/
