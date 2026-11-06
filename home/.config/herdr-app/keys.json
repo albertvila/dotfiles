@@ -57,7 +57,9 @@
     "ctrl-7": "space.select:7",
     "ctrl-8": "space.select:8",
     "ctrl-9": "space.select:9",
-    "cmd-g": "mod.open:github"
+    "cmd-g": "mod.open:github",
+    "ctrl-shift-g": "mod.open:gaucho",
+    "alt-n": "gaucho-badge.next"
   },
   "terminal": {
     "cmd-c": "terminal.copy",
