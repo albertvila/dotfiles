@@ -5,7 +5,17 @@
  * pi-guardrails permissionGate). Adds a Databricks allowlist/denylist pair
  * mirroring the AWS one.
  * Order: allowlist bypasses checks, then auto-deny blocks, then prompt patterns ask.
- * Matching: case-insensitive substring unless marked regex.
+ * Matching: case-insensitive substring unless marked regex, against what the
+ * command RUNS: heredoc bodies are cut first (text written to a file is not a
+ * command) and a `git commit` message is cut too (a commit that documents a
+ * destructive command is not running it). `bash -c "…"` keeps its text, because
+ * there the quotes hold a command. Scripts the command runs are opened and
+ * scanned by `codeHits` below, which is the other half of the same rule.
+ *
+ * shortcut: a mention inside a quoted argument of anything other than
+ * `git commit` still matches (`npm test --grep "terraform destroy"`). Upgrade by
+ * masking quoted spans for the deny class, but keep allow matching unmasked: the
+ * allowlist reads the SQL inside its own quotes.
  *
  * Strict mode: any non-read-only `aws`/`databricks` command is blocked
  * outright, with no prompt-to-allow. Narrow the denylists if that gets in
@@ -101,6 +111,12 @@ const destructiveDenyPatterns: Pattern[] = [
 	{ pattern: "npm publish", description: "Publishes npm package", enabled: true },
 	{ pattern: "terraform apply", description: "Applies infra changes", enabled: true },
 	{ pattern: "terraform destroy", description: "Destroys infra", enabled: true },
+	{ pattern: "\\bgh\\s+(repo|gist|release)\\s+delete\\b", regex: true, description: "Deletes a GitHub repo, gist or release", enabled: true },
+	// AGENTS.md § Ports, held here from 2026-11-07: 8765 is the attention
+	// dashboard and killing it looks like a crash. The human restarts it; an
+	// agent never has a reason to, so this one blocks rather than asks.
+	{ pattern: "\\blsof\\b[^;&|]*\\b8765\\b", regex: true, description: "The attention dashboard's port 8765 (leave it running)", enabled: true },
+	{ pattern: "\\b(kill|pkill|killall)\\b[^;&|\\n]*(8765|attention-dashboard)", regex: true, description: "Kills the attention dashboard (leave it running)", enabled: true },
 ];
 
 const autoDenyPatterns: Pattern[] = [...catchAllDenyPatterns, ...destructiveDenyPatterns];
@@ -109,6 +125,9 @@ const autoDenyPatterns: Pattern[] = [...catchAllDenyPatterns, ...destructiveDeny
 const promptPatterns: Pattern[] = [
 	{ pattern: "\\bsudo\\b", regex: true, flags: "i", description: "Privileged command (sudo)", enabled: true },
 	{ pattern: "\\b(chmod|chown)\\b.*777", regex: true, flags: "i", description: "World-writable permission change", enabled: true },
+	// AGENTS.md § Git, held here from 2026-11-07: a commit always asks first.
+	{ pattern: "\\bgit\\s+commit\\b", regex: true, description: "Every commit asks first (AGENTS.md § Commits)", enabled: true },
+	{ pattern: "\\bgit\\s+push\\b[^\\n;&|]*\\s(-f|--force|--force-with-lease)\\b", regex: true, description: "Force-push rewrites published history", enabled: true },
 ];
 
 // Substring patterns are the destructive hard denials, matched case-insensitively
@@ -116,12 +135,92 @@ const promptPatterns: Pattern[] = [
 const matches = (command: string, p: Pattern) =>
 	p.enabled && (p.regex ? new RegExp(p.pattern, p.flags).test(command) : command.toLowerCase().includes(p.pattern.toLowerCase()));
 
+// A heredoc body: `<<EOF` … `EOF`, quoted or bare, with the tab-strip variant.
+const HEREDOC = /<<-?\s*['"]?(\w+)['"]?[^\n]*\n[\s\S]*?\n\s*\1\s*(?:\n|$)/g;
+// `bash -c "…"`, `sh -c`, `eval`: there the quotes hold the command itself.
+const INTERPRETER_PAYLOAD = /(^|[;&|]\s*)(bash|sh|zsh)\s+-\w+\s+-c\b|\beval\b/;
+// A `git commit` message: `-m <quoted or bare>`, repeated.
+const COMMIT_MESSAGE = /(\bgit\s+commit\b[^\n]*?)(?:-m|--message)\s+(?:"(?:[^"\\]|\\.)*"|'[^']*'|\$'(?:[^'\\]|\\.)*'|\S+)/g;
+
+/**
+ * The text a rule matches: what the shell runs, not what the command text
+ * mentions. A heredoc body is data written to a file, so it is cut. A
+ * `git commit` message is data too — the commit that documents `rm -rf` is not
+ * running it (2026-11-07: a docs commit was blocked, twice in one session).
+ */
+export function runs(command: string): string {
+	const shell = command.replace(HEREDOC, "\n");
+	if (INTERPRETER_PAYLOAD.test(shell)) return shell;
+	return shell.replace(COMMIT_MESSAGE, (_, head) => `${head} -m …`);
+}
+
 /** Today's deterministic policy: allowlist, then hard deny, then prompt class. No Jev. */
 export function evaluate(command: string): Decision {
-	if (allowedPatterns.some((p) => matches(command, p))) return "allow";
-	if (autoDenyPatterns.some((p) => matches(command, p))) return "block";
-	if (promptPatterns.some((p) => matches(command, p))) return "prompt";
+	const text = runs(command);
+	if (allowedPatterns.some((p) => matches(text, p))) return "allow";
+	if (autoDenyPatterns.some((p) => matches(text, p))) return "block";
+	if (promptPatterns.some((p) => matches(text, p))) return "prompt";
 	return "allow";
+}
+
+// Scanned extensions, and the ways a command names a file it runs.
+const SCANNED = /\.(?:py|mjs|cjs|js|ts|sh|bash)$/;
+const RUNS_FILE = /\b(?:python3?|py|node|bun|deno\s+run|bash|sh|zsh|source)\s+(?:-[\w-]+\s+)*([^\s;&|<>]+\.(?:py|mjs|cjs|js|ts|sh|bash))/g;
+const RUNS_PATH = /(?:^|[\s;&|])((?:\.{1,2}\/)?[^\s;&|='"]+\.(?:py|mjs|cjs|js|ts|sh|bash))/g;
+// A call, not a mention: comment lines never run, so they are cut first.
+const CODE_RULES: Array<[RegExp, string]> = [
+	[/\bshutil\.rmtree\s*\(/, "a recursive delete in Python (shutil.rmtree)"],
+	[/\b(DROP|TRUNCATE)\s+(TABLE|DATABASE|SCHEMA|CATALOG)\b/i, "SQL DROP/TRUNCATE"],
+	[/\bDELETE\s+FROM\b/i, "SQL DELETE"],
+	[/\baws\s+[a-z0-9.-]+\s+(rm|delete|put|create|terminate|modify|apply|update|start|stop|invoke|run)\b/i, "an AWS write"],
+	[/\bdatabricks\s+[a-z0-9_.-]+\s+(delete|reset|repair|run-now|put|create|update|start|stop|restart|export|destroy)\b/i, "a Databricks write"],
+];
+
+/**
+ * What the command runs, read from disk: the script's own lines, comments cut.
+ * This is the half a command-text gate cannot see — `python3 reset.py` says
+ * nothing about what reset.py does (2026-11-07). Unreadable files are skipped:
+ * the guard never breaks an unrelated call.
+ */
+export function codeHits(command: string, cwd: string): string[] {
+	// The same view as the rules use: a script named in a commit message or
+	// written into a file is not a script this command runs.
+	const shell = runs(command);
+	const hits: string[] = [];
+	const scan = (source: string) => {
+		const code = source
+			.split("\n")
+			.map((line) => (line.trimStart().startsWith("#") ? "" : line))
+			.join("\n");
+		for (const [pattern, why] of CODE_RULES) if (pattern.test(code)) hits.push(why);
+	};
+	// Heredoc bodies fed to an interpreter are code that never touched a file.
+	// The match starts at `<<`, so the interpreter sits in the text before it on
+	// the same line: `python3 - <<'EOF'`. Feeding a heredoc through a pipe
+	// (`cat <<'EOF' | python3`) is not seen, and is not a thing anyone writes.
+	for (const m of command.matchAll(HEREDOC)) {
+		const start = command.lastIndexOf("\n", m.index) + 1;
+		const head = command.slice(start, m.index);
+		const body = m[0].replace(/^[^\n]*\n/, "").replace(/\n\s*\w+\s*$/, "");
+		if (/\b(python3?|py|node|bun|deno\s+run|bash|sh|zsh)\b/.test(head)) scan(body);
+	}
+	const paths = new Set<string>();
+	for (const m of shell.matchAll(RUNS_FILE)) paths.add(m[1]);
+	for (const m of shell.matchAll(RUNS_PATH)) if (SCANNED.test(m[1])) paths.add(m[1]);
+	for (const path of paths) {
+		const clean = path.replace(/"/g, "").replace(/^\/([a-zA-Z])\//, (_, d) => `${d.toUpperCase()}:/`);
+		for (const base of ["", cwd]) {
+			const full = base ? join(base, clean) : clean;
+			if (!existsSync(full)) continue;
+			try {
+				scan(readFileSync(full, "utf8"));
+			} catch {
+				// Unreadable is not a hit; the gate fails open on a file it cannot read.
+			}
+			break;
+		}
+	}
+	return [...new Set(hits)];
 }
 
 type RepoRules = { allow: string[]; deny: string[] };
@@ -281,11 +380,18 @@ export default function (pi: ExtensionAPI) {
 		if (typeof command !== "string") return undefined;
 
 		// Unoverridable gate rules first, so a repo settings file cannot unlock them.
-		const unoverridable = destructiveDenyPatterns.some((p) => matches(command, p)) || promptPatterns.some((p) => matches(command, p));
+		const text = runs(command);
+		const unoverridable = destructiveDenyPatterns.some((p) => matches(text, p)) || promptPatterns.some((p) => matches(text, p));
 		if (!unoverridable) {
 			const repo = repoDecision(command, ctx.cwd ? trackedRules(ctx.cwd) : NO_RULES);
 			if (repo === "block") return { block: true, reason: "Blocked: listed in .claude/settings.json deny" };
 			if (repo === "allow") return undefined;
+		}
+
+		// What the command runs: a script's own writes are the command's writes.
+		const scriptHits = codeHits(command, ctx.cwd ?? process.cwd());
+		if (scriptHits.length > 0) {
+			return { block: true, reason: `Blocked: ${scriptHits.join("; ")} in a script this command runs` };
 		}
 
 		const decision = evaluate(command);
@@ -299,7 +405,7 @@ export default function (pi: ExtensionAPI) {
 					return { block: true, reason: "Blocked by Jev: not a read with no side effects" };
 				}
 			}
-			const description = autoDenyPatterns.find((p) => matches(command, p))?.description ?? "command denied";
+			const description = autoDenyPatterns.find((p) => matches(text, p))?.description ?? "command denied";
 			return { block: true, reason: `Blocked: ${description}` };
 		}
 

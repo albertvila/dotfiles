@@ -34,7 +34,7 @@ for (const key of Object.keys(process.env)) {
 
 // The test imports the extension's real decision functions. It must not
 // re-implement the order or the middle-band rules.
-const { default: registerGate, evaluate, isJevEligible, parseJevDecision, bashRules, repoDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
+const { default: registerGate, evaluate, codeHits, isJevEligible, parseJevDecision, bashRules, repoDecision } = await import(pathToFileURL(process.env.GATE_FILE).href);
 
 let failed = 0;
 const check = (label, actual, expected) => {
@@ -110,6 +110,48 @@ const decisions = [
 ];
 
 for (const [expected, cmd] of decisions) check(`${expected}  ${cmd}`, evaluate(cmd).toUpperCase(), expected);
+
+// --- What runs vs. what is only mentioned --------------------------------
+// A command's text is not the command: a heredoc body is data, and so is a
+// commit's message. Both used to match the destructive substring and block the
+// very commit that documented the removal. A quoted command after `sh -c` is
+// still a command, and so is the tail of a chain.
+const mentionedOnly = [
+  ["PROMPT", 'git commit -m "docs: explain why we never rm -rf prod"'],
+  ["PROMPT", "git commit -F - <<'EOF'\nfix: guard\n\nWe removed the old rm -rf path.\nEOF"],
+  ["ALLOW", "cat > notes.md <<'EOF'\nlater: gh repo delete me/old\nEOF"],
+  ["BLOCK", 'bash -c "rm -rf /tmp/x"'],
+  ["BLOCK", "sh -c 'git reset --hard'"],
+  ["BLOCK", "git commit -m 'x' && rm -rf /tmp/x"],
+];
+for (const [expected, cmd] of mentionedOnly) check(`${expected}  mentioned: ${JSON.stringify(cmd)}`, evaluate(cmd).toUpperCase(), expected);
+
+// --- One-way doors the prose named and no code held ----------------------
+const oneWayDoors = [
+  ["BLOCK", "gh repo delete me/old --yes"],
+  ["BLOCK", "gh release delete v1.0.0 --yes"],
+  ["BLOCK", "gh gist delete 123"],
+  ["PROMPT", "git push --force origin main"],
+  ["PROMPT", "git push -f origin feature"],
+  ["PROMPT", "git push --force-with-lease origin main"],
+  ["PROMPT", 'git commit -m "fix: thing"'],
+  ["ALLOW", "git push origin main"],
+  ["ALLOW", "git log --oneline -5"],
+];
+for (const [expected, cmd] of oneWayDoors) check(`${expected}  ${cmd}`, evaluate(cmd).toUpperCase(), expected);
+
+// --- The dashboard port: never killed by an agent ------------------------
+// From AGENTS.md § Ports: killing 8765 looks like a crash. Code holds it now,
+// so it survives an agent that never read that section.
+const dashboardPort = [
+  ["BLOCK", "lsof -ti tcp:8765 | xargs kill"],
+  ["BLOCK", "kill $(lsof -ti tcp:8765)"],
+  ["BLOCK", "killall attention-dashboard"],
+  ["BLOCK", "pkill -f attention-dashboard"],
+  ["ALLOW", "curl -s localhost:8765/health"],
+  ["ALLOW", "lsof -ti tcp:3000 | xargs kill"],
+];
+for (const [expected, cmd] of dashboardPort) check(`${expected}  ${cmd}`, evaluate(cmd).toUpperCase(), expected);
 
 // --- Middle band: only a blocked read-shaped aws/databricks command -------
 const eligible = [
@@ -241,6 +283,28 @@ check("repo allow: legacy prefix form", repoDecision("git diff --stat", rules), 
 check("repo deny: prefix glob", repoDecision("databricks bundle deploy --target prod", rules), "block");
 check("repo deny beats repo allow", repoDecision("pytest slow tests/", rules), "block");
 check("repo rules: unrelated command", repoDecision("ls -la", rules), undefined);
+
+// --- Code inside a script the command runs -------------------------------
+// `python3 reset.py` hid the write from a gate that only read the command.
+// This is the second half of "match what runs": the shell text names a file,
+// and the file is read. Comment lines are code that never runs.
+const scriptDir = mkdtempSync(`${tmpdir()}/gate-scripts-`);
+writeFileSync(`${scriptDir}/reset.sh`, "#!/bin/sh\naws s3 rm s3://bucket/key --recursive\n");
+writeFileSync(`${scriptDir}/commented.sh`, "#!/bin/sh\n# never: rm -rf /tmp or aws s3 rm s3://b/k\necho ok\n");
+writeFileSync(`${scriptDir}/cleanup.py`, "import shutil\nsrc = 'x'\nshutil.rmtree(\"/tmp/data\")\n");
+writeFileSync(`${scriptDir}/prod.py`, "cur.execute('DROP TABLE users')\n");
+writeFileSync(`${scriptDir}/harmless.py`, "print('nothing to see')\n");
+check("codeHits: aws write in a shell script", codeHits("bash reset.sh", scriptDir).length, 1);
+check("codeHits: the same file run by path", codeHits("./reset.sh", scriptDir).length, 1);
+check("codeHits: a comment is not a call", codeHits("./commented.sh", scriptDir).length, 0);
+check("codeHits: recursive delete in python", codeHits("python3 cleanup.py", scriptDir).length, 1);
+check("codeHits: DDL in python", codeHits("python3 prod.py", scriptDir).length, 1);
+check("codeHits: a harmless script", codeHits("python3 harmless.py", scriptDir).length, 0);
+check("codeHits: a missing script is not a hit", codeHits("python3 gone.py", scriptDir).length, 0);
+check("codeHits: inline script fed to an interpreter", codeHits("python3 - <<'EOF'\nimport shutil\nshutil.rmtree('/d')\nEOF", scriptDir).length, 1);
+check("codeHits: no script named, nothing read", codeHits("echo hello", scriptDir).length, 0);
+check("codeHits: a commit message naming a script is a mention", codeHits('git commit -m "touch reset.sh"', scriptDir).length, 0);
+check("codeHits: a doc that quotes a script is a mention", codeHits("cat > notes.md <<'EOF'\nsee reset.sh\nEOF", scriptDir).length, 0);
 
 
 // catalog. Use only the dedicated key, without changing chat authentication.
