@@ -44,7 +44,7 @@
   },
   "steeringMode": "all",
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:@tintinweb/pi-subagents\",\"scope\":\"user\"}": "0.23.0",
+    "{\"source\":\"npm:@tintinweb/pi-subagents\",\"scope\":\"user\"}": "0.23.1",
     "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.22.0",
     "{\"source\":\"npm:pi-web-access@0.35.0\",\"scope\":\"user\"}": "0.35.0",
     "{\"source\":\"npm:pi-advisor-flow\",\"scope\":\"user\"}": "0.14.4"
