@@ -30,6 +30,7 @@ declare -a BREW_CASK_APPS=(
   claude-code
   font-symbols-only-nerd-font # icons for starship/herdr prompts
   ghostty
+  herdr-app # desktop app for terminals and coding agents (https://herdr.dev/); `herdr` above is its CLI
   ledger-live
   logitune # https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html
   steipete/tap/codexbar # https://codexbar.app/
