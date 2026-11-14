@@ -28,9 +28,16 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 
 ## Git
 
-### Commits — Always Ask First
-- Show the intended commit message and file list, then wait for a clear "yes" before running `git commit`.
 - Run `git push` only when explicitly asked.
+
+### History — Never Rewrite Pushed Commits
+
+A pushed commit is shared state: someone may have branched from it, reviewed it, or linked it. Amending or rebasing it rewrites history that others may already hold.
+
+- Commit a fix on top: a new commit is the default, even when it would be tidier folded into the previous one.
+- Reach for history rewriting only when it is the only way: a secret committed and not yet public, a commit that must not exist on a protected branch, or a branch you are certain nobody else has.
+- Even then, ask first and say which commits would be rewritten and why the new-commit route does not work. Never run `--force` to get past a rejected push.
+- `--force-with-lease`, never bare `--force`, and only after that yes.
 
 ### Commit Messages — Conventional Commits
 
