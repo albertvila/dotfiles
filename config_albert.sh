@@ -4,6 +4,7 @@ declare -a BREW_APPS=(
   databricks/tap/databricks # databricks CLI v2, used by the PLS/GIS data pipelines
   datadog-labs/pack/pup # Datadog CLI, used in herdr/agent workflows
   docker-credential-helper-ecr
+  doitintl/dci-cli/dci # DoiT Cloud Intelligence CLI, AWS cost control (https://github.com/doitintl/dci-cli)
   hadolint # Dockerfile linter and validation tool (https://github.com/hadolint/hadolint)
   hashicorp/tap/terraform
   herdr # Agent multiplexer that lives in your terminal (https://herdr.dev/)
@@ -46,6 +47,7 @@ declare -a BREW_TAPS=(
   aws/tap # docker-credential-helper-ecr
   databricks/tap # databricks
   datadog-labs/pack # pup
+  doitintl/dci-cli # dci
   hashicorp/tap # terraform
   mobile-dev-inc/tap # maestro
 )
@@ -53,6 +55,7 @@ declare -a BREW_TAPS=(
 declare -a BREW_TRUSTED_FORMULAS=(
   databricks/tap/databricks
   datadog-labs/pack/pup
+  doitintl/dci-cli/dci
   hashicorp/tap/terraform
   mobile-dev-inc/tap/maestro
 )
