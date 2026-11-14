@@ -47,7 +47,7 @@ declare -a BREW_TAPS=(
   aws/tap # docker-credential-helper-ecr
   databricks/tap # databricks
   datadog-labs/pack # pup
-  doitintl/dci-cli # dci
+  "doitintl/dci-cli https://github.com/doitintl/dci-cli" # dci; upstream renamed its tap repo, so tap by URL
   hashicorp/tap # terraform
   mobile-dev-inc/tap # maestro
 )

@@ -43,4 +43,17 @@ check "user pass installs opencode from core" "grep -qxF 'brew install opencode'
 check "maestro tap precedes its install" \
   "[ \"\$(grep -nxF 'brew tap mobile-dev-inc/tap' '$LOG' | cut -d: -f1)\" -lt \"\$(grep -nxF 'brew install mobile-dev-inc/tap/maestro' '$LOG' | cut -d: -f1)\" ]"
 
+# A tap entry may carry its clone URL as a second word, for upstream repos that
+# do not follow the homebrew-<name> convention (e.g. after doitintl renamed
+# homebrew-dci-cli to dci-cli, `brew tap doitintl/dci-cli` alone re-adds the
+# redirecting remote and `brew update` then refuses the redirect).
+brew() { printf '%s|' "$@" >> "$LOG"; echo >> "$LOG"; }
+: > "$LOG"
+BREW_CASK_APPS=()
+BREW_TRUSTED_FORMULAS=()
+BREW_TAPS=("doitintl/dci-cli https://github.com/doitintl/dci-cli")
+_install_brew_cask
+check "tap URL entry passes name and URL as separate args" \
+  "grep -qxF 'tap|doitintl/dci-cli|https://github.com/doitintl/dci-cli|' '$LOG'"
+
 exit "$fail"

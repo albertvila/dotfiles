@@ -114,8 +114,11 @@ function _install_brew_cask() {
 
   # Third-party taps and trusted formulas come from the active config, so a
   # default pass taps nothing a per-user config owns (CONTEXT.md: per-user config)
+  # An entry may carry its clone URL as a second word, for upstream repos that
+  # do not follow the homebrew-<name> convention.
   for tap in "${BREW_TAPS[@]}"; do
-    brew tap "$tap"
+    read -r -a tap_args <<< "$tap"
+    brew tap "${tap_args[@]}"
   done
   for formula in "${BREW_TRUSTED_FORMULAS[@]}"; do
     brew trust --formula "$formula"
