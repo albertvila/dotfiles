@@ -68,9 +68,9 @@ const allowedPatterns: Pattern[] = [
 		enabled: true,
 	},
 	{
-		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +[a-z0-9_.-]+ +(list|get|ls|cat|status|validate)[a-z0-9.-]*( +[^;&|`$<>()\\n\\r]+)* *$",
+		pattern: "^(DATABRICKS_[A-Z_]+=\\S* +)*databricks +[a-z0-9_.-]+ +(list|get|ls|cat|status|validate|logs)[a-z0-9.-]*( +[^;&|`$<>()\\n\\r]+)* *$",
 		regex: true,
-		description: "Read-only Databricks ops (list/get/ls/cat/status/validate)",
+		description: "Read-only Databricks ops (list/get/ls/cat/status/validate/logs)",
 		enabled: true,
 	},
 	{
@@ -125,8 +125,9 @@ const autoDenyPatterns: Pattern[] = [...catchAllDenyPatterns, ...destructiveDeny
 const promptPatterns: Pattern[] = [
 	{ pattern: "\\bsudo\\b", regex: true, flags: "i", description: "Privileged command (sudo)", enabled: true },
 	{ pattern: "\\b(chmod|chown)\\b.*777", regex: true, flags: "i", description: "World-writable permission change", enabled: true },
-	// AGENTS.md § Git, held here from 2026-11-07: a commit always asks first.
-	{ pattern: "\\bgit\\s+commit\\b", regex: true, description: "Every commit asks first (AGENTS.md § Commits)", enabled: true },
+	// AGENTS.md no longer asks for a confirmation on every commit (2026-11-14): the
+	// rule cost a plain `git commit` a dialog that read as a misfire, and the commit
+	// message and file list are in the transcript anyway.
 	{ pattern: "\\bgit\\s+push\\b[^\\n;&|]*\\s(-f|--force|--force-with-lease)\\b", regex: true, description: "Force-push rewrites published history", enabled: true },
 ];
 
@@ -274,7 +275,7 @@ export function trackedRules(cwd: string): RepoRules {
 }
 
 // A middle-band command needs a read-shaped token and no write or export token.
-const READ_TOKENS = ["list", "get", "describe", "ls", "filter", "cat", "status", "validate", "select", "show", "desc", "explain", "tail", "head"];
+const READ_TOKENS = ["list", "get", "describe", "ls", "filter", "cat", "status", "validate", "logs", "select", "show", "desc", "explain", "tail", "head"];
 const WRITE_TOKENS = ["cp", "copy", "sync", "mv", "rm", "put", "create", "delete", "update", "start", "stop", "run", "invoke", "apply", "login", "export"];
 // Newline is a chain separator too, and the allowlist already rejects it.
 const CHAIN = /[;&|\n\r]/;

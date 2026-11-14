@@ -117,8 +117,8 @@ for (const [expected, cmd] of decisions) check(`${expected}  ${cmd}`, evaluate(c
 // very commit that documented the removal. A quoted command after `sh -c` is
 // still a command, and so is the tail of a chain.
 const mentionedOnly = [
-  ["PROMPT", 'git commit -m "docs: explain why we never rm -rf prod"'],
-  ["PROMPT", "git commit -F - <<'EOF'\nfix: guard\n\nWe removed the old rm -rf path.\nEOF"],
+  ["ALLOW", 'git commit -m "docs: explain why we never rm -rf prod"'],
+  ["ALLOW", "git commit -F - <<'EOF'\nfix: guard\n\nWe removed the old rm -rf path.\nEOF"],
   ["ALLOW", "cat > notes.md <<'EOF'\nlater: gh repo delete me/old\nEOF"],
   ["BLOCK", 'bash -c "rm -rf /tmp/x"'],
   ["BLOCK", "sh -c 'git reset --hard'"],
@@ -134,7 +134,7 @@ const oneWayDoors = [
   ["PROMPT", "git push --force origin main"],
   ["PROMPT", "git push -f origin feature"],
   ["PROMPT", "git push --force-with-lease origin main"],
-  ["PROMPT", 'git commit -m "fix: thing"'],
+  ["ALLOW", 'git commit -m "fix: thing"'],
   ["ALLOW", "git push origin main"],
   ["ALLOW", "git log --oneline -5"],
 ];
