@@ -89,7 +89,7 @@ function _install_brew() {
       ok "[brew] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if brew outdated --quiet | grep -q "^${pkg_name}"; then
+      if brew outdated --formula --quiet | grep -Eq "^(${pkg}|${pkg_name})\$"; then
         warn "[brew] Package '$pkg' is not up to date, updating it ..."
         brew upgrade "$pkg"
       fi
@@ -131,7 +131,7 @@ function _install_brew_cask() {
       ok "[brew cask] Package '$pkg' is already installed"
 
       # Checking if the package needs update
-      if brew outdated --cask --quiet | grep -q "^${pkg_name}"; then
+      if brew outdated --cask --quiet | grep -Eq "^(${pkg}|${pkg_name})\$"; then
         warn "[brew cask] Package '$pkg' is not up to date, updating it ..."
         brew reinstall --cask "$pkg"
       fi

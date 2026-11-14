@@ -43,6 +43,25 @@ check "user pass installs opencode from core" "grep -qxF 'brew install opencode'
 check "maestro tap precedes its install" \
   "[ \"\$(grep -nxF 'brew tap mobile-dev-inc/tap' '$LOG' | cut -d: -f1)\" -lt \"\$(grep -nxF 'brew install mobile-dev-inc/tap/maestro' '$LOG' | cut -d: -f1)\" ]"
 
+# Prefix collision + tap prefix in outdated check: an outdated herdr-app cask or
+# openjdk@17 formula must not trigger `brew upgrade herdr` / `brew upgrade openjdk`,
+# while an outdated tapped formula (datadog-labs/pack/pup) must upgrade.
+brew() {
+  echo "brew $*" >> "$LOG"
+  case "$*" in
+    "list --formula -1") printf 'herdr\nopenjdk\npup\n' ;;
+    "outdated --formula --quiet"|"outdated --quiet")
+      printf 'herdr-gpui\nopenjdk@17\ndatadog-labs/pack/pup\n' ;;
+  esac
+}
+: > "$LOG"
+BREW_APPS=(herdr openjdk datadog-labs/pack/pup)
+_install_brew
+check "outdated check queries formulae only" "grep -qxF 'brew outdated --formula --quiet' '$LOG'"
+check "prefix-colliding herdr-gpui does not upgrade herdr" "! grep -qxF 'brew upgrade herdr' '$LOG'"
+check "prefix-colliding openjdk@17 does not upgrade openjdk" "! grep -qxF 'brew upgrade openjdk' '$LOG'"
+check "outdated tapped formula upgrades" "grep -qxF 'brew upgrade datadog-labs/pack/pup' '$LOG'"
+
 # A tap entry may carry its clone URL as a second word, for upstream repos that
 # do not follow the homebrew-<name> convention (e.g. after doitintl renamed
 # homebrew-dci-cli to dci-cli, `brew tap doitintl/dci-cli` alone re-adds the
