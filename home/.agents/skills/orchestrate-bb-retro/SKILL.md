@@ -76,7 +76,7 @@ every number it printed, and did it end in an edit someone can make.
    accepted, rejected or left unanswered — the record must not depend on that
    answer.
 
-   The **corpus** is `~/personal_workspace/orchestrate-runs/`, its own git repository,
+   The **corpus** is `~/personal_workspace/orchy-runs/`, its own git repository,
    one directory per run:
 
    ```
@@ -93,8 +93,8 @@ every number it printed, and did it end in an edit someone can make.
    ```sh
    python3 scripts/run-metrics.py <manager-thread-id> --json > /tmp/run.json  # --ledger / --no-pricing go HERE
    name=$(python3 -c "import json;print(json.load(open('/tmp/run.json'))['record_dirname'])")
-   mkdir -p ~/personal_workspace/orchestrate-runs/runs/$name
-   cp /tmp/run.json ~/personal_workspace/orchestrate-runs/runs/$name/run.json
+   mkdir -p ~/personal_workspace/orchy-runs/runs/$name
+   cp /tmp/run.json ~/personal_workspace/orchy-runs/runs/$name/run.json
    ```
 
    Add `--ledger PATH` if the run's ledger is not at the default
@@ -111,8 +111,8 @@ every number it printed, and did it end in an edit someone can make.
    pushed** by the retro:
 
    ```sh
-   git -C ~/personal_workspace/orchestrate-runs add runs/$name
-   git -C ~/personal_workspace/orchestrate-runs commit -m "record: runs/$name"
+   git -C ~/personal_workspace/orchy-runs add runs/$name
+   git -C ~/personal_workspace/orchy-runs commit -m "record: runs/$name"
    ```
 
    That repository's own commits are exempt from the ask-first convention,
@@ -295,4 +295,4 @@ re-run it after a partial retro finishes to get the closing numbers.
 cost arithmetic, ledger shapes) without touching the CLI.
 
 The corpus the archived records live in, and the vocabulary around it, are
-defined in `~/personal_workspace/orchestrate-runs/CONTEXT.md`.
+defined in `~/personal_workspace/orchy-runs/CONTEXT.md`.
