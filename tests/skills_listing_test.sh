@@ -2,23 +2,23 @@
 # The skill listing is context every turn: Pi puts each visible skill's name and
 # description in the system prompt and loads the body only when the work calls
 # for it. So a description is a per-turn cost paid in every session, in every
-# agent. Measured 2026-11-07: 85 visible skills, 23,781 characters of
-# name + description, about 8.5k tokens a turn (Pi's listing runs near 2.8
-# characters a token, not 4; 56 more skills already carry
-# `disable-model-invocation: true` and cost nothing).
+# agent. Measured 2026-11-15: 81 visible skills, 22,461 characters of
+# name + description, about 8k tokens a turn (Pi's listing runs near 2.8
+# characters a token, not 4; skills that carry
+# `disable-model-invocation: true` cost nothing).
 #
 # The budget is a ratchet, not a target: it is today's total, so nothing fails
 # now, and a new skill has to pay for itself by shortening something else. Lower
 # the number as you trim; never raise it without saying why in the commit.
 #
 # `disable-model-invocation: true` takes a skill out of the listing entirely, and
-# is right for one that only ever starts from its typed command
-# (`orchestrate-bb-plan`, `orchestrate-herdr-plan` do this today). It is wrong for
-# any skill whose description carries a second trigger ("or the prompt carries a
-# manifest", "or asks to share a markdown file"): those must stay visible.
+# is right for one that only ever starts from its typed command (`to-spec`,
+# `to-tickets` do this today). It is wrong for any skill whose description
+# carries a second trigger ("or the prompt carries a manifest", "or asks to share
+# a markdown file"): those must stay visible.
 set -eo pipefail
 
-BUDGET="${SKILLS_LISTING_BUDGET:-23781}"
+BUDGET="${SKILLS_LISTING_BUDGET:-22461}"
 
 fail=0
 check() { if eval "$2"; then echo "ok   - $1"; else echo "FAIL - $1"; fail=1; fi; }

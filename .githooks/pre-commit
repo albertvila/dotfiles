@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # The repo's own tests, run before every commit: they cover invariants a diff
 # never shows — the setup symlink tree, the cask config, the permission gate's
-# decision function, the orchestrate skill body budget, and the orchestrate
-# scripts' own self-tests (tests/orchestrate_test.sh).
+# decision function, and the skill listing budget.
 #
 # It runs all of them rather than picking by changed path. The whole set takes
-# seconds, and a path-based filter is how the orchestrate bodies got a budget
-# that nothing enforced. `git commit --no-verify` is the escape hatch when a
-# failure is genuinely unrelated to what you are committing.
+# seconds, and a path-based filter is how a budget goes unenforced.
+# `git commit --no-verify` is the escape hatch when a failure is genuinely
+# unrelated to what you are committing.
 set -eo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
