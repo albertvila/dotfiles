@@ -62,9 +62,7 @@ Before `gh pr create`, find the base branch that shows only your commits ahead (
 
 ### AWS Credentials / Git Push
 
-AWS sessions expire silently, and when they do `direnv`, the repo hooks and the push all fail with messages that never name the cause. Before pushing — or committing in a repo that has an `.envrc` — run `~/.agents/scripts/aws-check`. Exit 1 means the session for that repo's `AWS_PROFILE` is dead: stop and ask the user to run `aws sso login --sso-session lm-global`, then retry. A `DENIED` line instead of `STALE` means the profile's `sso_role_name` in `~/.aws/config` is not a role the user holds, and no login fixes that: report it. Exit 2 means it could not tell: push and report the real error.
-
-The login is not enough for the `lm` pre-push hook: `LM::Builder::API::Paws` reads `AWS_ACCESS_KEY_ID` and `~/.aws/credentials` and nothing else, so an SSO session is invisible to it and `git push` is refused with `AWS credentials: Missing suitable credentials` however fresh the login is. Push through `~/.agents/scripts/aws-env <command>`, which exports the session for one command: `aws-env git push -u origin <branch>`.
+AWS sessions expire silently, and when they do `direnv`, the repo hooks and the push all fail with messages that never name the cause. Before pushing — or committing in a repo that has an `.envrc` — run `~/.agents/scripts/aws-check`. Exit 1 means the session for that repo's `AWS_PROFILE` is dead: stop and ask the user to run `aws sso login --sso-session lm-global`, then retry. A `DENIED` line instead of `STALE` means the profile's `sso_role_name` in `~/.aws/config` is not a role the user holds, and no login fixes that: report it. Exit 2 means it could not tell: push and report the real error. The same login covers `git push` failing with `AWS credentials: Missing suitable credentials`.
 
 ## Grill Sessions
 
