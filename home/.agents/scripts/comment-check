@@ -6,8 +6,9 @@
 # way they are. Two PRs measured it: DEN-tachyon #51 added 103 `#` lines and 443
 # docstring lines against ~700 code lines, so the budget has to cover both forms.
 #
-# The rule itself is in ~/.agents/AGENTS.md. This is the check that notices when
-# nothing enforces it: a run of 3+ comment lines, or a docstring over 5.
+# The rule itself is in ~/.agents/AGENTS.md. This is the check that holds it: a run of 3+ comment
+# lines, or a docstring over 5. ~/.git-hooks/dispatch runs `--staged` on every commit; the other two
+# forms are for a cleanup pass and for a branch somebody else committed.
 #
 #   comment-check FILE...        whole files (a cleanup pass)
 #   comment-check --base REF     the lines this branch added since REF
