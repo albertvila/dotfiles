@@ -17,7 +17,7 @@ if [ "$hook" = pre-commit ]; then
   if [ ! -x "$checker" ]; then checker=$(command -v comment-check) || checker=""; fi
   if [ -n "$checker" ] && ! out=$("$checker" --staged); then
     printf '%s\n' "$out" >&2
-    printf '\ncomment-check: the reasoning goes to the ADR or the PR body, or --no-verify to commit anyway\n' >&2
+    printf '\ncomment-check: the reasoning goes to the ADR or the PR body\n' >&2
     exit 1
   fi
 fi
