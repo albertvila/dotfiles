@@ -29,9 +29,13 @@ check "it names the file, the line, and where the reasoning goes" \
 # 3. Docstrings are the same budget: 443 of the lines in DEN-tachyon #51 were here.
 printf 'def f():\n    \"\"\"One sentence about what this returns.\"\"\"\n    return 1\n' > "$WORK/short_doc.py"
 check "a one-line docstring passes" "bash '$CHECK' '$WORK/short_doc.py' >/dev/null"
-printf 'def f():\n    \"\"\"A store over the synced copy.\n\n    ADR 0005: reads come from a copy, saves stay in Delta. Nothing here writes\n    Postgres, and nothing here takes a lock, because a copy is not the master.\n    \"\"\"\n    return 1\n' > "$WORK/long_doc.py"
+printf 'def f():\n    """A store over the synced copy.\n\n    ADR 0005: reads come from a copy, saves stay in Delta. Nothing here writes Postgres,\n    and nothing here takes a lock: a copy is not the master, and a stale read is safe\n    by the token, which is why no read has to be rechecked against Delta either.\n    """\n    return 1\n' > "$WORK/long_doc.py"
 out=$(bash "$CHECK" "$WORK/long_doc.py" 2>&1) && code=0 || code=$?
-check "a five-line docstring fails" "[ $code -eq 1 ] && printf '%s\n' \"\$out\" | grep -q '5-line docstring'"
+check "a six-line docstring fails" "[ $code -eq 1 ] && printf '%s\n' \"\$out\" | grep -q '6-line docstring'"
+
+# A multi-line SQL literal is not a docstring: the warehouse keeps its statements in f-strings.
+printf 'def merge():\n    return f"""MERGE INTO t AS t\nUSING (SELECT 1) AS s\nON t.a = s.a\nWHEN MATCHED THEN UPDATE SET\n  t.value = :value,\n  t.status = :status,\n  t.audit.by = :by\n"""\n' > "$WORK/sql_literal.py"
+check "a multi-line f-string passes" "bash '$CHECK' '$WORK/sql_literal.py' >/dev/null"
 
 # 4. Exempt blocks: a licence header, notebook cells, tool directives, dividers.
 printf '# Copyright 2026 Launchmetrics\n# SPDX-License-Identifier: MIT\n# Licensed under the Apache License\n\n# MAGIC | code table | the DataOps group, the Product group, and the\n# MAGIC | and the Tachyon taxonomy editor, which writes them through the\n# MAGIC | warehouse. This is documentation of the notebook, not a comment.\n\n# ---------------------------------------------------------------------------\n\ndef f():\n    return 1\n' > "$WORK/exempt.py"

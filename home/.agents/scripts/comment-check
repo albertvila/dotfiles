@@ -20,7 +20,7 @@
 set -uo pipefail
 
 COMMENT_MAX=2   # a run of this many lines is fine; one more is a paragraph
-DOC_MAX=4       # a docstring this long is still a sentence about the interface
+DOC_MAX=5       # a summary and a two-line why: the shape the rule allows
 
 usage() {
   sed -n 's/^#[[:space:]]*//p' "$0" | sed -n '/^comment-check /,/^$/p'
@@ -40,17 +40,18 @@ FNR==NR { add[$1]=1; next }
   if (c && l ~ /^[[:space:]]*(#+|\/\/+)[-=*#_ ]*$/) c=0
   if (c) {
     if (cr==0) cstart=n
-    cr++; if (all || (n in add)) cadd++
+    cr++; if (n in add) cadd++
   } else {
     if (cr > cmax && cadd==cr)
       printf "%s:%d: %d comment lines over the %d allowed - the reasoning goes to the ADR or the PR body\n", f, cstart, cr, cmax
     cr=0; cadd=0
   }
-
-  # Docstrings: an odd count of `"""` on a line opens or closes one.
+  # Docstrings: one opens where a def, a class or the file itself opens one — the line starts with
+  # the quotes and the line above ends with `:` — and closes on the next line with an odd count. An
+  # f-string or a SQL literal handed to `text()` is not a docstring.
   q=l; gsub(/[^"]/,"",q); nq=length(q)
   if (!indoc) {
-    if (nq % 2 == 1) { indoc=1; dstart=n; dlen=1; dadd=(n in add) }
+    if (nq % 2 == 1 && l ~ /^[[:space:]]*"/ && (n==1 || prev==":")) { indoc=1; dstart=n; dlen=1; dadd=(n in add) }
   } else {
     dlen++; if (n in add) dadd++
     if (nq % 2 == 1) {
@@ -59,6 +60,8 @@ FNR==NR { add[$1]=1; next }
         printf "%s:%d: %d-line docstring - one line saying what it does, the why goes elsewhere\n", f, dstart, dlen
     }
   }
+  t=l; sub(/[[:space:]]+$/,"",t)
+  if (t != "") prev = substr(t, length(t))
 }
 END {
   if (cr > cmax && cadd==cr)
