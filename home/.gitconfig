@@ -32,3 +32,8 @@
     path = ~/.gitconfig-user
 [http]
 	sslCAInfo = /opt/homebrew/etc/ca-certificates/cert.pem
+
+# Our hooks, after every include: the last core.hooksPath wins, and ~/.git-hooks/dispatch hands
+# each hook on to the ones lm installed for the repos that have them.
+[core]
+	hooksPath = ~/.git-hooks

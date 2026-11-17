@@ -44,6 +44,8 @@ check "headers, MAGIC cells and dividers pass" "bash '$CHECK' '$WORK/exempt.py' 
 # git hands GIT_DIR to hook scripts, so a temp repo created here would otherwise
 # write into the caller's index. Every GIT_* variable is dropped first.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
+# And the developer's own git config, or the global core.hooksPath runs a hook on these fixtures.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 # 5. The diff modes judge only what the diff added.
 mkdir -p "$WORK/repo" && cd "$WORK/repo"

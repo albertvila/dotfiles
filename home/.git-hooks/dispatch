@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Every git hook, for every repo. `core.hooksPath = ~/.git-hooks` in ~/.gitconfig points git here,
+# and each hook name in this directory is a link to this file — the six names lm installs are
+# linked today, so a hook lm adds later has to be linked here too or it silently stops running.
+#
+# Two jobs. First, the comment budget: one line for the constraint the code cannot change, the rest
+# in the ADR or the PR body (~/.agents/AGENTS.md holds the rule). It judges only the staged lines,
+# so a repo's backlog cannot fail a commit. Second, it hands the hook on to Launchmetrics' own hooks
+# — this path replaced theirs, and `lm` still owns commit messages and the pre-push PR test.
+set -uo pipefail
+
+hook="${0##*/}"
+lm_hooks=$(git config --file "$HOME/.gitconfig-lm" --get core.hooksPath 2>/dev/null || true)
+
+if [ "$hook" = pre-commit ]; then
+  checker="$HOME/.agents/scripts/comment-check"
+  if [ ! -x "$checker" ]; then checker=$(command -v comment-check) || checker=""; fi
+  if [ -n "$checker" ] && ! out=$("$checker" --staged); then
+    printf '%s\n' "$out" >&2
+    printf '\ncomment-check: the reasoning goes to the ADR or the PR body, or --no-verify to commit anyway\n' >&2
+    exit 1
+  fi
+fi
+
+# ~/.gitconfig includes ~/.gitconfig-lm for repos under ~/workspace, and that file names the hooks
+# `lm` installed. Those repos get theirs run; everywhere else there is nothing to hand on to.
+# Both paths resolved through `pwd -P`: on macOS /tmp is a symlink to /private/tmp, and a repo
+# reached by the unresolved name would not match the prefix this test is.
+top=$(cd "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null && pwd -P) || exit 0
+home=$(cd "$HOME" && pwd -P)
+case "$top" in
+  "$home"/workspace/*) ;;
+  *) exit 0 ;;
+esac
+[ -n "$lm_hooks" ] && [ -x "$lm_hooks/$hook" ] || exit 0
+exec "$lm_hooks/$hook" "$@"
