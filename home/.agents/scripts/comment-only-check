@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Prove a diff changed comments and docstrings only.
+
+A cleanup of comments is the one change no test can check: nothing fails when a `why` is deleted.
+So this checks the other direction — no expression, signature or string value moved.
+"""
+
+import argparse
+import ast
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# Lines that are a comment and nothing else, by what the file is. A changed line that matches none
+# of these is code; a file this dictionary cannot classify fails rather than passes.
+RULES = {
+    ".sql": (r"^\s*--",),
+    ".ts": (r"^\s*//", r"^\s*/\*", r"^\s*\*", r"\*/\s*$"),
+    ".tsx": (r"^\s*//", r"^\s*/\*", r"^\s*\*", r"\*/\s*$"),
+    ".js": (r"^\s*//", r"^\s*/\*", r"^\s*\*", r"\*/\s*$"),
+    ".mjs": (r"^\s*//", r"^\s*/\*", r"^\s*\*", r"\*/\s*$"),
+    ".jsx": (r"^\s*//", r"^\s*/\*", r"^\s*\*", r"\*/\s*$"),
+    ".yaml": (r"^\s*#",),
+    ".yml": (r"^\s*#",),
+    ".toml": (r"^\s*#",),
+    ".rb": (r"^\s*#",),
+    ".pl": (r"^\s*#",),
+    ".tf": (r"^\s*#",),
+    ".cfg": (r"^\s*#",),
+    ".ini": (r"^\s*#",),
+    ".conf": (r"^\s*#",),
+    ".sh": (r"^\s*#",),
+    ".bash": (r"^\s*#",),
+    ".zsh": (r"^\s*#",),
+    ".dockerfile": (r"^\s*#",),
+}
+
+PASS = ast.Pass()
+
+
+def git(*args: str) -> str:
+    done = subprocess.run(["git", *args], capture_output=True, text=True)
+    if done.returncode != 0:
+        print(f"comment-only-check: git {' '.join(args)}: {done.stderr.strip()}", file=sys.stderr)
+        sys.exit(2)
+    return done.stdout
+
+
+def blob(rev: str, path: str) -> str | None:
+    """A file's content at `rev`, or None when it is not there."""
+    done = subprocess.run(["git", "show", f"{rev}:{path}"], capture_output=True, text=True)
+    return done.stdout if done.returncode == 0 else None
+
+
+def without_docstrings(tree: ast.AST) -> str:
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if not isinstance(body, list):
+            continue
+        first = body[0] if body else None
+        if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
+            node.body = body[1:] or [PASS]
+    return ast.dump(tree, include_attributes=False)
+
+
+def cosmetic_difference(before: str, after: str) -> str | None:
+    """None when the two versions differ only in comments and docstrings, else why not."""
+    try:
+        old, new = without_docstrings(ast.parse(before)), without_docstrings(ast.parse(after))
+    except SyntaxError as broken:
+        return f"does not parse: {broken.msg} (line {broken.lineno})"
+    return None if old == new else "a statement, signature or string literal changed"
+
+
+def rules_for(path: str, content: str) -> tuple[str, ...] | None:
+    suffix = Path(path).suffix.lower()
+    if suffix in RULES:
+        return RULES[suffix]
+    if Path(path).name in {"Makefile", "makefile", "Dockerfile"}:
+        return (r"^\s*#",)
+    if content.startswith("#!"):
+        return (r"^\s*#",)
+    return None
+
+
+def changed_lines(diff: str) -> dict[str, list[tuple[str, str]]]:
+    """path -> [(sign, line)] for every added or removed line, from a zero-context diff."""
+    found: dict[str, list[tuple[str, str]]] = {}
+    path = None
+    for line in diff.splitlines():
+        if line.startswith("+++ b/"):
+            path = line[6:]
+            found.setdefault(path, [])
+        elif line.startswith("--- ") or line.startswith("+++ ") or line.startswith("@@"):
+            continue
+        elif path and line[:1] in "+-":
+            found[path].append((line[0], line[1:]))
+    return found
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Prove a diff changed comments and docstrings only.")
+    parser.add_argument("--base", help="the ref the diff starts at")
+    parser.add_argument("--to", default="HEAD", help="the ref the diff ends at (default HEAD)")
+    parser.add_argument("--staged", action="store_true", help="the index against HEAD")
+    which = parser.parse_args()
+
+    if which.staged and which.base:
+        parser.error("--staged and --base are different diffs; pick one")
+    if not which.staged and not which.base:
+        parser.error("give --base REF or --staged")
+
+    span = ["--cached"] if which.staged else [which.base, which.to]
+    status = git("diff", "--no-color", "--find-renames", "--name-status", *span)
+    lines = changed_lines(git("diff", "--no-color", "--unified=0", "--find-renames", *span))
+
+    failures, checked = [], 0
+    for entry in status.splitlines():
+        fields = entry.split("\t")
+        if len(fields) < 2:
+            continue
+        change, path = fields[0], fields[-1]
+        if change.startswith("R"):
+            before, path = fields[1], fields[2]
+        else:
+            before = path if change == "M" else None
+
+        if change in {"A", "D"}:
+            what = "added" if change == "A" else "deleted"
+            failures.append(f"{path}: {what} - a new or removed file is not a comment change")
+            continue
+        if change not in {"M", "R"}:
+            failures.append(f"{path}: {change} - not a modification this can judge")
+            continue
+
+        old = blob(which.base if not which.staged else "HEAD", before)
+        new = blob(":0" if which.staged else which.to, path)
+        if old is None or new is None:
+            failures.append(f"{path}: one side of the diff is missing")
+            continue
+
+        checked += 1
+        if path.lower().endswith(".py"):
+            reason = cosmetic_difference(old, new)
+            if reason:
+                failures.append(f"{path}: {reason}")
+            continue
+
+        rules = rules_for(path, new)
+        if rules is None:
+            failures.append(f"{path}: no comment rule for this file type, so nothing is proven")
+            continue
+        for sign, line in lines.get(path, []):
+            if line.strip() and not any(re.search(rule, line) for rule in rules):
+                moved = "added" if sign == "+" else "removed"
+                failures.append(f"{path}: {moved} code: {line.strip()[:70]}")
+                break
+
+    for failure in failures:
+        print(f"CODE {failure}")
+    if failures:
+        print(f"\n{checked} file(s) checked, {len(failures)} not comment-only")
+        return 1
+    print(f"{checked} file(s) checked, every change is a comment or a docstring")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
