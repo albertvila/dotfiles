@@ -105,5 +105,8 @@ check "no range exits 2" "[ $code -eq 2 ]"
 check "an unknown ref exits 2" "[ $code -eq 2 ]"
 "$CHECK" --staged --base main >/dev/null 2>&1 && code=0 || code=$?
 check "two diffs at once exits 2" "[ $code -eq 2 ]"
+"$CHECK" a.py >/dev/null 2>&1 && code=0 || code=$?
+check "a path exits 2 and says what to give instead" \
+  "[ $code -eq 2 ] && output a.py 2>&1 | grep -q 'this reads a diff, not paths'"
 
 exit "$fail"

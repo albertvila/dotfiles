@@ -3,6 +3,9 @@
 
 A cleanup of comments is the one change no test can check: nothing fails when a `why` is deleted.
 So this checks the other direction — no expression, signature or string value moved.
+
+#   comment-only-check --staged        the index against HEAD
+#   comment-only-check --base REF      REF against HEAD, or against --to REF
 """
 
 import argparse
@@ -130,7 +133,13 @@ def main() -> int:
     parser.add_argument("--base", help="the ref the diff starts at")
     parser.add_argument("--to", default="HEAD", help="the ref the diff ends at (default HEAD)")
     parser.add_argument("--staged", action="store_true", help="the index against HEAD")
+    parser.add_argument("paths", nargs="*", help=argparse.SUPPRESS)
     which = parser.parse_args()
+
+    # A path is what its sibling comment-check takes, so it is the argument this one gets handed by
+    # mistake; the plain argparse error names no way forward.
+    if which.paths:
+        parser.error("this reads a diff, not paths: --staged, or --base REF [--to REF]")
 
     if which.staged and which.base:
         parser.error("--staged and --base are different diffs; pick one")

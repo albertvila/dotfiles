@@ -31,7 +31,7 @@ printf 'def f():\n    \"\"\"One sentence about what this returns.\"\"\"\n    ret
 check "a one-line docstring passes" "bash '$CHECK' '$WORK/short_doc.py' >/dev/null"
 printf 'def f():\n    """A store over the synced copy.\n\n    ADR 0005: reads come from a copy, saves stay in Delta. Nothing here writes Postgres,\n    and nothing here takes a lock: a copy is not the master, and a stale read is safe\n    by the token, which is why no read has to be rechecked against Delta either.\n    """\n    return 1\n' > "$WORK/long_doc.py"
 out=$(bash "$CHECK" "$WORK/long_doc.py" 2>&1) && code=0 || code=$?
-check "a six-line docstring fails" "[ $code -eq 1 ] && printf '%s\n' \"\$out\" | grep -q '6-line docstring'"
+check "a six-line docstring fails" "[ $code -eq 1 ] && printf '%s\n' \"\$out\" | grep -q '6-line docstring over the 5 allowed'"
 
 # A multi-line SQL literal is not a docstring: the warehouse keeps its statements in f-strings.
 printf 'def merge():\n    return f"""MERGE INTO t AS t\nUSING (SELECT 1) AS s\nON t.a = s.a\nWHEN MATCHED THEN UPDATE SET\n  t.value = :value,\n  t.status = :status,\n  t.audit.by = :by\n"""\n' > "$WORK/sql_literal.py"
