@@ -25,10 +25,12 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 
 ## Comments
 
-- One line for the why the code cannot say: the vendor that guesses its own unit, the choice that looks wrong on purpose, the invariant a guard protects. Two when the quirk needs its example.
-- Everything else has a home: the decision in an ADR, the measurement and what you rejected in the PR body. The comment states it once and points — `# ADR 0005: saves stay in Delta.`
-- State a rationale where it is computed. Eleven paraphrases of one decision are eleven places to go stale; the other sites name that function.
+- One line for the constraint the code cannot change — the vendor that guesses its own unit, the shape of the data, the ordering a protocol requires — two when the quirk needs its example. Docstrings spend the same budget, saying what the thing does.
+- A surprise in our own design is a rename or an ADR, not prose: a justification either names a constraint we cannot change or it goes, and six lines cut to two is the same alibi, shorter.
+- Everything else has a home: the decision in an ADR, the reasoning in the PR body. The comment states it once and points — `# ADR 0005: saves stay in Delta.`
+- State a rationale where it is computed: eleven paraphrases of one decision are eleven places to go stale, so the other sites name that function.
 - A test comment states the trap its name cannot: the fixture that makes two rows collide, not what the assert checks. The comment dies with the code it explained.
+- `~/.agents/scripts/comment-check --base <branch>` before a PR: it names every block over the budget.
 
 ## Ports
 - `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running: never kill it, by pid, port or name (`lsof -ti tcp:8765 | xargs kill` takes it down and looks like a crash); kill your own preview server by the pid you started, or use a free port.
@@ -54,7 +56,7 @@ Ticket number goes in the description: `refactor: RBT-778 move …`, not `RBT-77
 
 ### Pull Requests
 
-When asked to open a pull request, read and follow the `pr` skill before writing the body.
+When asked to open a pull request, read and follow the `pr` skill before writing the body. The body carries the reasoning the code no longer repeats — what you rejected, what you measured, what you could not check — under Summary, since the template has no section for it.
 
 Before `gh pr create`, find the base branch that shows only your commits ahead (`git log --oneline develop..HEAD`, also `main`/`master`); don't assume `main`.
 

@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Does this diff write more prose than the code needs?
+#
+# An agent with no comment budget writes the reasoning beside the code: six-line
+# paragraphs of design history, measurements, and why the last three lines are the
+# way they are. Two PRs measured it: DEN-tachyon #51 added 103 `#` lines and 443
+# docstring lines against ~700 code lines, so the budget has to cover both forms.
+#
+# The rule itself is in ~/.agents/AGENTS.md. This is the check that notices when
+# nothing enforces it: a run of 3+ comment lines, or a docstring over 4 lines.
+#
+#   comment-check FILE...        whole files (a cleanup pass)
+#   comment-check --base REF     the lines this branch added since REF
+#   comment-check --staged       the lines staged right now
+#
+# exit 0 = nothing over budget   1 = findings   2 = usage or git error
+#
+# shortcut: `#` and `//` only, and `"""` docstrings only — no `/* */`, no `'''`.
+# Add them when a repo that uses them starts writing essays in them.
+set -uo pipefail
+
+COMMENT_MAX=2   # a run of this many lines is fine; one more is a paragraph
+DOC_MAX=5       # a summary and a two-line why: the shape the rule allows
+
+usage() {
+  sed -n 's/^#[[:space:]]*//p' "$0" | sed -n '/^comment-check /,/^$/p'
+}
+
+# awk reads the line numbers to judge (one per line) first, then the source. A
+# whole-file pass hands it every line, so one detector serves both modes. The list
+# is never empty: an empty first file makes FNR==NR true on the source's first line.
+read -r -d '' DETECT <<'AWK'
+FNR==NR { add[$1]=1; next }
+{
+  n=FNR; l=$0
+  # A comment line, minus the ones that are not prose: headers, tool directives,
+  # notebook cells, and banner dividers made of nothing but punctuation.
+  c = (l ~ /^[[:space:]]*(#[^!]|\/\/[^\/])/) &&
+      l !~ /(copyright|Copyright|SPDX-License-Identifier|Licensed under|noqa|type: ignore|fmt:|pylint:|eslint-|@ts-|MAGIC)/
+  if (c && l ~ /^[[:space:]]*(#+|\/\/+)[-=*#_ ]*$/) c=0
+  if (c) {
+    if (cr==0) cstart=n
+    cr++; if (n in add) cadd++
+  } else {
+    if (cr > cmax && cadd==cr)
+      printf "%s:%d: %d comment lines over the %d allowed - the reasoning goes to the ADR or the PR body\n", f, cstart, cr, cmax
+    cr=0; cadd=0
+  }
+  # Docstrings: one opens where a def, a class or the file itself opens one — the line starts with
+  # the quotes and the line above ends with `:` — and closes on the next line with an odd count. An
+  # f-string or a SQL literal handed to `text()` is not a docstring.
+  q=l; gsub(/[^"]/,"",q); nq=length(q)
+  if (!indoc) {
+    if (nq % 2 == 1 && l ~ /^[[:space:]]*"/ && (n==1 || prev==":")) { indoc=1; dstart=n; dlen=1; dadd=(n in add) }
+  } else {
+    dlen++; if (n in add) dadd++
+    if (nq % 2 == 1) {
+      indoc=0
+      if (dlen > dmax && dadd==dlen)
+        printf "%s:%d: %d-line docstring - one line saying what it does, the why goes elsewhere\n", f, dstart, dlen
+    }
+  }
+  t=l; sub(/[[:space:]]+$/,"",t)
+  if (t != "") prev = substr(t, length(t))
+}
+END {
+  if (cr > cmax && cadd==cr)
+    printf "%s:%d: %d comment lines over the %d allowed - the reasoning goes to the ADR or the PR body\n", f, cstart, cr, cmax
+}
+AWK
+
+scan() { # scan <path> [lines-file]
+  local path="$1" list="${2:-}"
+  [ -f "$path" ] || return 0
+  if [ -z "$list" ]; then
+    list=$(mktemp)
+    seq 1 "$(awk 'END{print NR}' "$path")" > "$list"
+    trap 'rm -f "$list"' RETURN
+  fi
+  awk -v f="$path" -v cmax="$COMMENT_MAX" -v dmax="$DOC_MAX" \
+      "$DETECT" "$list" "$path"
+}
+
+base=""; staged=0; paths=(); have_paths=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --staged) staged=1; shift ;;
+    --base) base="${2:-}"; [ -n "$base" ] || { echo "comment-check: --base needs a ref" >&2; exit 2; }; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    -*) echo "comment-check: unknown flag $1" >&2; exit 2 ;;
+    *) paths+=("$1"); have_paths=1; shift ;;
+  esac
+done
+
+if [ "$have_paths" -eq 1 ]; then
+  found=0
+  for p in "${paths[@]}"; do
+    [ -f "$p" ] || { echo "comment-check: no such file: $p" >&2; exit 2; }
+    out=$(scan "$p") || continue
+    [ -n "$out" ] && { printf '%s\n' "$out"; found=1; }
+  done
+  exit "$found"
+fi
+
+if [ "$staged" -eq 1 ] && [ -z "$base" ]; then range=(--cached)
+elif [ -n "$base" ]; then
+  git rev-parse --verify --quiet "$base^{commit}" >/dev/null || {
+    echo "comment-check: no such ref: $base" >&2; exit 2; }
+  range=("$base")
+else
+  echo "comment-check: give files, --staged, or --base REF" >&2; exit 2
+fi
+
+# file<TAB>line for every added line, from a zero-context diff.
+added=$(git diff --unified=0 "${range[@]}" -- '*.py' '*.ts' '*.js' '*.sh' 2>/dev/null |
+  awk '/^\+\+\+ /{ f=substr($0,7); sub(/^b\//,"",f); next }
+       /^@@ /{ match($0,/\+[0-9]+/); ln=substr($0,RSTART+1,RLENGTH-1)+0; next }
+       /^\+/ && !/^\+\+\+/ { print f "\t" ln; ln++ }')
+
+[ -n "$added" ] || exit 0
+
+work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
+found=0
+while IFS= read -r path; do
+  [ -f "$path" ] || continue
+  awk -F'\t' -v want="$path" '$1==want{print $2}' <<<"$added" > "$work/lines"
+  out=$(scan "$path" "$work/lines")
+  [ -n "$out" ] && { printf '%s\n' "$out"; found=1; }
+done < <(cut -f1 <<<"$added" | sort -u)
+
+exit "$found"
