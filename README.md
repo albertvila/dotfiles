@@ -38,7 +38,7 @@ To ask whether this machine still matches the repo, run `./setup.sh -c` (add `-u
 
 - a missing or foreign link in the home mirror
 - a package the active config declares that is not installed (brew formula, brew cask, npm, pip) — one line per missing package manager when the manager itself is absent
-- a manual step that leaves a trace: `~/.gitconfig-user`, a gpg secret key, `~/.aws/credentials`
+- a manual step that leaves a trace: `~/.gitconfig-user`, a gpg secret key, `~/.aws/sso/cache`
 
 It installs nothing and prompts for nothing. The manual steps that need a browser or a human — github and ssh keys, `twg setup`, the Alfred and Rectangle logins — stay manual, because a check that cannot see the answer must not claim one.
 
@@ -99,7 +99,7 @@ Also be sure the variable `export GPG_TTY=$(tty)` is properly set, more informat
 - Run `twg setup` to log in to the Teamwork Graph CLI (the token prompt opens a browser, so it needs your terminal)
 
 ### aws
-- Run `aws configure` and set up your aws credentials
+- Run `aws sso login --sso-session lm-global`. It needs a browser, so it is the one step no setup can do; every profile in `~/.aws/config` reuses that session and refreshes itself until the registration expires (about 3 months)
 
 ### Google drive
 - If the Strikethrough shortcut does not work, review if it's used by a Chrome extension using `chrome://extensions/shortcuts`

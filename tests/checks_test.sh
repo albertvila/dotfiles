@@ -88,18 +88,18 @@ chmod +x "$BIN/gpg"
 OUT=$(check_manual_steps 2>&1) || true
 check "no gitconfig-user is drift" "printf '%s\n' \"\$OUT\" | grep -q 'missing ~/.gitconfig-user'"
 check "no gpg secret key is drift" "printf '%s\n' \"\$OUT\" | grep -q 'no gpg secret key'"
-check "no aws credentials is drift" "printf '%s\n' \"\$OUT\" | grep -q 'missing ~/.aws/credentials'"
+check "no aws sso login is drift" "printf '%s\n' \"\$OUT\" | grep -q 'no aws sso login yet'"
 check "all three reported on a bare HOME ($(count "$OUT" 'drift:'))" "[ $(count "$OUT" 'drift:') -eq 3 ]"
 
 printf 'sec:u:4096:1:ABCD:1:::S:::+:::\n' > "$answers/gpg"
 touch "$HOME/.gitconfig-user"
-mkdir -p "$HOME/.aws"
-touch "$HOME/.aws/credentials"
+mkdir -p "$HOME/.aws/sso/cache"
+touch "$HOME/.aws/sso/cache/token.json"
 DOTFILES_DRIFT=0
 check_manual_steps > /dev/null 2>&1 || true
 check "complete manual steps are not drift" "[ $DOTFILES_DRIFT -eq 0 ]"
 
-rm "$HOME/.aws/credentials"
+rm -rf "$HOME/.aws/sso"
 DOTFILES_DRIFT=0
 OUT=$(check_manual_steps 2>&1) || true
 check "a step that regresses is the only drift line ($(count "$OUT" 'drift:'))" \
