@@ -13,7 +13,7 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 - When a working solution exists, simplify in place, in the code the task touches: delete dead helpers, over-abstractions, and duplicated logic. Don't rebuild — the tested behavior is the oracle, and a clean rewrite that loses an edge case is worse.
 - Minimum code for the task: no speculative features, options, abstractions or "for later" code. Name what you left out in one line.
 - Before writing new code, look for an existing helper, component or pattern and use it the way the surrounding code does. List the callers, tests and config your change must reach.
-- Follow the codebase's conventions even when you disagree; flag the disagreement instead of diverging.
+- Follow the codebase's conventions — its layers, names, error handling — even when you disagree; a comment beside the code is not a convention.
 - When instructions, docs and code conflict, name the conflict and which side you followed. Never blend them.
 - A new or changed test must fail without the change; one that passes on buggy code proves nothing.
 - If a command, type check or test can answer a question, run it instead of reasoning about it.
@@ -22,6 +22,13 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 - Corrected twice on the same mistake → run the `correct` skill. One correction is a fix, two is a class.
 - Before you add code for a race condition or security edge case that is unlikely or purely hypothetical, tell me exactly what would go wrong, how likely that is, and how much complexity the extra code adds, in words a 10-year-old could understand. Then wait for my OK.
 - End any turn that reports on long-running or delegated work with a short status: **Goal**, **Done**, **Next**, **Needs you** (or "nothing").
+
+## Comments
+
+- One line for the why the code cannot say: the vendor that guesses its own unit, the choice that looks wrong on purpose, the invariant a guard protects. Two when the quirk needs its example.
+- Everything else has a home: the decision in an ADR, the measurement and what you rejected in the PR body. The comment states it once and points — `# ADR 0005: saves stay in Delta.`
+- State a rationale where it is computed. Eleven paraphrases of one decision are eleven places to go stale; the other sites name that function.
+- A test comment states the trap its name cannot: the fixture that makes two rows collide, not what the assert checks. The comment dies with the code it explained.
 
 ## Ports
 - `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running: never kill it, by pid, port or name (`lsof -ti tcp:8765 | xargs kill` takes it down and looks like a crash); kill your own preview server by the pid you started, or use a free port.
