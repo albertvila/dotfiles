@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Run one command with AWS credentials in its environment.
+#
+# The `lm` pre-push hook on Launchmetrics repos authenticates through
+# LM::Builder::API::Paws, which reads AWS_ACCESS_KEY_ID and ~/.aws/credentials and nothing
+# else. This machine has no credentials file and an SSO profile, so the hook refuses every
+# push with "AWS credentials: Missing suitable credentials" — even when `aws-check` says the
+# session is fine, because the SSO cache is the CLI's and not the hook's. This turns the
+# session into the three variables it reads, for one command:
+#
+#   aws-env git push -u origin my-branch
+#
+# exit 0/anything = the wrapped command's own status   1 = stale session   2 = usage
+set -uo pipefail
+
+# Same walk as aws-check: the profile the repo's .envrc declares, else atlas-staging, which
+# nearly every repo here uses. It prints that for a human; this needs the value.
+profile="${AWS_PROFILE:-}"
+if [ -z "$profile" ]; then
+  dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/.envrc" ]; then
+      raw=$(sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}AWS_PROFILE=//p' "$dir/.envrc" | head -1)
+      raw="${raw%\"}"; raw="${raw#\"}"; raw="${raw%\'}"; raw="${raw#\'}"
+      profile="${raw%%[[:space:]]*}"
+      break
+    fi
+    dir=$(dirname "$dir")
+  done
+fi
+profile="${profile:-atlas-staging}"
+
+if [ $# -eq 0 ]; then
+  echo "usage: aws-env <command> [args...]" >&2
+  exit 2
+fi
+
+# A caller that already exported credentials keeps its own: an explicit choice beats a guess.
+if [ -z "${AWS_ACCESS_KEY_ID:-}" ]; then
+  if ! creds=$(aws configure export-credentials --profile "$profile" --format env 2>/dev/null); then
+    echo "aws-env: profile='$profile' has no usable session - refresh it in Strider, then retry" >&2
+    exit 1
+  fi
+  case "$creds" in
+    *AWS_ACCESS_KEY_ID*) eval "$creds" ;;
+    *) echo "aws-env: profile='$profile' exported no access key - refresh it in Strider" >&2; exit 1 ;;
+  esac
+fi
+
+exec "$@"
