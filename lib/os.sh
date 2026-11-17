@@ -288,6 +288,6 @@ function check_manual_steps() {
     _drift "missing ~/.gitconfig-user (git user + signing key, see README)"
   gpg --list-secret-keys --with-colons 2>/dev/null | grep -q '^sec' ||
     _drift "no gpg secret key, so signed commits cannot be made (see README)"
-  [ -f "$HOME/.aws/credentials" ] ||
-    _drift "missing ~/.aws/credentials (run aws configure, see README)"
+  compgen -G "$HOME/.aws/sso/cache/*.json" > /dev/null ||
+    _drift "no aws sso login yet (run aws sso login --sso-session lm-global, see README)"
 }

@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Is the AWS session this repo needs still usable?
 #
-# Temp AWS creds expire silently. When they do, direnv's CodeArtifact token and
+# AWS sessions expire silently. When they do, direnv's CodeArtifact token and
 # the pre-push hook both fail with messages that never say "your session is
 # stale", so a thread retries the same push instead of asking for a refresh.
 # This answers that question in one line, for the profile the repo itself
 # declares in its .envrc. When the repo declares nothing, atlas-staging is what
 # gets checked (nearly every repo here uses it) and the line says "(assumed)".
 #
-# exit 0 = STS answered   1 = stale, refresh it   2 = cannot tell (no aws CLI)
+# exit 0 = STS answered
+# exit 1 = STALE (a login or refresh fixes it) or DENIED (the profile's role is
+#          not yours, and no login does): either way a human has to act
+# exit 2 = cannot tell (no aws CLI)
 set -uo pipefail
 
 profile="${AWS_PROFILE:-}"
@@ -43,6 +46,15 @@ if [ -z "$profile" ]; then
   assumed=" (assumed)"
 fi
 
+# An sso_session refreshes its own token from the cached login; a profile
+# without one is a Strider static key. Which one it is decides who can fix it.
+sso_session_of() {
+  awk -v want="$1" '
+    /^\[/ { in_profile = ($0 == "[profile " want "]" || $0 == "[" want "]"); next }
+    in_profile && /^[[:space:]]*sso_session[[:space:]]*=/ { sub(/^[^=]*=[[:space:]]*/, ""); print; exit }
+  ' "$HOME/.aws/config" 2>/dev/null
+}
+
 if ! command -v aws >/dev/null 2>&1; then
   echo "aws-check: no aws CLI on PATH, cannot verify '$profile'" >&2
   exit 2
@@ -55,5 +67,15 @@ if out=$(aws sts get-caller-identity --profile "$profile" \
   exit 0
 fi
 
-echo "aws STALE profile='$profile'$assumed — refresh it in Strider, then retry" >&2
+session=$(sso_session_of "$profile")
+case "$out" in
+  *'No access'*|*ForbiddenException*|*AccessDenied*)
+    echo "aws DENIED profile='$profile'$assumed — that role is not yours; fix sso_role_name in ~/.aws/config" >&2 ;;
+  *)
+    if [ -n "$session" ]; then
+      echo "aws STALE profile='$profile'$assumed — run: aws sso login --sso-session $session, then retry" >&2
+    else
+      echo "aws STALE profile='$profile'$assumed — refresh it in Strider, then retry" >&2
+    fi ;;
+esac
 exit 1
