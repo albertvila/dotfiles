@@ -24,6 +24,7 @@ printf 'def f():\n    """What it does."""\n    return 1\n' > a.py
 printf 'echo hi\n# a comment\n' > b.sh
 printf 'def f():\n    return 1\n' > c.py
 printf 'x = 1\n' > d.zig
+printf '/*\n   one line\n   another line\n*/\ncode();\n' > e.js
 git add . && git commit -qm one
 clean() { git reset -q --hard HEAD; rm -f d.zig e.new; }
 
@@ -64,6 +65,18 @@ printf 'echo hi there\n# a comment, reworded\n' > b.sh
 git add b.sh
 "$CHECK" --staged >/dev/null 2>&1 && code=0 || code=$?
 check "a changed shell line fails" "[ $code -eq 1 ]"
+
+# 4b. A block comment is a comment on its middle lines, which carry no marker of their own.
+clean
+printf '/*\n   one line, reworded\n   another line\n*/\ncode();\n' > e.js
+git add e.js
+check "a reworded line inside /* */ passes" "'$CHECK' --staged >/dev/null"
+git reset -q --hard HEAD
+printf '/*\n   one line\n   another line\n*/\ncode(2);\n' > e.js
+git add e.js
+"$CHECK" --staged >/dev/null 2>&1 && code=0 || code=$?
+check "a code line below the block still fails" "[ $code -eq 1 ]"
+git reset -q --hard HEAD
 
 # 5. What it cannot judge, it refuses rather than passes.
 clean

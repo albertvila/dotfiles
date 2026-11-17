@@ -36,6 +36,8 @@ RULES = {
     ".dockerfile": (r"^\s*#",),
 }
 
+C_STYLE = {".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs"}
+
 PASS = ast.Pass()
 
 
@@ -84,19 +86,43 @@ def rules_for(path: str, content: str) -> tuple[str, ...] | None:
     return None
 
 
-def changed_lines(diff: str) -> dict[str, list[tuple[str, str]]]:
-    """path -> [(sign, line)] for every added or removed line, from a zero-context diff."""
-    found: dict[str, list[tuple[str, str]]] = {}
-    path = None
+def changed_lines(diff: str) -> dict[str, list[tuple[str, int, str]]]:
+    """path -> [(sign, line number in that side, text)] from a zero-context diff."""
+    found: dict[str, list[tuple[str, int, str]]] = {}
+    path, old_ln, new_ln = None, 0, 0
+    hunk = re.compile(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@")
     for line in diff.splitlines():
         if line.startswith("+++ b/"):
             path = line[6:]
             found.setdefault(path, [])
-        elif line.startswith("--- ") or line.startswith("+++ ") or line.startswith("@@"):
+        elif line.startswith("--- ") or line.startswith("+++ "):
             continue
+        elif hunk.match(line):
+            old_ln, new_ln = (int(group) for group in hunk.match(line).groups())
         elif path and line[:1] in "+-":
-            found[path].append((line[0], line[1:]))
+            if line[0] == "+":
+                found[path].append(("+", new_ln, line[1:]))
+                new_ln += 1
+            else:
+                found[path].append(("-", old_ln, line[1:]))
+                old_ln += 1
     return found
+
+
+def in_block_comment(text: str) -> dict[int, bool]:
+    """Which lines of a C-style source sit inside `/* ... */`, by 1-based line number."""
+    inside = {}
+    open_comment = False
+    for number, line in enumerate(text.splitlines(), start=1):
+        starts = line.find("/*") != -1
+        ends = line.find("*/") != -1
+        if open_comment or starts:
+            inside[number] = True
+        if starts and not ends:
+            open_comment = True
+        elif open_comment and ends:
+            open_comment = False
+    return inside
 
 
 def main() -> int:
@@ -151,11 +177,14 @@ def main() -> int:
         if rules is None:
             failures.append(f"{path}: no comment rule for this file type, so nothing is proven")
             continue
-        for sign, line in lines.get(path, []):
-            if line.strip() and not any(re.search(rule, line) for rule in rules):
-                moved = "added" if sign == "+" else "removed"
-                failures.append(f"{path}: {moved} code: {line.strip()[:70]}")
-                break
+        c_style = Path(path).suffix.lower() in C_STYLE
+        blocks = {"+": in_block_comment(new), "-": in_block_comment(old)} if c_style else {"+": {}, "-": {}}
+        for sign, number, line in lines.get(path, []):
+            if not line.strip() or any(re.search(rule, line) for rule in rules) or blocks[sign].get(number):
+                continue
+            moved = "added" if sign == "+" else "removed"
+            failures.append(f"{path}: {moved} code: {line.strip()[:70]}")
+            break
 
     for failure in failures:
         print(f"CODE {failure}")
