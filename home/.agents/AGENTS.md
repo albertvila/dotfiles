@@ -31,8 +31,14 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 - State a rationale where it is computed: eleven paraphrases of one decision are eleven places to go stale, so the other sites name that function.
 - A test comment states the trap its name cannot: the fixture that makes two rows collide, not what the assert checks. The comment dies with the code it explained.
 
+## This machine
+
+- macOS ships BSD tools: bytes and whitespace are `sed -n l` or `od -c`; `cat -A` and `sed ,+N` ranges are GNU and fail here.
+- Checkouts: `~/personal_workspace/*` are personal, `~/workspace/*` work — look there before guessing a path.
+- The shell already starts in the project directory: `cd` only to reach another checkout.
+
 ## Ports
-- `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running: never kill it, by pid, port or name (`lsof -ti tcp:8765 | xargs kill` takes it down and looks like a crash); kill your own preview server by the pid you started, or use a free port.
+- `8765` is the attention dashboard (`~/personal_workspace/attention-dashboard`) — leave it running. To restart it, `./attention restart` from that checkout, which is what the board's own button runs; a kill by pid or port (`lsof -ti tcp:8765 | xargs kill`) takes the board down and looks like a crash. Kill your own preview server by the pid you started, or use a free port.
 
 ## Git
 

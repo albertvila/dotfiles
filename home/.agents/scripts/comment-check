@@ -58,7 +58,7 @@ FNR==NR { add[$1]=1; next }
     if (nq % 2 == 1) {
       indoc=0
       if (dlen > dmax && dadd==dlen)
-        printf "%s:%d: %d-line docstring - one line saying what it does, the why goes elsewhere\n", f, dstart, dlen
+        printf "%s:%d: %d-line docstring over the %d allowed - one line saying what it does, the why goes elsewhere\n", f, dstart, dlen, dmax
     }
   }
   t=l; sub(/[[:space:]]+$/,"",t)
