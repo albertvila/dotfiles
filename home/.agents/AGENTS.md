@@ -15,7 +15,7 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 - Before writing new code, look for an existing helper, component or pattern and use it the way the surrounding code does. List the callers, tests and config your change must reach.
 - Follow the codebase's conventions — its layers, names, error handling — even when you disagree; a comment beside the code is not a convention.
 - When instructions, docs and code conflict, name the conflict and which side you followed. Never blend them.
-- A new or changed test must fail without the change; one that passes on buggy code proves nothing.
+- A test is a claim about behavior: it fails on that behavior's regression and for no other reason — not on a refactor, a private field, a call count, or a removed feature's absence. A copy of a behavior another test guards is deleted, not written.
 - If a command, type check or test can answer a question, run it instead of reasoning about it.
 - State the assumptions you made in the reply; ask only when an ambiguity changes the outcome.
 - Broken windows: lint errors, test failures, and flakiness get fixed on sight, even when unrelated to the current task. That means fixing what is broken, not restyling or refactoring working code next to your change.
