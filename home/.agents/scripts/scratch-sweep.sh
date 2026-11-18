@@ -6,7 +6,7 @@
 #
 # Classification per .scratch/<feature>/ directory:
 #   spec-only      has spec.md, no issues/        -> next step /to-tickets
-#   tickets-ready  has issues/ (spec.md optional) -> next step /orchy-run
+#   tickets-ready  has issues/ (spec.md optional) -> next step /mission-run
 # "Pending" = at least one issue whose status is not done/wontfix/resolved;
 # for spec-only, the spec's own Status line counts. Fully settled specs are
 # skipped silently. Status lines are matched in both `**Status:** x` and
@@ -63,7 +63,7 @@ echo "$projects_json" | jq -r '.[] | .id as $id | .name as $name | .sources[]? |
 
       n=0; rows=""
       if [ -d "$dir/issues" ]; then
-        kind="tickets-ready"; next_step="/orchy-run"
+        kind="tickets-ready"; next_step="/mission-run"
         for f in "$dir/issues"/*.md; do
           [ -e "$f" ] || continue
           s=$(status_of "$f")
