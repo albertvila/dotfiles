@@ -20,6 +20,29 @@ abbr -a -- ... "cd ../.."
 abbr -a -- .... "cd ../../.."
 abbr -a -- - "cd -"
 
+# --- rm guard ---
+# A trailing slash makes the kernel resolve the link it ends with, so
+# `rm -rf link/` empties the target and leaves the link. The operand names the
+# link, so drop the slash and pass everything else to rm untouched.
+function rm --wraps rm --description "rm, removing a link rather than what a trailing slash resolves"
+    set -l out
+    set -l literal
+    for arg in $argv
+        if test -z "$literal"; and string match -qr -- '^-' $arg
+            test "$arg" = --; and set literal 1
+            set out $out $arg
+            continue
+        end
+        set -l bare (string replace -r -- '/+$' '' $arg)
+        if test -n "$bare"; and test -L $bare
+            set out $out $bare
+        else
+            set out $out $arg
+        end
+    end
+    command rm $out
+end
+
 # --- tab title (~/w/dotfiles style) ---
 function fish_title
     set -l d $PWD
