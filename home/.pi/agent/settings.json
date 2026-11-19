@@ -20,7 +20,8 @@
     "npm:pi-powerline-footer",
     "npm:pi-rewind",
     "npm:pi-web-access@0.35.0",
-    "npm:pi-advisor-flow"
+    "npm:pi-advisor-flow",
+    "git:github.com/johnlindquist/pi-emphasis"
   ],
   "powerline": {
     "welcome": false,
@@ -44,9 +45,9 @@
   },
   "steeringMode": "all",
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:@tintinweb/pi-subagents\",\"scope\":\"user\"}": "0.25.0",
+    "{\"source\":\"npm:@tintinweb/pi-subagents\",\"scope\":\"user\"}": "0.26.1",
     "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.22.0",
     "{\"source\":\"npm:pi-web-access@0.35.0\",\"scope\":\"user\"}": "0.35.0",
-    "{\"source\":\"npm:pi-advisor-flow\",\"scope\":\"user\"}": "0.15.0"
+    "{\"source\":\"npm:pi-advisor-flow\",\"scope\":\"user\"}": "0.16.0"
   }
 }
