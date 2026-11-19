@@ -15,11 +15,11 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 - Before writing new code, look for an existing helper, component or pattern and use it the way the surrounding code does. List the callers, tests and config your change must reach.
 - Follow the codebase's conventions — its layers, names, error handling — even when you disagree; a comment beside the code is not a convention.
 - When instructions, docs and code conflict, name the conflict and which side you followed. Never blend them.
-- A test is a claim about behavior: it fails on that behavior's regression and for no other reason — not on a refactor, a private field, a call count, or a removed feature's absence. A copy of a behavior another test guards is deleted, not written.
+- A test is a claim about behavior: it must fail on that behavior's regression and for no other reason — one that breaks on a refactor, asserts a private field or a call count, guards a removed feature's absence, or passes on buggy code proves nothing. If another test guards that behavior, the copy is deleted, not written.
 - If a command, type check or test can answer a question, run it instead of reasoning about it.
 - State the assumptions you made in the reply; ask only when an ambiguity changes the outcome.
 - Broken windows: lint errors, test failures, and flakiness get fixed on sight, even when unrelated to the current task. That means fixing what is broken, not restyling or refactoring working code next to your change.
-- Corrected twice on the same mistake → run the `correct` skill. One correction is a fix, two is a class.
+- Corrected twice on the same mistake → run `/retro`. One correction is a fix, two is a class.
 - Before you add code for a race condition or security edge case that is unlikely or purely hypothetical, tell me exactly what would go wrong, how likely that is, and how much complexity the extra code adds, in words a 10-year-old could understand. Then wait for my OK.
 - End any turn that reports on long-running or delegated work with a short status: **Goal**, **Done**, **Next**, **Needs you** (or "nothing").
 
