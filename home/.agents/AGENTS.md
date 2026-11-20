@@ -25,11 +25,12 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 
 ## Comments
 
-- One line for the constraint the code cannot change — the vendor that guesses its own unit, the shape of the data, the ordering a protocol requires — two when the quirk needs its example. Docstrings spend the same budget, saying what the thing does.
-- A surprise in our own design is a rename or an ADR, not prose: a justification either names a constraint we cannot change or it goes, and six lines cut to two is the same alibi, shorter.
-- Everything else has a home: the decision in an ADR, the reasoning in the PR body. The comment states it once and points — `# ADR 0005: saves stay in Delta.`
-- State a rationale where it is computed: eleven paraphrases of one decision are eleven places to go stale, so the other sites name that function.
-- A test comment states the trap its name cannot: the fixture that makes two rows collide, not what the assert checks. The comment dies with the code it explained.
+- A comment is the exception: it names a constraint the code cannot — the vendor that guesses its own unit, the shape of the data, the ordering a protocol requires — two when the quirk needs an example; docstrings spend the same budget.
+- The code says what it does: a comment that says it again, restates the test, or justifies the line just written is deleted, not shortened.
+- A decision is not a comment: the choice and what it beat go to the ADR or `CONTEXT.md`, the reasoning to the PR body. The comment points — `# ADR 0005: saves stay in Delta.`
+- A workaround is a fix you skipped: rename, extract or type it until no comment is needed.
+- State a rationale once, where it is computed; eleven paraphrases are eleven places to go stale, so others name that function.
+- A test comment names the trap the test name cannot. A comment the code has moved past dies with that change.
 
 ## This machine
 
