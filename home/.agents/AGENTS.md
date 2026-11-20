@@ -25,12 +25,13 @@ Import PySpark functions by name (`from pyspark.sql.functions import col, when`)
 
 ## Comments
 
-- A comment is the exception: it names a constraint the code cannot — the vendor that guesses its own unit, the shape of the data, the ordering a protocol requires — two when the quirk needs an example; docstrings spend the same budget.
-- The code says what it does: a comment that says it again, restates the test, or justifies the line just written is deleted, not shortened.
-- A decision is not a comment: the choice and what it beat go to the ADR or `CONTEXT.md`, the reasoning to the PR body. The comment points — `# ADR 0005: saves stay in Delta.`
-- A workaround is a fix you skipped: rename, extract or type it until no comment is needed.
-- State a rationale once, where it is computed; eleven paraphrases are eleven places to go stale, so others name that function.
-- A test comment names the trap the test name cannot. A comment the code has moved past dies with that change.
+- A comment survives one question: without it, would a careful change go wrong? Otherwise, deleted.
+- It answers by naming a constraint the code cannot — the vendor that guesses its own unit, the data's shape — one line, two when the quirk needs an example; docstrings spend the same budget.
+- The code says what it does: a comment restating it, the test, or the line just written fails it.
+- A decision is not a comment: the choice and what it beat go to the repo's decision record (ADR, `CONTEXT.md`), the reasoning to the PR body. A citation rides on a fact, `# frozen until restored (ADR 0008)`; one naming only the document says nothing.
+- A workaround is a fix you skipped: rename or extract it until the comment is unnecessary.
+- State it once, where it is computed: eleven copies are eleven places to go stale.
+- A test comment names the trap its name cannot; one the code has moved past dies with it.
 
 ## This machine
 
