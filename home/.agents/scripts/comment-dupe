@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""Flag a rationale written more than once.
+
+The comment budget catches a paragraph; this catches the same paragraph in two files. A decision
+that lives in eleven places is eleven edits when it changes, so the second copy names the first
+instead — `# ADR 0005: reads come from a copy.` The rule is in ~/.agents/AGENTS.md.
+
+  comment-dupe [FILE...]        the files given, or every tracked source file
+  comment-dupe --staged [--warn] the decisions this commit adds, against the repo's own
+
+exit 0 = nothing written twice   1 = copies found   2 = usage      (--warn always exits 0)
+"""
+
+import argparse
+import ast
+import pathlib
+import re
+import subprocess
+import sys
+
+COMMENT = re.compile(r"^[ \t]*(#(?!!)|//(?!/))")
+SKIP = re.compile(r"copyright|SPDX|Licensed under|noqa|type: ignore|fmt:|pylint:|MAGIC", re.IGNORECASE)
+# A sentence short enough to be a label ("the token is a digest") matches by accident: the noise
+# falls away above eight words, and a real duplicated decision is a sentence, not a phrase.
+MIN_WORDS = 8
+# Near-copies differ by a word or a comma; the same idea reworded shares fewer words than this and
+# is a paraphrase, which no similarity measure over words settles.
+OVERLAP = 0.7
+SUFFIXES = (".py", ".js", ".mjs", ".ts", ".tsx", ".sh", ".sql", ".rb", ".pl", ".yaml", ".yml")
+
+
+def tracked(paths: list[str]) -> list[str]:
+    if paths:
+        return [p for p in paths if p.endswith(SUFFIXES)]
+    found = subprocess.run(["git", "ls-files"], capture_output=True, text=True)
+    if found.returncode != 0:
+        sys.exit("comment-dupe: not a git repository, so name the files")
+    return [p for p in found.stdout.split() if p.endswith(SUFFIXES)]
+
+
+def sentences(path: str) -> list[tuple[int, str]]:
+    """Every comment sentence long enough to be a decision, with the line it starts on."""
+    try:
+        lines = pathlib.Path(path).read_text(errors="replace").splitlines()
+    except OSError:
+        return []
+    out, block, start = [], [], 0
+    for number, line in enumerate(lines + [""], start=1):
+        if COMMENT.match(line) and not SKIP.search(line):
+            if not block:
+                start = number
+            block.append(COMMENT.sub("", line).strip())
+            continue
+        if block:
+            text = " ".join(block).strip()
+            for piece in re.split(r"(?<=[.!?])\s+", text):
+                if len(piece.split()) >= MIN_WORDS:
+                    out.append((start, piece))
+            block = []
+    return out
+
+
+def from_index(path: str) -> str:
+    """The content this commit will land, which is the index and not the working tree."""
+    done = subprocess.run(["git", "show", f":{path}"], capture_output=True, text=True)
+    return done.stdout
+
+
+def sentences_of(text: str) -> list[tuple[int, str]]:
+    """Every comment sentence in a text, with the line it starts on."""
+    out, block, start = [], [], 0
+    for number, line in enumerate(text.splitlines() + [""], start=1):
+        if COMMENT.match(line) and not SKIP.search(line):
+            if not block:
+                start = number
+            block.append(COMMENT.sub("", line).strip())
+            continue
+        if block:
+            out.extend(_cut(start, block))
+            block = []
+    return out
+
+
+def _cut(start: int, block: list[str]) -> list[tuple[int, str]]:
+    text = " ".join(block).strip()
+    return [(start, piece) for piece in re.split(r"(?<=[.!?])\s+", text)
+            if len(piece.split()) >= MIN_WORDS]
+
+
+def docstrings(path: str) -> list[tuple[int, str]]:
+    """The same treatment for the other form a rationale takes, or it moves into one to escape."""
+    if not path.endswith(".py"):
+        return []
+    try:
+        tree = ast.parse(pathlib.Path(path).read_text(errors="replace"))
+    except SyntaxError:
+        return []
+    out = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            text = ast.get_docstring(node, clean=True)
+            if text:
+                out.append((getattr(node, "lineno", 1), " ".join(text.split())))
+    return out
+
+
+def decisions(path: str) -> list[tuple[int, str]]:
+    """Every candidate, from comments and from docstrings alike, cut into sentences."""
+    pieces = sentences(path) + docstrings(path)
+    return [(line, piece) for line, text in pieces for piece in re.split(r"(?<=[.!?])\s+", text)
+            if len(piece.split()) >= MIN_WORDS]
+
+
+def words(text: str) -> frozenset[str]:
+    return frozenset(re.findall(r"[a-z0-9']+", text.lower()))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Flag a rationale written more than once.")
+    parser.add_argument("paths", nargs="*", help="files to read; the tracked source files by default")
+    parser.add_argument("--staged", action="store_true", help="only the decisions this commit adds")
+    parser.add_argument("--warn", action="store_true", help="report and pass, for a commit hook")
+    options = parser.parse_args()
+    given = options.paths
+
+    if options.staged:
+        return staged(warn=options.warn)
+
+    seen = []
+    for path in tracked(given):
+        for line, text in decisions(path):
+            seen.append((path, line, text, words(text)))
+
+    copies = []
+    for index, (path, line, text, bag) in enumerate(seen):
+        for other_path, other_line, other_text, other_bag in seen[index + 1:]:
+            shared = len(bag & other_bag) / max(1, len(bag | other_bag))
+            if shared >= OVERLAP:
+                copies.append((shared, path, line, text, other_path, other_line))
+
+    if not copies:
+        print(f"{len(seen)} decisions read, each written once")
+        return 0
+
+    for shared, path, line, text, other_path, other_line in sorted(copies, reverse=True):
+        print(f"{shared:.0%} the same: {path}:{line} and {other_path}:{other_line}")
+        print(f"    {text}")
+    print(f"\n{len(seen)} decisions read, {len(copies)} pair(s) written more than once")
+    return 1
+
+
+def staged(warn: bool) -> int:
+    """What this commit adds, against what the repo already says: a warn in the hook, not a gate."""
+    changed = subprocess.run(["git", "diff", "--cached", "--name-only"], capture_output=True, text=True)
+    if changed.returncode != 0:
+        sys.exit("comment-dupe: not a git repository")
+    staged_paths = [p for p in changed.stdout.split() if p.endswith(SUFFIXES)]
+    if not staged_paths:
+        return 0
+
+    added = [(path, line, text) for path in staged_paths for line, text in sentences_of(from_index(path))]
+    if not added:
+        return 0
+
+    corpus = []
+    for path in tracked([]):
+        if path in staged_paths:
+            continue
+        for line, text in decisions(path):
+            corpus.append((path, line, text, words(text)))
+
+    hits = []
+    for path, line, text in added:
+        bag = words(text)
+        for other_path, other_line, other_text, other_bag in corpus:
+            if len(bag & other_bag) / max(1, len(bag | other_bag)) >= OVERLAP:
+                hits.append((path, line, text, other_path, other_line))
+
+    for path, line, text, other_path, other_line in hits:
+        print(f"comment-dupe: {path}:{line} says what {other_path}:{other_line} already says - name it instead")
+        print(f"    {text}")
+    if hits and not warn:
+        print(f"\n{len(added)} decision(s) added, {len(hits)} already written")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

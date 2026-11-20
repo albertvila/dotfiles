@@ -20,6 +20,10 @@ if [ "$hook" = pre-commit ]; then
     printf '\ncomment-check: the reasoning goes to the ADR or the PR body\n' >&2
     exit 1
   fi
+  # A decision already written elsewhere is a warning, not a gate: which copy dies is a person's
+  # call, and blocking a commit on it would teach everyone to pass --no-verify.
+  dupe="$HOME/.agents/scripts/comment-dupe"
+  [ -x "$dupe" ] && "$dupe" --staged --warn >&2
 fi
 
 # ~/.gitconfig includes ~/.gitconfig-lm for repos under ~/workspace, and that file names the hooks
