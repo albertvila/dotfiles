@@ -22,6 +22,7 @@ set -uo pipefail
 
 COMMENT_MAX=2   # a run of this many lines is fine; one more is a paragraph
 DOC_MAX=5       # a summary and a two-line why: the shape the rule allows
+TRAIL_MAX=80    # a clause after the code is a label; past this it is a paragraph on one line
 
 usage() {
   sed -n 's/^#[[:space:]]*//p' "$0" | sed -n '/^comment-check /,/^$/p'
@@ -36,9 +37,21 @@ FNR==NR { add[$1]=1; next }
   n=FNR; l=$0
   # A comment line, minus the ones that are not prose: headers, tool directives,
   # notebook cells, and banner dividers made of nothing but punctuation.
-  c = (l ~ /^[[:space:]]*(#[^!]|\/\/[^\/])/) &&
-      l !~ /(copyright|Copyright|SPDX-License-Identifier|Licensed under|noqa|type: ignore|fmt:|pylint:|eslint-|@ts-|MAGIC)/
-  if (c && l ~ /^[[:space:]]*(#+|\/\/+)[-=*#_ ]*$/) c=0
+  # A comment line starts with its marker. A comment *after* the code is judged on its own length:
+  # three `HERE = ROOT  # the checkout` labels are a table, not a paragraph, while one 90-character
+  # sentence after a statement is the paragraph this exists to catch.
+  skip  = l ~ /(copyright|Copyright|SPDX-License-Identifier|Licensed under|noqa|type: ignore|fmt:|pylint:|eslint-|@ts-|MAGIC)/
+  full  = (l ~ /^[[:space:]]*(#[^!]|\/\/[^\/])/) && !skip
+  c = full
+  if (full && l ~ /^[[:space:]]*(#+|\/\/+)[-=*#_ ]*$/) c=0
+  trailing = ""
+  if (!skip && !full && (l ~ /[[:space:]][[:space:]]#[^!]/ || l ~ /[^:][[:space:]]\/\/[^\/]/)) {
+    trailing = l
+    sub(/^.*[[:space:]][[:space:]]#+[[:space:]]?/, "", trailing)
+    sub(/^.*[^:][[:space:]]\/\/+[[:space:]]?/, "", trailing)
+    if (length(trailing) > tmax && (n in add))
+      printf "%s:%d: %d characters of comment after the code - the reasoning goes to the ADR or the PR body\n", f, n, length(trailing)
+  }
   if (c) {
     if (cr==0) cstart=n
     cr++; if (n in add) cadd++
@@ -78,7 +91,7 @@ scan() { # scan <path> [lines-file]
     seq 1 "$(awk 'END{print NR}' "$path")" > "$list"
     trap 'rm -f "$list"' RETURN
   fi
-  awk -v f="$path" -v cmax="$COMMENT_MAX" -v dmax="$DOC_MAX" \
+  awk -v f="$path" -v cmax="$COMMENT_MAX" -v dmax="$DOC_MAX" -v tmax="$TRAIL_MAX" \
       "$DETECT" "$list" "$path"
 }
 

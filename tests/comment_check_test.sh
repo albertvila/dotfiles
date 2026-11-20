@@ -37,6 +37,17 @@ check "a six-line docstring fails" "[ $code -eq 1 ] && printf '%s\n' \"\$out\" |
 printf 'def merge():\n    return f"""MERGE INTO t AS t\nUSING (SELECT 1) AS s\nON t.a = s.a\nWHEN MATCHED THEN UPDATE SET\n  t.value = :value,\n  t.status = :status,\n  t.audit.by = :by\n"""\n' > "$WORK/sql_literal.py"
 check "a multi-line f-string passes" "bash '$CHECK' '$WORK/sql_literal.py' >/dev/null"
 
+# 3b. A comment after the code is judged by its own length, not by its neighbours: a table of
+# labels is the normal case, and a sentence squeezed onto the end of a statement is the paragraph.
+printf 'HERE = "/x"     # the checkout\nWEB = HERE + "/w"  # the pages\nDATA = HERE + "/d"  # a run writes\n' > "$WORK/labels.py"
+check "a table of trailing labels passes" "bash '$CHECK' '$WORK/labels.py' >/dev/null"
+printf 'def f():\n    save(row)  # %s\n    return 1\n' "$(printf 'x%.0s' {1..90})" > "$WORK/long_trail.py"
+out=$(bash "$CHECK" "$WORK/long_trail.py" 2>&1) && code=0 || code=$?
+check "a 90-character trailing comment fails" \
+  "[ $code -eq 1 ] && printf '%s\n' \"\$out\" | grep -q 'characters of comment after the code'"
+printf 'x = "a#b"\ny = "https://example.com/a//b"\n' > "$WORK/url.py"
+check "a # or // inside a string is not a comment" "bash '$CHECK' '$WORK/url.py' >/dev/null"
+
 # 4. Exempt blocks: a licence header, notebook cells, tool directives, dividers.
 printf '# Copyright 2026 Launchmetrics\n# SPDX-License-Identifier: MIT\n# Licensed under the Apache License\n\n# MAGIC | code table | the DataOps group, the Product group, and the\n# MAGIC | and the Tachyon taxonomy editor, which writes them through the\n# MAGIC | warehouse. This is documentation of the notebook, not a comment.\n\n# ---------------------------------------------------------------------------\n\ndef f():\n    return 1\n' > "$WORK/exempt.py"
 check "headers, MAGIC cells and dividers pass" "bash '$CHECK' '$WORK/exempt.py' >/dev/null"
