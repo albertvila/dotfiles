@@ -78,4 +78,23 @@ check "headers are ignored" "'$DUPE' e.py f.py >/dev/null"
 # 6. Silence is not success: it says what it read.
 check "it reports what it read" "'$DUPE' >/dev/null 2>&1; output | grep -q 'decisions read'"
 
+# 7. The staged mode: what this commit adds, against what the repo already says. It is a warning in
+# the hook, so --warn must pass while the same finding without it fails.
+git checkout -q -b staged-case HEAD~1 2>/dev/null || git switch -q -c staged-case
+printf 'def k():
+    # The token is a digest of the four fields a save compares, and nothing about the shape.\n    return 1\n' > s1.py
+git add s1.py && git commit -qm six
+printf 'def m():\n    # The token is a digest of the four fields a save compares, and nothing about the shape.\n    return 2\n' > s2.py
+git add s2.py
+"$DUPE" --staged >/dev/null 2>&1 && code=0 || code=$?
+check "--staged fails on a copy" "[ $code -eq 1 ]"
+"$DUPE" --staged --warn >/dev/null 2>&1 && code=0 || code=$?
+check "--warn passes with the same copy" "[ $code -eq 0 ]"
+check "--warn names the copy and its twin" "output --staged --warn | grep -q 's2.py:2 says what s1.py:2 already says'"
+git reset -q s2.py && rm -f s2.py
+printf 'def n():\n    # A save asks the warehouse to re-read the row before it decides there is a conflict.\n    return 3\n' > s3.py
+git add s3.py
+check "--staged is silent on a new decision" "'$DUPE' --staged --warn >/dev/null"
+git reset -q s3.py && rm -f s3.py
+
 exit "$fail"

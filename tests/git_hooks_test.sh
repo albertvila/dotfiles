@@ -23,6 +23,7 @@ FAKE_HOME="$WORK/home"
 LM_HOOKS="$WORK/lm-hooks"
 mkdir -p "$FAKE_HOME/.agents/scripts" "$LM_HOOKS" "$FAKE_HOME/workspace/lm-proj" "$WORK/personal/proj"
 ln -s "$REPO/home/.agents/scripts/comment-check" "$FAKE_HOME/.agents/scripts/comment-check"
+ln -s "$REPO/home/.agents/scripts/comment-dupe" "$FAKE_HOME/.agents/scripts/comment-dupe"
 printf '[core]\n\thooksPath = %s\n' "$LM_HOOKS" > "$FAKE_HOME/.gitconfig-lm"
 
 # An lm hook that records what it was asked, so forwarding is observable.
@@ -53,6 +54,17 @@ printf 'def f():\n    # `_` is a character in these codes, so the search escapes
 git add a.py
 hook "$WORK/personal/proj" pre-commit >/dev/null 2>&1 && code=0 || code=$?
 check "a one-line staged block passes" "[ $code -eq 0 ]"
+
+# 1b. A decision the repo already states is a warning on the way in, never a refusal: blocking a
+# commit on prose a person has to adjudicate teaches everyone to pass --no-verify.
+printf 'def other():\n    # One store over two databases: the read from the copy, the save through the warehouse.\n    return 2\n' > a.py
+git add a.py && git commit -qm seeded
+printf 'def third():\n    # One store over two databases: the read from the copy, the save through the warehouse.\n    return 3\n' > b.py
+git add b.py
+out=$(hook "$WORK/personal/proj" pre-commit 2>&1) && code=0 || code=$?
+check "a duplicate decision does not block the commit" "[ $code -eq 0 ]"
+check "it says so on the way in" "printf '%s\n' \"\$out\" | grep -q 'comment-dupe' && printf '%s\n' \"\$out\" | grep -q 'name it instead'"
+git reset -q --hard HEAD
 
 # 2. Forwarding: a repo under ~/workspace runs the lm hook of the same name, with its arguments.
 new_repo "$FAKE_HOME/workspace/lm-proj"
